@@ -8,13 +8,15 @@
    its own numbers would undo the one claim this product makes, so those panels are gone rather
    than filled with something plausible. */
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
-import { ArrowDownToLine, ArrowRight, ArrowUpRight, BarChart3, Bell, BriefcaseBusiness, ChevronRight, Clock3, Filter, LayoutDashboard, ListChecks, Moon, Search, ShieldCheck, Sun, TrendingUp, TriangleAlert, Users, X, Zap } from "lucide-react";
+import { ArrowDownToLine, ArrowRight, ArrowUpRight, BarChart3, Bell, Coins, BriefcaseBusiness, ChevronRight, Clock3, Filter, LayoutDashboard, ListChecks, Moon, Search, ShieldCheck, Sun, TrendingUp, TriangleAlert, Users, X, Zap } from "lucide-react";
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
+import { useActions, useWorkspace } from "@/lib/client";
+import { Connections, CreditsPanel, dataLabel } from "@/components/panels";
+import { Intake } from "@/components/Intake";
 import { derive, type Derived, type LaneItem } from "@/lib/dashboard";
 import { DashboardGraph } from "./dashboard-graph";
 import { DashboardLeads } from "./dashboard-leads";
-import type { Workspace } from "@/lib/types";
 import { dashboardStyles } from "./glassy-dashboard.css";
 
 gsap.registerPlugin(useGSAP);
@@ -585,6 +587,24 @@ function Dock({ active, side = false, select }: { active: View; side?: boolean; 
   );
 }
 
+/** What a header chip opens. The panels inside are the app's own, so the wallet and the list of
+    connections read the same on both pages; this only places them. */
+function Pop({ open, onClose, width = 340, children }: { open: boolean; onClose: () => void; width?: number; children: ReactNode }) {
+  useEffect(() => {
+    if (!open) return;
+    const key = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", key);
+    return () => window.removeEventListener("keydown", key);
+  }, [open, onClose]);
+  if (!open) return null;
+  return (
+    <>
+      <div className="gd-pop-catch" onClick={onClose} />
+      <div className="gd-pop" style={{ width }}>{children}</div>
+    </>
+  );
+}
+
 function Dialog({ title, children, close }: { title: string; children: ReactNode; close: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
   const label = useId();
@@ -654,8 +674,10 @@ export function GlassyDashboard({
   initialTheme = "light",
   appHref = "/",
 }: GlassyDashboardProps = {}) {
-  const [ws, setWs] = useState<Workspace | null>(null);
-  const [failed, setFailed] = useState(false);
+  const { ws, offline: failed, refresh } = useWorkspace();
+  const { act, busy, toast } = useActions(refresh);
+  const [intake, setIntake] = useState(false);
+  const [pop, setPop] = useState<"credits" | "stack" | null>(null);
   const [view, setView] = useState<View>(routeFromHash);
   const [active, setActive] = useState(view);
   const [period, setPeriod] = useState<Period>("7 days");
@@ -680,25 +702,9 @@ export function GlassyDashboard({
     return () => media.removeEventListener("change", update);
   }, []);
 
-  /* The workspace, read from the same endpoint the app polls. */
-  useEffect(() => {
-    let alive = true;
-    const pull = async () => {
-      try {
-        const res = await fetch("/api/state", { cache: "no-store" });
-        if (!res.ok) throw new Error(String(res.status));
-        const next = (await res.json()) as Workspace;
-        if (alive && next && typeof next.rev === "number") setWs(next);
-      } catch {
-        if (alive) setFailed(true);
-      }
-    };
-    void pull();
-    const timer = setInterval(pull, 4000);
-    return () => { alive = false; clearInterval(timer); };
-  }, []);
-
   const d = useMemo(() => derive(ws, windowOf[period]), [ws, period]);
+  const source = ws ? dataLabel(ws) : null;
+  const running = ws?.run.status === "running";
 
   const changeView = useCallback((next: View) => {
     if (pending.current === next) return;
@@ -763,6 +769,26 @@ export function GlassyDashboard({
     saveCsv("connet-ledger.csv", rows);
   };
 
+  /* The app's own opening screen, not a copy of it: Intake posts to /api/run itself, so a search
+     started here is the same search started at /. It keeps the app's clothes — .field and all —
+     because it is the app's screen, and this page is only where it was opened from. */
+  if (intake && ws) {
+    return (
+      <div className="field">
+        <Intake
+          initial={ws.product}
+          founder={ws.founder}
+          sample={ws.modes.llm === "sample"}
+          onBack={ws.product ? () => setIntake(false) : undefined}
+          onStarted={() => {
+            setIntake(false);
+            void refresh();
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="gd-app" data-theme={theme} ref={root} style={{ "--gd-panel-frost": `${Math.max(0, Math.min(36, panelFrost))}px` } as CSSProperties}>
       <style>{dashboardStyles}</style>
@@ -788,6 +814,27 @@ export function GlassyDashboard({
             <Search aria-hidden="true" className="gd-ask-search" />
           </button>
           <div className="gd-top-actions">
+            {ws && (
+              <div className="gd-chip-seat">
+                <button type="button" className="gd-chip" aria-expanded={pop === "stack"} onClick={() => setPop(pop === "stack" ? null : "stack")}>
+                  <span className="gd-live" data-live={source?.live ? "yes" : "no"} aria-hidden="true" />
+                  {source?.label}
+                </button>
+                <Pop open={pop === "stack"} onClose={() => setPop(null)}><Connections ws={ws} /></Pop>
+              </div>
+            )}
+            {ws && (
+              <div className="gd-chip-seat">
+                <button type="button" className="gd-chip" aria-expanded={pop === "credits"} onClick={() => setPop(pop === "credits" ? null : "credits")}>
+                  <Coins aria-hidden="true" />
+                  {ws.credits.balance} credits
+                </button>
+                <Pop open={pop === "credits"} onClose={() => setPop(null)} width={320}><CreditsPanel ws={ws} act={act} busy={busy} /></Pop>
+              </div>
+            )}
+            <button type="button" className="gd-primary gd-new" disabled={running} onClick={() => setIntake(true)} title="Describe a product and search again">
+              New search
+            </button>
             <a className="gd-secondary gd-open" href={appHref}>Open the app</a>
             <button type="button" className="gd-icon-button" aria-label={theme === "light" ? "Dark theme" : "Light theme"} onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
               {theme === "light" ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
@@ -851,6 +898,7 @@ export function GlassyDashboard({
           </main>
           <Dock active={active} select={selectView} />
         </div>
+        {toast && <p className="gd-toast" role="status">{toast}</p>}
         <footer className="gd-footer">
           <span>Every figure on this page is read from the workspace.</span>
           {backgroundCredit && (

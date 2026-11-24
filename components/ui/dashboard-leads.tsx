@@ -5,15 +5,17 @@
    at / cannot disagree. Nothing on this page acts: every button is a way into the app, which is
    where a draft is read, approved or rejected. A dashboard that could send mail would be a second
    place to get that wrong. */
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type CSSProperties } from "react";
 import { ArrowRight, Sparkles, Zap } from "lucide-react";
 import { initials } from "@/components/ui";
 import { ranked, wayInParts, type LeadView } from "@/components/leads";
 import type { Workspace } from "@/lib/types";
 
+/* The score carries its own colour: red at the bottom of the scale through to green at the top.
+   It is the one place on this grey page where hue says something, so it is worth the exception. */
 function Score({ total, tier }: { total: number; tier: string }) {
   return (
-    <span className="gd-score" data-tier={tier} title={`Scored ${total} out of 100 — tier ${tier}`}>
+    <span className="gd-score" data-tier={tier} style={{ "--gd-score-h": Math.round((Math.max(0, Math.min(100, total)) / 100) * 132) } as CSSProperties} title={`Scored ${total} out of 100 — tier ${tier}`}>
       <strong>{total}</strong>
       <small>/100</small>
     </span>

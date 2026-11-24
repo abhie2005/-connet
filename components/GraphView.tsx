@@ -159,6 +159,7 @@ export function GraphView({
   best,
   onPick,
   palette = VIOLET,
+  maxFit = 1.5,
 }: {
   nodes: GNode[];
   edges: GEdge[];
@@ -179,6 +180,8 @@ export function GraphView({
   onPick: (nodeId: string) => void;
   /** What to draw it in. The app keeps the violet; the dashboard passes its greys. */
   palette?: GraphPalette;
+  /** How far the automatic fit may zoom in. Higher fills a wide panel rather than islanding in it. */
+  maxFit?: number;
 }) {
   const spotNow = spot ?? null;
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -186,7 +189,10 @@ export function GraphView({
   const sim = useRef<Simulation<N, L> | null>(null);
   const data = useRef<{ nodes: N[]; links: L[]; byId: Map<string, N> }>({ nodes: [], links: [], byId: new Map() });
   const view = useRef({ k: 1, x: 0, y: 0, w: 0, h: 0 });
-  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best, net, reach, turned: 0, shownNet: net, spot: spotNow as Spot | null, ring: null as 0 | 1 | 2 | null, palette });
+  /* What the pointer has done to the view: a zoom factor on top of the fit, and a shift in screen
+     pixels. Folding it into the fit below means `at` and the ring hit-test keep working unchanged. */
+  const nudge = useRef({ k: 1, dx: 0, dy: 0, dragging: false, moved: false, sx: 0, sy: 0 });
+  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best, net, reach, turned: 0, shownNet: net, spot: spotNow as Spot | null, ring: null as 0 | 1 | 2 | null, palette, maxFit });
   const [tip, setTip] = useState<{ x: number; y: number; title: string; sub: string } | null>(null);
 
   // The page gets a fresh copy of the graph on every poll. Only a real change (a new node or
@@ -205,6 +211,7 @@ export function GraphView({
     live.current.reach = reach;
     live.current.leads = new Map(leads.map((l) => [l.id, l]));
     live.current.palette = palette;
+    live.current.maxFit = maxFit;
     latest.current = { nodes, edges };
   });
 
@@ -381,11 +388,16 @@ export function GraphView({
         x0 = y0 = -span;
         x1 = y1 = span;
       }
-      const k = Math.min(1.5, Math.min(v.w / (x1 - x0), v.h / (y1 - y0)));
+      const fit = Math.min(live.current.maxFit, Math.min(v.w / (x1 - x0), v.h / (y1 - y0)));
       const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
-      v.k += (k - v.k) * 0.08;
-      v.x += (cx - v.x) * 0.08;
-      v.y += (cy - v.y) * 0.08;
+      // The pointer's zoom multiplies the fit; its drag shifts the centre by that many screen pixels.
+      const nz = nudge.current;
+      const k = fit * nz.k;
+      // A drag must answer the hand at once; everything else eases, so the picture never jumps.
+      const ease = nz.dragging ? 1 : 0.08;
+      v.k += (k - v.k) * ease;
+      v.x += (cx - nz.dx / k - v.x) * ease;
+      v.y += (cy - nz.dy / k - v.y) * ease;
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, v.w, v.h);
@@ -915,7 +927,44 @@ export function GraphView({
     return RINGS.find((r) => onRing.has(r.at) && Math.abs(far - r.at) < 13 / v.k) || null;
   };
 
+  /** Take hold of the picture. */
+  const grab = (e: React.MouseEvent) => {
+    const nz = nudge.current;
+    nz.dragging = true;
+    nz.moved = false;
+    nz.sx = e.clientX;
+    nz.sy = e.clientY;
+  };
+
+  const release = () => {
+    nudge.current.dragging = false;
+  };
+
+  /** Come closer, keeping whatever is under the pointer under the pointer. */
+  const wheel = (e: React.WheelEvent) => {
+    const nz = nudge.current;
+    const box = canvas.current!.getBoundingClientRect();
+    const f = Math.min(1.12, Math.max(0.89, Math.exp(-e.deltaY / 420)));
+    const next = Math.min(4, Math.max(0.45, nz.k * f));
+    const did = next / nz.k;
+    nz.dx = e.clientX - box.left - box.width / 2 - (e.clientX - box.left - box.width / 2 - nz.dx) * did;
+    nz.dy = e.clientY - box.top - box.height / 2 - (e.clientY - box.top - box.height / 2 - nz.dy) * did;
+    nz.k = next;
+  };
+
   const move = (e: React.MouseEvent) => {
+    const nz = nudge.current;
+    if (nz.dragging) {
+      // Past a few pixels this is a drag, not a click, and the node under it must not open.
+      if (Math.abs(e.clientX - nz.sx) + Math.abs(e.clientY - nz.sy) > 3) nz.moved = true;
+      nz.dx += e.clientX - nz.sx;
+      nz.dy += e.clientY - nz.sy;
+      nz.sx = e.clientX;
+      nz.sy = e.clientY;
+      canvas.current!.style.cursor = "grabbing";
+      setTip(null);
+      return;
+    }
     const n = at(e);
     live.current.hover = n?.id || null;
     const ring = n ? null : ringAtPointer(e);
@@ -923,11 +972,11 @@ export function GraphView({
     if (ring) {
       const box = wrap.current!.getBoundingClientRect();
       const count = data.current.nodes.filter((x) => x.node.label === "Person" && !x.node.props.isFounder && x.ring === ring.ring).length;
-      canvas.current!.style.cursor = "default";
+      canvas.current!.style.cursor = "grab";
       return setTip({ x: Math.min(e.clientX - box.left + 14, box.width - 250), y: e.clientY - box.top + 14, title: ring.title, sub: `${count} ${count === 1 ? "person" : "people"} ${ring.says}` });
     }
     const opens = n && n.node.label !== "Product" && n.node.label !== "School" && n.node.label !== "JobPost" && !n.node.props.isFounder && !(n.node.label === "Company" && !live.current.leads.has(n.id));
-    canvas.current!.style.cursor = opens ? "pointer" : "default";
+    canvas.current!.style.cursor = opens ? "pointer" : "grab";
     if (!n) return setTip(null);
     const box = wrap.current!.getBoundingClientRect();
     const lead = live.current.leads.get(n.id);
@@ -967,12 +1016,22 @@ export function GraphView({
       <canvas
         ref={canvas}
         onMouseMove={move}
+        onMouseDown={grab}
+        onMouseUp={release}
+        onWheel={wheel}
+        onDoubleClick={() => {
+          nudge.current.k = 1;
+          nudge.current.dx = 0;
+          nudge.current.dy = 0;
+        }}
         onMouseLeave={() => {
+          release();
           live.current.ring = null;
           live.current.hover = null;
           setTip(null);
         }}
         onClick={(e) => {
+          if (nudge.current.moved) return;
           const n = at(e);
           if (n) onPick(n.id);
         }}

@@ -43,6 +43,7 @@ export const dashboardStyles = `
   font-weight: 550;
   font-variant-numeric: tabular-nums;
 }
+.gd-app[data-theme="dark"] .gd-score strong { color: hsl(var(--gd-score-h, 0) 68% 66%); }
 .gd-app[data-theme="dark"] {
   --gd-ink: #f4f4f5;
   --gd-muted: #b4b4bd;
@@ -101,7 +102,7 @@ export const dashboardStyles = `
   backdrop-filter: blur(15px) saturate(1.15);
   -webkit-backdrop-filter: blur(15px) saturate(1.15);
 }
-.gd-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 400px) minmax(0, 1fr); align-items: center; gap: 12px; min-block-size: 60px; border-radius: 999px; padding: 6px 9px 6px 13px; }
+.gd-top { position: relative; z-index: 30; display: grid; grid-template-columns: auto minmax(150px, 1fr) auto; align-items: center; gap: 12px; min-block-size: 60px; border-radius: 999px; padding: 6px 9px 6px 13px; }
 .gd-brand { display: flex; align-items: center; gap: 10px; min-inline-size: 0; padding-inline-start: 3px; }
 .gd-logo { inline-size: 35px; block-size: 35px; display: grid; place-items: center; border-radius: 50%; background: var(--gd-primary); color: var(--gd-primary-ink); box-shadow: inset 0 0 0 1px var(--gd-gloss), 0 2px 7px rgb(var(--gd-dark-shadow) / 12%); }
 .gd-logo svg { width: 21px; height: 21px; }
@@ -114,6 +115,8 @@ export const dashboardStyles = `
 @keyframes gd-prompt-in { from { clip-path: inset(0 100% 0 0); } }
 .gd-ask-search { margin-inline-start: auto; width: 15px; height: 15px; color: var(--gd-muted); }
 .gd-top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
+.gd-top-actions > * { flex: none; }
+.gd-chip, .gd-new { white-space: nowrap; }
 .gd-open { min-block-size: 38px; padding: 0 14px; white-space: nowrap; }
 .gd-icon-button { position: relative; min-inline-size: 44px; min-block-size: 44px; display: inline-grid; place-items: center; border-radius: 999px; border: 1px solid var(--gd-line); padding: 0; background: var(--gd-inner); }
 .gd-icon-button svg { width: 17px; height: 17px; stroke-width: 1.75; }
@@ -352,6 +355,7 @@ export const dashboardStyles = `
 .gd-key svg { flex: none; }
 
 .gd-canvas { position: relative; min-block-size: 0; block-size: clamp(300px, 46vh, 460px); border-radius: 16px; border: 1px solid var(--gd-rim); background: var(--gd-inner); overflow: hidden; }
+.gd-particles { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; pointer-events: none; }
 .gd-graph-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; color: var(--gd-muted); font-size: 11.5px; font-weight: 650; }
 
 .gd-net-block { display: grid; gap: 14px; margin-block-end: 14px; }
@@ -365,9 +369,9 @@ export const dashboardStyles = `
 .gd-who strong { font-size: 17px; font-weight: 820; letter-spacing: -.02em; }
 .gd-who small { color: var(--gd-muted); font-size: 11.5px; font-weight: 650; }
 .gd-score { display: inline-flex; align-items: baseline; gap: 1px; flex: none; }
-.gd-score strong { font-size: 22px; font-weight: 840; letter-spacing: -.03em; }
+.gd-score strong { font-size: 22px; font-weight: 840; letter-spacing: -.03em; color: hsl(var(--gd-score-h, 0) 64% 32%); }
 .gd-score small { color: var(--gd-muted); font-size: 11px; font-weight: 700; }
-.gd-score[data-tier="C"] strong { color: var(--gd-muted); }
+
 .gd-reason { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-block-start: 7px; font-size: 12.5px; font-weight: 620; line-height: 1.45; }
 .gd-reason-k { display: inline-flex; align-items: center; gap: 6px; inline-size: 74px; flex: none; color: var(--gd-muted); font-weight: 760; }
 .gd-reason-k svg { inline-size: 14px; block-size: 14px; }
@@ -383,6 +387,20 @@ export const dashboardStyles = `
 .gd-rest-do { min-block-size: 32px; padding: 5px 12px; }
 /* The row the graph was clicked on, named down here. */
 .gd-leads .is-picked { background: var(--gd-raised); box-shadow: 0 0 0 2px var(--gd-focus); }
+
+
+/* The header's chips, and what they open. The panels inside come from the app, so they bring
+   their own clothes with them; this is the frame around them. */
+.gd-chip-seat { position: relative; }
+.gd-chip { display: inline-flex; align-items: center; gap: 7px; min-block-size: 40px; padding: 7px 13px; border-radius: 999px; border: 1px solid var(--gd-rim); background: var(--gd-raised); color: var(--gd-ink); font: inherit; font-size: 11.5px; font-weight: 780; cursor: pointer; }
+.gd-chip:hover { background: var(--gd-surface); }
+.gd-chip svg { inline-size: 14px; block-size: 14px; }
+.gd-live { inline-size: 8px; block-size: 8px; border-radius: 999px; background: #807BA6; }
+.gd-live[data-live="yes"] { background: #17914F; }
+.gd-pop-catch { position: fixed; inset: 0; z-index: 30; }
+.gd-pop { position: absolute; inset-inline-end: 0; inset-block-start: calc(100% + 10px); z-index: 40; max-inline-size: calc(100vw - 32px); padding: 15px; border-radius: 18px; border: 1px solid var(--gd-rim); background: var(--gd-raised); color: #1b1b1f; backdrop-filter: blur(var(--gd-panel-frost)); box-shadow: 0 16px 40px rgb(var(--gd-dark-shadow) / 22%); }
+.gd-new:disabled { opacity: .5; cursor: not-allowed; }
+.gd-toast { position: fixed; inset-block-end: calc(84px + env(safe-area-inset-bottom)); inset-inline: 0; z-index: 60; inline-size: fit-content; max-inline-size: calc(100% - 32px); margin-inline: auto; padding: 10px 16px; border-radius: 999px; background: var(--gd-primary); color: var(--gd-primary-ink); font-size: 12px; font-weight: 740; box-shadow: 0 10px 30px rgb(var(--gd-dark-shadow) / 26%); }
 
 @media (max-width: 1060px) {
   .gd-surround { inline-size: calc(100% - 74px); }

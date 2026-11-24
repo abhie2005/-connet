@@ -13,6 +13,7 @@ import { useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { GraphView, type Spot } from "@/components/GraphView";
 import { graphMarks } from "@/components/graph-marks";
+import { DashboardParticles } from "./dashboard-particles";
 import { bestNext } from "@/components/leads";
 import { reach as reachOf, ringOf, type Net } from "@/lib/graph/nets";
 import { SLATE, SLATE_DARK } from "@/components/graph-palette";
@@ -73,7 +74,7 @@ export function DashboardGraph({ ws, appHref, theme, picked, onPick }: { ws: Wor
       <header className="gd-panel-head gd-graph-head">
         <div>
           <h2>The net</h2>
-          <p className="gd-graph-note">Every company, person and reason to write the agents found, and how they connect.</p>
+          <p className="gd-graph-note">Every company, person and reason to write the agents found, and how they connect. Drag to move it, scroll to come closer, double-click to put it back.</p>
         </div>
         <Nets net={net} onChange={setNet} product={ws.product?.name || "The product"} canYou={canYou} within={within} />
       </header>
@@ -104,6 +105,7 @@ export function DashboardGraph({ ws, appHref, theme, picked, onPick }: { ws: Wor
       </div>
 
       <div className="gd-canvas">
+        <DashboardParticles theme={theme} />
         <GraphView
           nodes={ws.graph.nodes}
           edges={ws.graph.edges}
@@ -116,6 +118,7 @@ export function DashboardGraph({ ws, appHref, theme, picked, onPick }: { ws: Wor
           waiting={waiting}
           best={best?.lead.id || null}
           palette={C}
+          maxFit={2.1}
           onPick={pick}
         />
       </div>

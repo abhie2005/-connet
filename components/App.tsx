@@ -3,11 +3,11 @@
 // the work that says what to do next.
 import * as Dialog from "@radix-ui/react-dialog";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { APP_NAME, post, useWorkspace } from "@/lib/client";
+import { APP_NAME, useActions, useWorkspace } from "@/lib/client";
 import { reach as reachOf, ringOf, type Net } from "@/lib/graph/nets";
-import { COSTS, type Freedom, type Lead, type Workspace } from "@/lib/types";
+import { type Freedom, type Lead, type Workspace } from "@/lib/types";
 import { ApprovalsTab } from "./ApprovalsTab";
-import { BriefTab, type Act } from "./BriefTab";
+import { BriefTab } from "./BriefTab";
 import { Feed } from "./Feed";
 import { GraphView, type Flow, type Highlight, type Spot } from "./GraphView";
 import { graphMarks } from "./graph-marks";
@@ -15,6 +15,7 @@ import { Intake } from "./Intake";
 import { LeadsTab } from "./LeadsTab";
 import { PipelineTab } from "./PipelineTab";
 import { CompetitorCard, Profile } from "./Profile";
+import { Connections, CreditsPanel, dataLabel } from "./panels";
 import { bestNext, ranked, routeTo, viewOf } from "./leads";
 import { Icon, Logo } from "./ui";
 
@@ -113,94 +114,6 @@ function Popover({ open, onClose, children, width = 320 }: { open: boolean; onCl
   );
 }
 
-const EVENT_NAMES: Record<string, string> = {
-  "discovery.run": "Search",
-  "lead.enriched": "Emails found",
-  "outreach.drafted": "Message drafted",
-  "outreach.sent": "Message sent",
-  "graph.query": "Graph query",
-  "credits.topup": "Top-up",
-};
-
-function CreditsPanel({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set<string> }) {
-  const c = ws.credits;
-  const shown = c.balance;
-  const usage = new Map<string, number>();
-  for (const e of c.ledger) if (e.event !== "credits.topup") usage.set(e.event, (usage.get(e.event) || 0) + 1);
-  return (
-    <div>
-      <div className="flex items-end gap-2">
-        <div className="text-[30px] font-extrabold leading-none">{shown}</div>
-        <div className="text-soft pb-0.5">credits left</div>
-      </div>
-      <div className="text-faint text-[13px] mt-1">
-        A search costs {COSTS["discovery.run"]}, finding emails at a company {COSTS["lead.enriched"]}, a draft {COSTS["outreach.drafted"]}. Paid steps stop when this reaches zero.
-      </div>
-      <div className="mt-3 grid gap-1 text-[14px]">
-        {[...usage.entries()].map(([event, n]) => (
-          <div key={event} className="flex justify-between">
-            <span>{EVENT_NAMES[event] || event}</span>
-            <span className="font-semibold">{n} metered</span>
-          </div>
-        ))}
-        {usage.size === 0 && <div className="text-faint">Nothing metered yet.</div>}
-      </div>
-      <div className="rounded-xl bg-raise p-2.5 mt-3 text-[13px] leading-snug">
-        {c.flexprice.configured ? (
-          <>
-            <span className="font-bold">Flexprice: </span>
-            {c.flexprice.accepted} usage events accepted{c.flexprice.failed ? `, ${c.flexprice.failed} failed` : ""}.{" "}
-            {c.flexprice.wallet == null
-              ? "No wallet found for this customer, so the gate uses this app's own count."
-              : c.flexprice.wallet > c.balance
-                ? `The Flexprice wallet reads ${c.flexprice.wallet}: it is not being drawn down by these events yet, so the gate uses this app's own count.`
-                : "The balance above follows the Flexprice wallet."}
-            {c.flexprice.lastError && <div className="text-bad mt-1">{c.flexprice.lastError}</div>}
-          </>
-        ) : (
-          <>
-            <span className="font-bold">Local ledger. </span>Add FLEXPRICE_API_KEY to meter usage in Flexprice.
-          </>
-        )}
-      </div>
-      <button className="btn w-full mt-3" disabled={busy.has("topup")} onClick={() => act({ type: "topup", credits: 20 }, "topup")}>
-        <Icon name="plus" />
-        Top up 20 credits
-      </button>
-    </div>
-  );
-}
-
-function Connections({ ws }: { ws: Workspace }) {
-  const m = ws.modes;
-  const rows: [string, string, boolean][] = [
-    ["Model", m.llm === "gemini" ? "Gemini" : "Sample answers", m.llm !== "sample"],
-    ["Web search", m.search === "tavily" ? "Tavily" : "Sample pages", m.search !== "sample"],
-    ["Contact data", m.enrich === "hunter" ? "Hunter.io" : "Sample records", m.enrich !== "sample"],
-    ["Knowledge graph", m.graph === "neo4j" ? "Neo4j" : "Embedded graph", m.graph === "neo4j"],
-    ["Usage billing", m.billing === "flexprice" ? "Flexprice" : "Local ledger", m.billing === "flexprice"],
-    ["Agent room", m.band ? "Mirrored to Band" : "In this app only", m.band],
-    ["Sending", "Simulated: nothing leaves this machine", false],
-  ];
-  return (
-    <div className="grid gap-2 text-[14px]">
-      {rows.map(([name, value, live]) => (
-        <div key={name} className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full flex-none" style={{ background: live ? "#17914F" : "#B9B3DE" }} />
-          <span className="font-semibold w-[118px] flex-none">{name}</span>
-          <span className="text-soft">{value}</span>
-        </div>
-      ))}
-      {(ws.run.stats.replayed || 0) > 0 && (
-        <div className="box p-2.5 text-[13px] leading-snug mt-1">
-          <span className="font-bold">Replay. </span>
-          {ws.run.stats.replayed} of this run&rsquo;s lookups were answered from copies saved on this machine earlier, so they cost nothing and needed no network. Run <span className="mono">npm run fresh</span> to fetch everything again.
-        </div>
-      )}
-      <div className="text-faint text-[13px] mt-1">Keys live in .env.local. A missing key switches that one part to sample data.</div>
-    </div>
-  );
-}
 /** The switch between the two nets. The thumb takes the color of whoever the net is about:
     ink for the product, the violet accent for you. Both halves are the same width, so nothing
     resizes when it moves. */
@@ -374,8 +287,6 @@ export function App() {
   const [card, setCard] = useState<{ lead: string; focus: string | null } | null>(null);
   const [rival, setRival] = useState<string | null>(null);
   const [pathFor, setPathFor] = useState<string | null>(null);
-  const [busy, setBusy] = useState<Set<string>>(new Set());
-  const [toast, setToast] = useState<string | null>(null);
   const [intake, setIntake] = useState(false);
   const [pop, setPop] = useState<"credits" | "connections" | null>(null);
   const [graphOpen, setGraphOpen] = useState(true);
@@ -395,25 +306,7 @@ export function App() {
   /** Message id to status as of the last look, to notice a new draft or an approval. */
   const known = useRef<Map<string, string> | null>(null);
 
-  const act: Act = useCallback(
-    async (body, key) => {
-      if (key) setBusy((b) => new Set(b).add(key));
-      const res = await post("/api/action", body);
-      if (key)
-        setBusy((b) => {
-          const next = new Set(b);
-          next.delete(key);
-          return next;
-        });
-      await refresh();
-      if (res.error) {
-        setToast(res.error);
-        return false;
-      }
-      return true;
-    },
-    [refresh],
-  );
+  const { act, busy, toast, setToast } = useActions(refresh);
 
   /** Dots along `path`. With `lasts`, they stop leaving after that long; without, when `stop` is called. */
   const flow = useCallback((path: string[], tone: Flow["tone"], lasts: number | null) => {
@@ -443,12 +336,6 @@ export function App() {
     },
     [ws, act, flow, net],
   );
-
-  useEffect(() => {
-    if (!toast) return;
-    const t = setTimeout(() => setToast(null), 6000);
-    return () => clearTimeout(t);
-  }, [toast]);
 
   // Follow the run: once the first leads exist, show them (unless the user chose a tab).
   // A new search counts as a change even when it finds as many leads as the last one did.
@@ -532,10 +419,7 @@ export function App() {
 
   const running = ws.run.status === "running";
   const drafts = ws.messages.filter((m) => m.status === "draft").length;
-  const sample = ws.modes.llm === "sample" || ws.modes.search === "sample";
-  const st = ws.run.stats;
-  // Live answers saved earlier on this machine and read back: real data, but not fetched just now.
-  const replayed = !sample && (st.replayed || 0) > 0 && (st.replayed || 0) >= (st.llmCalls + st.searches) / 2;
+  const source = dataLabel(ws);
   const credits = ws.credits.balance;
   const best = running ? null : bestNext(ws);
   const canYou = ws.graph.nodes.some((n) => n.props.isFounder);
@@ -606,8 +490,8 @@ export function App() {
         <span className="flex-1" />
         <div className="relative">
           <button className="frost chip !py-1.5 !px-3 !text-[13.5px] border-0" onClick={() => setPop(pop === "connections" ? null : "connections")}>
-            <span className="w-2 h-2 rounded-full" style={{ background: sample ? "#807BA6" : "#17914F" }} />
-            {sample ? "Sample data" : replayed ? "Live data, replayed" : "Live data"}
+            <span className="w-2 h-2 rounded-full" style={{ background: source.live ? "#17914F" : "#807BA6" }} />
+            {source.label}
           </button>
           <Popover open={pop === "connections"} onClose={() => setPop(null)} width={340}>
             <Connections ws={ws} />
