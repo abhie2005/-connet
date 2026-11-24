@@ -10,7 +10,7 @@ import type { Competitor, Contact, Evidence, Lead, Signal, SignalKind, Source } 
 import { checkEvidence, mentions } from "../verify";
 import type { AccountOut, AccountsIn, AccountsOut, CompetitorsIn, CompetitorsOut, PeopleIn, PeopleOut } from "./shapes";
 
-const EXTRACT_SYSTEM = `You extract facts from web pages for a sales team. You may only state what the pages say. Every fact needs a quote copied exactly, character for character, from the numbered page it came from: do not fix typos, do not shorten words, do not join distant sentences. If you cannot quote it, leave it out. Never use outside knowledge. You return only JSON.`;
+export const EXTRACT_SYSTEM = `You extract facts from web pages for a sales team. You may only state what the pages say. Every fact needs a quote copied exactly, character for character, from the numbered page it came from: do not fix typos, do not shorten words, do not join distant sentences. If you cannot quote it, leave it out. Never use outside knowledge. You return only JSON.`;
 
 const SIGNAL_KINDS: SignalKind[] = ["hiring", "funding", "launch", "leadership", "tech", "expansion", "other"];
 const NOT_COMPANY_SITES = /(linkedin|crunchbase|wikipedia|facebook|twitter|x\.com|youtube|indeed|glassdoor|medium|substack|reddit|news|times|post|journal|techcrunch|forbes|bloomberg|prnewswire|businesswire|yahoo|google)\./i;
@@ -19,7 +19,7 @@ export function numbered(shown: Source[]): string {
   return shown.map((s, i) => `[${i + 1}] ${s.title}\nURL: ${s.url}\n${s.text}`).join("\n\n");
 }
 
-async function look(s: Store, query: string, hint: SearchHint, max = 5, failed?: (why: string) => void): Promise<Source[]> {
+export async function look(s: Store, query: string, hint: SearchHint, max = 5, failed?: (why: string) => void): Promise<Source[]> {
   s.state.run.stats.searches += 1;
   let pages: FoundPage[] = [];
   try {
@@ -31,15 +31,15 @@ async function look(s: Store, query: string, hint: SearchHint, max = 5, failed?:
   return pages.filter((p) => p.text.trim().length > 40).map((p) => s.addSource(p));
 }
 
-interface Tally {
+export interface Tally {
   proposed: number;
   verified: number;
   dropped: string[];
 }
 
-const tally = (): Tally => ({ proposed: 0, verified: 0, dropped: [] });
+export const tally = (): Tally => ({ proposed: 0, verified: 0, dropped: [] });
 
-function keep(t: Tally, ev: Evidence | null, what: string): ev is Evidence {
+export function keep(t: Tally, ev: Evidence | null, what: string): ev is Evidence {
   t.proposed += 1;
   if (ev && ev.verified) {
     t.verified += 1;
@@ -49,7 +49,7 @@ function keep(t: Tally, ev: Evidence | null, what: string): ev is Evidence {
   return false;
 }
 
-function addTally(s: Store, t: Tally) {
+export function addTally(s: Store, t: Tally) {
   const stats = s.state.run.stats;
   stats.claimsProposed += t.proposed;
   stats.claimsVerified += t.verified;
@@ -75,7 +75,7 @@ function findDomain(proposed: string | null | undefined, name: string, shown: So
   return null;
 }
 
-function newLead(name: string, segment: string): Lead {
+export function newLead(name: string, segment: string): Lead {
   return {
     id: companyId(name),
     company: canonicalName(name),
@@ -87,6 +87,7 @@ function newLead(name: string, segment: string): Lead {
     summary: "",
     evidence: [],
     signals: [],
+    jobPosts: [],
     contacts: [],
     usesCompetitor: null,
     negative: null,
