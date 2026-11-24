@@ -39,18 +39,15 @@ Keep these four working above everything else. They are the pitch.
 3. **Warm paths from the graph.** Shared school or employer with the founder; referral paths after a reply. Shown as a bright dashed line on the graph. This is the showpiece.
 4. **A second agent reviews every draft.** Unsupported claims are sent back once, then handed to the rep.
 
-## The look: blue into purple (his request, Nov 24, 03:02)
+## The look: rich, deep blue into purple (his request, Nov 24, 03:17)
 
-The fourth look in two days, each at his request: Glyph's sky blue and pink, then black and grey ("cool tech vibe", Nov 23), then peach all over (Nov 24, 02:56: "no like the whole thing make it peachy color"; built, never pushed), then, six minutes later, "try purple and like a matching blue kind of vibe. Make sure it's appealing to the eyes". That last one is what is built. Tokens are in `app/globals.css`. Where older notes below say black, grey, peach, ice blue or yellow, this section wins.
+The fifth look in two days, each at his request: Glyph's sky blue and pink; black and grey ("cool tech vibe", Nov 23); peach all over (Nov 24, 02:56, built, never pushed); a light blue into purple (03:02, commit `cfc2624`); then "try a slightly darker purple, we might undo that" (03:11) and, before that was built, "with the darker purple and like maybe some sort of blue that matches, give it a very rich vibe" (03:17). That last one is what is built, **in a commit of its own on top of the features, so `git revert` of that one commit brings the light look back.** Tokens are in `app/globals.css`. Where older notes below say black, grey, peach, ice blue or yellow, this section wins.
 
-- **One soft field behind the whole window:** sky blue `#84B4FA` on the left running into violet `#B08DF3` on the right (`.field::before`), with a white light behind the graph. In "Your net" a second still layer fades in and the field is purple all over (`#A79BF7` to `#C583EA`, `.field::after`), the way Glyph's field changes with its mode. Only opacity moves.
-- **White sheets float on it** (`#FDFCFF`, soft indigo shadow); boxes inside a sheet are lilac `#F3F1FD`, hairlines `#E4E0F7`. Corners 6 to 14 px.
-- **Deep indigo ink `#1B1640` is the hierarchy:** the main action, the selected tab, the "Best first" flag, Tier A rings. Softer text `#4D4873`, faint `#807BA6`.
-- **Violet `#6541E0` only for what is live:** the running lamp, reasons to write, the way in, links, focus, the "Your net" thumb and the founder's disc (`#5A34D6` on the canvas).
-- **Amber `#B06F00` only for what an agent stopped** or what needs the rep: dropped quotes, guessed addresses, a draft waiting for approval (the dot on "Review draft").
-- Green, amber and red color the match score. Red also strikes out what to delete in a draft and green marks what was added. Otherwise green and red are small ticks and error text.
-- Agents are told apart by a small mark each (ring, square, eye, triangle), not by a color each.
-- **The graph is drawn straight on the field** with a faint dot grid (palette at the top of `components/GraphView.tsx`). The product is a white disc with light round it; companies are white discs with an ink ring, darker for a better tier; people are dark dots with a white outline; reasons to write are violet diamonds; names sit on white pills. White is what moves or waits: the way in (a dashed white line), a draft on its way (white dots), a draft waiting for you (a dashed white ring). Dots for an approved message are ink.
+- **One deep field behind the whole window:** royal blue `#2440B8` on the left into violet `#6A27BD` on the right (`.field::before`), a soft light behind the graph, darker in the bottom right corner for depth. In "Your net" a second still layer fades in and the field is purple all over (`#4D2BBD` to `#8A229F`, `.field::after`), the way Glyph's field changes with its mode. Only opacity moves.
+- **White sheets float on it** (`#FDFCFF`, deep shadow); boxes inside a sheet are lilac `#F3F1FD`, hairlines `#E4E0F7`. Corners 6 to 14 px. On a sheet nothing changed from the light look: deep indigo ink `#1B1640` is the hierarchy (the main action, the selected section, Tier A), violet `#6541E0` is what is live, amber `#B06F00` is what an agent stopped or what waits for the rep, and the match score is green, amber or red.
+- **Controls that sit on the field are dark glass with white text** (`.frost`: the menu button, Sample data, credits, the net switch, the Agents bar). `.frost` turns the color tokens over for whatever is inside it (`--color-ink` is white there), so the same components work on a sheet and on the field. Text straight on the field uses `text-on-field`. The logo on the field is the white tile (`<Logo light />`).
+- **The graph is drawn in light** (palette at the top of `components/GraphView.tsx`): pale lilac lines for ties and rings; the product a white disc with light round it; companies light discs, brighter for a better tier, Tier A with a thin ring of light; **people sky blue `#8FCBFF`**, and so are you; reasons to write orchid diamonds `#D9BEFF`; names on white pills in ink; the "Best first" flag sky blue. White is what moves or waits: the way in (a dashed white line), a draft on its way (white dots), a draft waiting for you (a dashed white ring). Dots for an approved message are mint `#8AF0B8`.
+- Red also strikes out what is not backed in a draft and green marks what was added. Agents are told apart by a small mark each (ring, square, eye, triangle), not by a color each.
 - Archivo for everything; JetBrains Mono for Cypher and the few instrument-style readouts (`.mono`, `.num`).
 
 ## The screen: easy first (his request, Nov 24, 00:50 to 00:59)
@@ -96,7 +93,21 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 - Don't show how long the model took (he had "answered in N s" removed from Glyph's cards).
 - He found strong pink too much in Glyph. If a color comes back, keep it soft.
 
-## Status (Nov 24, 03:20)
+## The menu, the setting, and one claim at a time (his request, Nov 24, 03:11)
+
+- **"Have this as a hamburger menu adding the target, leads, approve, pipeline as well, and make it pop out from the left to the right."** The row of tabs is gone. A menu button at the top left (and the section name beside the app name) opens a sheet that slides in from the left: the four sections with a line each and their counts, and Settings at the bottom (`Menu` in `components/App.tsx`, `.menu*` in the stylesheet, Radix Dialog). An amber dot on the button says a draft is waiting while you are somewhere else. If he misses the tabs, the old `Tabs` component is in commit `cfc2624`.
+- **"Settings to adjust how much is made up in the email by the AI."** One setting, three steps, "How much may the AI add on its own?" (`Settings.freedom` in `lib/types.ts`, read in `draftMessage`):
+  - **Nothing** (`strict`): the writer is told to restate facts only; whatever is still unbacked after the one rewrite is cut out by plain code (`takeOut`) before the rep sees the draft, and listed under "Taken out before you saw it".
+  - **A little** (`balanced`, the default, how it was): facts only on purpose; what slips through is marked for the rep.
+  - **More** (`open`): the writer may add at most two sentences of its own pitch, worded as its view and declared with no fact; they do not send the draft back, and reach the rep marked.
+  - At every setting a number that is in no fact is flagged and sends the draft back, and nothing is sent without approval. The setting applies to drafts written from then on and outlives a new search. On sample data "More" adds one fixed sentence so the setting can be seen without keys; "Nothing" and "A little" give the same sample drafts (the sample rewrite is always clean).
+- **"Make it so that you can delete claims separately, what if someone wants to keep something."** Each unbacked claim on the Approve card is a small box with its own **Keep** and **Delete** (`decideClaim` in `lib/pipeline.ts`, action `claim`). Delete takes that one sentence out. Keep leaves it in and unmarks it: it is listed under "Kept by you" (with Undo), never as backed (`Claim.kept`), and the audit trail records it. "Delete all" appears when two or more are marked.
+
+## Status (Nov 24, 03:45)
+
+**Checked on sample data only** (1512 wide), in the deep look: every section through the menu, the setting at each step, Keep then Delete on a draft doctored to have three unbacked claims, both nets, a Draft click with its dots, the open Agents bar, the profile card. No console errors. 55 checks pass (4 new: one claim at a time, "More", "Nothing", taking one claim out of a text); lint and build are clean. He has seen none of it yet. **"Nothing" and "More" have never been run against the live model.** After pulling he must run `npm run clean` before `npm run dev`, or the old stylesheet stays.
+
+### Earlier status (Nov 24, 03:20)
 
 **The blue-into-purple look is checked on sample data only** (1512 wide): every tab, both nets, the profile card, a Draft click with its dots, the first screen. No console errors. He has not seen it yet. 51 checks pass; lint and build are clean. After pulling he must run `npm run clean` before `npm run dev`, or the old stylesheet stays.
 

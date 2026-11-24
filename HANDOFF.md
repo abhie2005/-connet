@@ -7,6 +7,22 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 03:45. Yoon Woo's Claude: a menu, a setting for the AI, keep or delete per claim, and a deep look
+
+**Why.** Yoon Woo, 03:11 and 03:17: a setting for "how much is made up in the email by the AI"; a hamburger menu that slides in from the left with Target, Leads, Approve, Pipeline in it; "delete claims separately, what if someone wants to keep something"; and "the darker purple and some sort of blue that matches, a very rich vibe".
+
+**Done (on `main`), in two commits so the look can be undone on its own.**
+- **Menu.** The tab row is gone. The button at the top left (or the section name beside "Connet") slides a menu in from the left: the four sections and Settings.
+- **Setting: "How much may the AI add on its own?"** Nothing (facts only; what is still unbacked is cut before you see it), A little (the default, as before), More (a sentence or two of its own pitch, marked for you). A number in no source is flagged at every setting. Applies to drafts written from then on.
+- **Each unbacked claim has its own Keep and Delete.** Kept is shown as "Kept by you", never as backed, and is in the audit trail.
+- **The look is deep now:** royal blue into violet behind everything, purple all over in "Your net", white sheets, dark glass controls, the graph in light (people are sky blue). To go back to the light look: `git revert` the commit named "Deep blue-and-purple look".
+- 55 checks pass. Checked in a browser on sample data only. "Nothing" and "More" have not been run on the live model yet.
+- All of it is written up in `CLAUDE.md`.
+
+**Need.**
+- `[open]` Yoon Woo: `git pull`, `npm run clean` (or the old colors stay), `npm run dev`. Then try the setting on live data: set it, click Draft on a lead, look at the draft under Approve.
+- `[open]` Skylar: the video should show this look and the menu. `docs/DEMO.md` now says "Menu, Target" and so on where it said "Target tab", and at 1:48 "Delete on one and Keep on another". The 03:20 note about the light look is superseded.
+
 ## Nov 24, 03:20. Yoon Woo's Claude: the whole app is blue into purple
 
 **Why.** Yoon Woo, 02:56: "no like the whole thing make it peachy color" (peach had been made the accent only). Then at 03:02, before the peach version was pushed: "try purple and like a matching blue kind of vibe. Make sure it's appealing to the eyes".
@@ -19,8 +35,8 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 - The look is written up in `CLAUDE.md` ("The look: blue into purple").
 
 **Need.**
-- `[open]` Yoon Woo: `git pull`, `npm run clean` (or the old colors stay), `npm run dev`.
-- `[open]` Skylar: the video should show this look, not the black or peach one. `docs/DEMO.md` at 1:38 now says "dashed white ring" where it said "yellow ring".
+- `[done]` Yoon Woo: `git pull`, `npm run clean`, `npm run dev` (superseded by the 03:45 entry).
+- `[done]` Skylar: the video should show this look, not the black or peach one (superseded by the 03:45 entry). `docs/DEMO.md` at 1:38 now says "dashed white ring" where it said "yellow ring".
 
 ## Nov 24, 03:00. Yoon Woo's Claude: peach, scores out of 100, and a draft that shows what to delete
 
