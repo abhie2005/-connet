@@ -940,8 +940,11 @@ export function GraphView({
     nudge.current.dragging = false;
   };
 
-  /** Come closer, keeping whatever is under the pointer under the pointer. */
+  /** Come closer, keeping whatever is under the pointer under the pointer. Held key only: a
+      plain wheel is the page scrolling past, and taking that would trap the reader here. */
   const wheel = (e: React.WheelEvent) => {
+    if (!e.ctrlKey && !e.metaKey) return;
+    e.preventDefault();
     const nz = nudge.current;
     const box = canvas.current!.getBoundingClientRect();
     const f = Math.min(1.12, Math.max(0.89, Math.exp(-e.deltaY / 420)));

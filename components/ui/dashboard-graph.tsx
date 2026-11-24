@@ -73,7 +73,7 @@ export function DashboardGraph({ ws, appHref, theme, picked, onPick, net, onNet,
       <header className="gd-panel-head gd-graph-head">
         <div>
           <h2>The net</h2>
-          <p className="gd-graph-note">Every company, person and reason to write the agents found, and how they connect. Drag to move it, scroll to come closer, double-click to put it back.</p>
+          <p className="gd-graph-note">Every company, person and reason to write the agents found, and how they connect. Drag to move it, ⌘ or Ctrl with the wheel to come closer, double-click to put it back.</p>
         </div>
         <Nets net={net} onChange={onNet} product={ws.product?.name || "The product"} canYou={canYou} within={within} />
       </header>

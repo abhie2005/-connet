@@ -79,7 +79,17 @@ function Entry({ m, ws, act, busy }: { m: Meeting; ws: Workspace; act: Act; busy
 
 export function Calendar({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set<string> }) {
   const meetings = (ws.meetings || []).filter((m) => m.status !== "cancelled").sort((a, b) => a.start.localeCompare(b.start));
-  if (meetings.length === 0) return null;
+  // Said rather than left out: a section that vanishes when it is empty is a feature nobody
+  // finds. The agent proposes a meeting when a reply agrees to talk, so this fills from Pipeline.
+  if (meetings.length === 0)
+    return (
+      <div className="mb-7">
+        <SectionTitle>Calendar</SectionTitle>
+        <div className="box p-4 text-[14px] leading-snug text-soft">
+          Nothing booked. When a reply agrees to talk, the agent proposes a time here and it waits for you to book it.
+        </div>
+      </div>
+    );
   // Two weeks, from this week's Monday, moved on if the first meeting is later than that.
   const today = new Date();
   const first = fromStamp(meetings[0].start);
