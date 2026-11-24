@@ -14,6 +14,7 @@ test("shifted text is told from real writing", () => {
   assert.equal(garbled(good), false);
   assert.equal(garbled("DHL, XPO, NFI and UPS"), false, "a few acronyms are not judged");
   assert.equal(garbled("WAREHOUSE AND DISTRIBUTION SERVICES IN SOUTHERN CALIFORNIA"), false, "capitals alone are fine");
+  assert.equal(garbled("FTL LTL DRAYAGE CROSS-DOCK TRANSLOADING"), false, "a list of services in capitals is real");
 });
 
 test("only the unreadable stretches are cut out of a page", () => {
@@ -26,5 +27,5 @@ test("only the unreadable stretches are cut out of a page", () => {
 
 test("a company name made of shifted text is refused; real odd names are not", () => {
   assert.equal(garbledName("7KH 5HJDQ URXS 75 )XO\u0193OOPHQW"), true);
-  for (const real of ["3PL Worldwide", "STG Logistics", "NX Logistics Thailand", "DHL Supply Chain", "JB Hunt Transport", "3M", "7-Eleven", "XPO"]) assert.equal(garbledName(real), false, real);
+  for (const real of ["3PL Worldwide", "3PL Center LLC", "3PL CENTER LLC", "STG Logistics", "NX Logistics Thailand", "DHL Supply Chain", "JB Hunt Transport", "3M", "7-Eleven", "XPO", "A.P. Moller - Maersk", "Nestl\u00e9 Purina", "CEVA 3PL WMS", "BNSF", "24/7 Express Logistics", "H&M", "\uc0bc\uc131 SDS"]) assert.equal(garbledName(real), false, real);
 });

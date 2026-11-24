@@ -27,8 +27,10 @@ export function whenFrom(text: string, now: Date): { start: string; exact: boole
   const at = (offset: number) => new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset);
 
   const named = t.match(/\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\.?\s+(\d{1,2})(?:st|nd|rd|th)?\b/);
-  const slashed = t.match(/\b(\d{1,2})\/(\d{1,2})\b/);
-  const weekday = t.match(/\b(sun|mon|tue|wed|thu|fri|sat)(?:day|sday|nesday|rsday|urday)?s?\b/);
+  // "9/10 of our docks" and "24/7" are not dates: a slashed date counts only after "on" or "for".
+  const slashed = t.match(/\b(?:on|for)\s+(?:the\s+)?(\d{1,2})\/(\d{1,2})\b(?!\/|\s*(?:of|%))/);
+  // Whole names and the usual short forms. Not "sat", "sun" or "thus", which are words of their own.
+  const weekday = t.match(/\b(?:(sun|mon|tues|wednes|thurs|fri|satur)days?|(mon|tues|tue|weds|wed|thurs|thur|thu|fri))\b/);
   if (named || slashed) {
     const month = named ? MONTHS.indexOf(named[1]) : Number(slashed![1]) - 1;
     const date = Number(named ? named[2] : slashed![2]);
@@ -40,7 +42,7 @@ export function whenFrom(text: string, now: Date): { start: string; exact: boole
   if (!day && /\btomorrow\b/.test(t)) day = at(1);
   if (!day && /\btoday\b/.test(t)) day = at(0);
   if (!day && weekday) {
-    const want = DAYS.indexOf(weekday[1]);
+    const want = DAYS.indexOf((weekday[1] || weekday[2]).slice(0, 3));
     const ahead = (want - now.getDay() + 7) % 7 || 7; // the next one, never today
     day = at(ahead);
   }

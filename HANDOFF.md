@@ -7,6 +7,21 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 05:25. Yoon Woo's Claude: a pass for mistakes, and a spotlight from the legend
+
+**Why.** Yoon Woo, 04:44: "check for ANY possible mistakes before I test again and fix ALL of it." 04:53: clicking a name in the legend should brighten that kind and push the rest into the background.
+
+**Done (on `main`).**
+- A pass over everything built tonight, on saved data made to look like his live run, at his window size. Eleven things fixed; the list is in `CLAUDE.md`. The ones that mattered most: a rule that could have deleted a real company with a name like "3PL Center LLC"; deleting a body sentence replacing a short subject; the approval card wider than its panel; names on the graph written over each other; each section opening scrolled down.
+- A claim that is not in the message can be dismissed. An invented figure is found and its sentence marked.
+- **The legend is a row of switches**: press Company, Person, Reason to write, Competitor or Draft waiting for you and that kind lights up and is named; the rest fades back.
+- 74 checks pass. Every button pressed (66 checks).
+
+**Not checked, because it needs the live services:** the settings "Nothing" and "More", the wider search, Find their address on an approval card, Google Calendar opening with the right time.
+
+**Need.**
+- `[open]` Yoon Woo: pull, `npm run clean`, `npm run dev`, and try those four on live data.
+
 ## Nov 24, 05:00. Yoon Woo's Claude: Delete that deletes, and every button pressed
 
 **Why.** Yoon Woo, 04:26 to 04:31, with screenshots from his Mac: Delete on a claim "didn't actually delete", Pipeline cards overlapping, a draft to the garbled company. "Make sure every button works please."

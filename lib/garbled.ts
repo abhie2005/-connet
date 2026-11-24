@@ -13,7 +13,7 @@ export function garbled(text: string, minLetters = 24): boolean {
   const l = letters(text);
   if (l.length < minLetters) return false;
   const vowels = share(l, /[aeiou]/gi);
-  return vowels < 0.2 || (vowels < 0.3 && share(l, /[a-z]/g) < 0.05);
+  return vowels < 0.2 || (vowels < 0.25 && share(l, /[a-z]/g) < 0.05);
 }
 
 /** The text with its unreadable stretches taken out. Readable text comes back unchanged. */
@@ -36,10 +36,13 @@ export function readable(text: string): string {
   return out.join("\n");
 }
 
-/** A last check on a company's name: shifted text that slipped through still gives itself away
-    by a word that starts with a digit or a symbol and has almost no vowels. */
+/** A last check on a company's name: shifted text that slipped through still gives itself away.
+    It has no small letters, hardly a vowel, and at least two words that start with a digit or a
+    symbol or hold a letter no keyboard has. Deliberately hard to trip: a saved company with such
+    a name is deleted, and "3PL Center LLC" or "7-Eleven" must never be. */
 export function garbledName(name: string): boolean {
   const l = letters(name);
-  if (l.length < 6 || share(l, /[aeiouy]/gi) >= 0.25) return false;
-  return name.split(/\s+/).some((w) => /^\d[A-Z]{2,}$/.test(w) || /^[)(<=;:\[\]\\+*$%][A-Z]/.test(w) || /[^\x00-\x7F]/.test(w));
+  if (l.length < 6 || share(l, /[a-z]/g) >= 0.1 || share(l, /[aeiouy]/gi) >= 0.3) return false;
+  const odd = name.split(/\s+/).filter((w) => /^\d[A-Z]{2,}$/.test(w) || /^[)(<=;:\[\]\\+*$%][A-Z]/.test(w) || /[^\x00-\x7F]/.test(w));
+  return odd.length >= 2;
 }

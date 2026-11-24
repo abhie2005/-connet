@@ -258,7 +258,7 @@ export async function draftMessage(s: Store, lead: Lead): Promise<Message> {
     angle: base.angle,
     subject: String(draft.subject || "").trim(),
     // The greeting is the person it goes to, or nobody: never a name borrowed from a fact.
-    body: greet(sec.body.trim(), contact ? contact.name.split(" ")[0] : null),
+    body: greet(sec.body.trim(), contact ? contact.name : null),
     linkedinNote: String(draft.linkedin_note || "").trim().slice(0, 300),
     facts,
     claims: result.claims,

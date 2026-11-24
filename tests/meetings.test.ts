@@ -20,6 +20,16 @@ test("a reply with no exact time gives a suggestion, and says so", () => {
   assert.deepEqual(whenFrom("Happy to chat. We are open 24/7.", new Date(2026, 10, 27, 9, 0)), { start: "2026-11-30T10:00", exact: false }, "the next working day skips the weekend, and 24/7 is not a date");
 });
 
+test("words that only look like a day or a date are not read as one", () => {
+  const plain = { start: "2026-11-25T10:00", exact: false };
+  assert.deepEqual(whenFrom("Thus we sat in the sun and thought about it. Happy to talk.", tue), plain);
+  assert.deepEqual(whenFrom("About 9/10 of our docks are booked by phone. Let's talk.", tue), plain);
+  assert.deepEqual(whenFrom("It took a month. We may talk.", tue), plain);
+  assert.deepEqual(whenFrom("Thurs at 4pm or Weds works", tue), { start: "2026-11-26T16:00", exact: true }, "the first day named");
+  assert.deepEqual(whenFrom("Saturdays are out, but Sunday at 11am is fine", tue).exact, true);
+  assert.deepEqual(whenFrom("Can you do it on 12/3 at 9am?", tue), { start: "2026-12-03T09:00", exact: true });
+});
+
 test("only a reply about talking asks for a meeting", () => {
   assert.equal(wantsMeeting("Can we do a call next week?"), true);
   assert.equal(wantsMeeting("Send me a demo when you can"), true);

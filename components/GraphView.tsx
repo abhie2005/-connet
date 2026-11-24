@@ -35,6 +35,10 @@ interface L extends SimulationLinkDatum<N> {
   edge: GEdge;
 }
 
+/** One kind of thing picked out by pressing its name in the legend: it stays bright and named,
+    and everything else steps back. */
+export type Spot = "company" | "person" | "signal" | "competitor" | "waiting";
+
 export interface Highlight {
   nodes: Set<string>;
   edges: Set<string>; // "a|b" with the two node ids in either order
@@ -151,6 +155,7 @@ export function GraphView({
   net,
   reach,
   highlight,
+  spot,
   flows,
   waiting,
   best,
@@ -164,6 +169,8 @@ export function GraphView({
   /** How far everything is from the founder (lib/graph/nets.ts). */
   reach: Map<string, Reach>;
   highlight: Highlight | null;
+  /** The kind of thing picked out in the legend, if any. */
+  spot?: Spot | null;
   /** Messages in motion right now. */
   flows: Flow[];
   /** People (or companies, when nobody is named) with a draft waiting for the rep's approval. */
@@ -172,12 +179,13 @@ export function GraphView({
   best: string | null;
   onPick: (nodeId: string) => void;
 }) {
+  const spotNow = spot ?? null;
   const canvas = useRef<HTMLCanvasElement>(null);
   const wrap = useRef<HTMLDivElement>(null);
   const sim = useRef<Simulation<N, L> | null>(null);
   const data = useRef<{ nodes: N[]; links: L[]; byId: Map<string, N> }>({ nodes: [], links: [], byId: new Map() });
   const view = useRef({ k: 1, x: 0, y: 0, w: 0, h: 0 });
-  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best, net, reach, turned: 0, shownNet: net });
+  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best, net, reach, turned: 0, shownNet: net, spot: spotNow as Spot | null });
   const [tip, setTip] = useState<{ x: number; y: number; title: string; sub: string } | null>(null);
 
   // The page gets a fresh copy of the graph on every poll. Only a real change (a new node or
@@ -188,6 +196,7 @@ export function GraphView({
   // What the drawing loop reads. Refreshed after every render, before the effects below run.
   useEffect(() => {
     live.current.highlight = highlight;
+    live.current.spot = spotNow;
     live.current.flows = flows;
     live.current.waiting = waiting;
     live.current.best = best;
@@ -382,7 +391,24 @@ export function GraphView({
       ctx.translate(-v.x, -v.y);
 
       const isLit = (a: string, b: string) => !!hl && (hl.edges.has(`${a}|${b}`) || hl.edges.has(`${b}|${a}`));
-      const dim = (id: string) => !!hl && !hl.nodes.has(id);
+      // The legend's spotlight: one kind of thing stays bright, the rest steps back. Whoever the
+      // net is about is never dimmed.
+      const spot = live.current.spot;
+      const inSpot = (n: N | undefined) =>
+        !spot ||
+        !n ||
+        n.node.label === "Product" ||
+        (!!n.node.props.isFounder && you) ||
+        (spot === "company"
+          ? n.node.label === "Company" && live.current.leads.has(n.id)
+          : spot === "person"
+            ? n.node.label === "Person" && !n.node.props.isFounder
+            : spot === "signal"
+              ? n.node.label === "Signal"
+              : spot === "competitor"
+                ? n.node.label === "Competitor"
+                : live.current.waiting.has(n.id));
+      const dim = (id: string) => (!!hl && !hl.nodes.has(id)) || (!!spot && !inSpot(d.byId.get(id)));
       const now = performance.now();
       const moving = new Set<string>();
       for (const f of live.current.flows) for (const id of f.path) moving.add(id);
@@ -476,7 +502,7 @@ export function GraphView({
           ctx.strokeStyle = type === "MATCHED_TO" ? ink(0.32) : ink(0.26);
           ctx.lineWidth = type === "MATCHED_TO" ? 1.4 : 1.1;
         }
-        ctx.globalAlpha = hl && !lit ? 0.3 : far(a) || far(b) ? 0.5 : 1;
+        ctx.globalAlpha = hl && !lit ? 0.3 : spot && !(inSpot(a) && inSpot(b)) ? 0.22 : far(a) || far(b) ? 0.5 : 1;
         ctx.stroke();
         ctx.shadowBlur = 0;
       }
@@ -484,7 +510,7 @@ export function GraphView({
       ctx.lineDashOffset = 0;
 
       // Nodes.
-      const labels: { n: N; text: string; bold: boolean }[] = [];
+      const labels: { n: N; text: string; bold: boolean; rank: number }[] = [];
       for (const n of d.nodes) {
         if (n.x == null || n.y == null) continue;
         const age = Math.max(0, Math.min(1, (performance.now() - n.born) / 420));
@@ -496,6 +522,16 @@ export function GraphView({
         ctx.globalAlpha = (dim(n.id) ? 0.3 : 1) * (off ? 0.55 : 1) * (out ? 0.55 : 1) * Math.min(1, age * 2);
         const { label } = n.node;
         const founder = !!n.node.props.isFounder;
+        if (spot && inSpot(n) && label !== "Product" && !(founder && you)) {
+          // Picked out in the legend: a soft light behind it.
+          const glow = ctx.createRadialGradient(n.x, n.y, r * 0.6, n.x, n.y, r * 2.4 + 6);
+          glow.addColorStop(0, white(0.75));
+          glow.addColorStop(1, white(0));
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r * 2.4 + 6, 0, Math.PI * 2);
+          ctx.fillStyle = glow;
+          ctx.fill();
+        }
         ctx.beginPath();
         if (label === "Signal") {
           ctx.moveTo(n.x, n.y - r * 1.25);
@@ -590,8 +626,17 @@ export function GraphView({
           ctx.stroke();
         }
         // In your net the people within reach are the point, so they are named.
-        const named = label !== "Signal" && (label !== "Person" || founder || (hl && hl.nodes.has(n.id)) || hover === n.id || moving.has(n.id) || (you && n.ring !== 0));
-        if (named && age > 0.5) labels.push({ n, text: founder && you ? "You" : n.node.name, bold: label === "Product" || !!lead || (founder && you) || (you && n.ring === 1) });
+        // With a spotlight on, what is picked out is named (people and reasons to write too) and
+        // the rest is not, so the picture goes quiet around it.
+        const picked = !!spot && inSpot(n);
+        const named = spot ? picked : label !== "Signal" && (label !== "Person" || founder || (hl && hl.nodes.has(n.id)) || hover === n.id || moving.has(n.id) || (you && n.ring !== 0));
+        if (named && age > 0.5) {
+          // Which names win when two would overlap: whoever the net is about, then whatever is
+          // being pointed at, then the best lead, then leads by score, then the rest; competitors last.
+          const wanted = hover === n.id || moving.has(n.id) || !!(hl && hl.nodes.has(n.id));
+          const rank = label === "Product" || (founder && you) ? 0 : wanted ? 1 : live.current.best === n.id ? 2 : lead ? 3 + (100 - lead.score.total) / 100 : label === "Competitor" ? 7 : label === "Person" ? (you && n.ring === 1 ? 4 : 6) : 5;
+          labels.push({ n, text: founder && you ? "You" : n.node.name, bold: label === "Product" || !!lead || (founder && you) || (you && n.ring === 1), rank });
+        }
       }
 
       // Labels, on a dark pill so the lines behind do not run through the letters.
@@ -599,17 +644,44 @@ export function GraphView({
       if (you) for (const l of d.links) if (l.edge.type === "WORKS_AT") job.set((l.source as N).id, l.target as N);
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      for (const { n, text, bold } of labels) {
+      // A name is only written where it does not run over one already written: first where it
+      // belongs, then on the other side of its node. If neither is free it waits for a hover.
+      const taken: { x0: number; y0: number; x1: number; y1: number }[] = [];
+      const free = (b: { x0: number; y0: number; x1: number; y1: number }) => !taken.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+      // The edges of what can be seen, in the graph's own units: a name is kept inside them.
+      const edgeL = v.x - v.w / 2 / v.k + 3 / v.k, edgeR = v.x + v.w / 2 / v.k - 3 / v.k;
+      // The "Best first" flag is drawn later, above its node: keep names out of its way.
+      const flagged = live.current.best ? d.byId.get(live.current.best) : null;
+      if (flagged && flagged.x != null && flagged.y != null) {
+        const fpx = Math.max(9.5, Math.min(15, 10.5 / v.k));
+        const fy = flagged.y - flagged.r - fpx * 1.25;
+        taken.push({ x0: flagged.x - fpx * 3.4, x1: flagged.x + fpx * 3.4, y0: fy - fpx * 0.9, y1: fy + fpx * 1.3 });
+      }
+      labels.sort((a, b) => a.rank - b.rank);
+      for (const { n, text, bold, rank } of labels) {
         const px = Math.max(10.5, Math.min(17, 11.5 / v.k));
-        const short = text.length > 26 ? text.slice(0, 25) + "…" : text;
+        const long = n.node.label === "Signal" ? 34 : 26;
+        const short = text.length > long ? text.slice(0, long - 1) + "…" : text;
         // People are labelled above their dot, everything else below, so the two do not collide.
         // In your net a person's name goes on the side away from their company, whose own name
         // hangs below it.
         const firm = you ? job.get(n.id) : undefined;
         const above = n.node.label === "Person" && !n.node.props.isFounder && !(firm && firm.y != null && firm.y < n.y!);
-        const y = above ? n.y! - n.r - px * 0.95 - 2 : n.y! + n.r + px * 0.95 + 2;
+        const up = n.y! - n.r - px * 0.95 - 2, down = n.y! + n.r + px * 0.95 + 2;
+        ctx.font = `${bold ? 700 : 550} ${px}px ${font}`;
+        const half = (ctx.measureText(short).width + 12) / 2 + 1.5;
+        // Near the edge of the picture a name slides inwards instead of being cut off.
+        const cx = edgeR - edgeL > half * 2 ? Math.min(edgeR - half, Math.max(edgeL + half, n.x!)) : n.x!;
+        const boxAt = (y: number) => ({ x0: cx - half, x1: cx + half, y0: y - px * 0.78 - 1, y1: y + px * 0.78 + 1 });
+        let y = above ? up : down;
+        if (!free(boxAt(y))) {
+          const other = above ? down : up;
+          if (free(boxAt(other))) y = other;
+          else if (rank >= 2) continue; // whoever the net is about, and what is pointed at, are always named
+        }
+        taken.push(boxAt(y));
         ctx.globalAlpha = dim(n.id) ? 0.3 : far(n) ? 0.7 : 1;
-        pill(short, n.x!, y, px, bold ? 700 : 550, bold ? INK : "#3F3A6B", "rgba(255,255,255,.88)");
+        pill(short, cx, y, px, bold ? 700 : 550, bold ? INK : "#3F3A6B", "rgba(255,255,255,.88)");
       }
       ctx.globalAlpha = 1;
 
@@ -636,7 +708,10 @@ export function GraphView({
           }
           written.push({ x: Math.cos(at) * ring.at, y: Math.sin(at) * ring.at });
           ctx.globalAlpha = hl ? 0.4 : 1;
-          pill(ring.means, Math.cos(at) * ring.at, Math.sin(at) * ring.at, px, 600, ring.ring === 1 ? INK : ring.ring === 2 ? "#3F3A6B" : "#6B6794", "rgba(255,255,255,.94)");
+          ctx.font = `600 ${px}px ${font}`;
+          const halfCap = (ctx.measureText(ring.means).width + 12) / 2 + 2;
+          const capX = edgeR - edgeL > halfCap * 2 ? Math.min(edgeR - halfCap, Math.max(edgeL + halfCap, Math.cos(at) * ring.at)) : Math.cos(at) * ring.at;
+          pill(ring.means, capX, Math.sin(at) * ring.at, px, 600, ring.ring === 1 ? INK : ring.ring === 2 ? "#3F3A6B" : "#6B6794", "rgba(255,255,255,.94)");
         }
         ctx.globalAlpha = 1;
       }

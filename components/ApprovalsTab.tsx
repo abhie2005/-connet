@@ -76,7 +76,7 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
   const claim = (index: number, action: "delete" | "keep" | "unkeep") => act({ type: "claim", messageId: m.id, index, action }, `m:${m.id}`);
 
   return (
-    <div className="rounded-2xl border border-line p-5 arrive">
+    <div className="rounded-2xl border border-line p-5 arrive min-w-0">
       <div className="flex items-baseline gap-2 flex-wrap">
         <span className="text-faint text-[13.5px]">To</span>
         <span className="font-bold leading-snug">{m.to.split(",")[0]}</span>
@@ -131,6 +131,11 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
                         <button className="claim-btn" disabled={working} onClick={() => claim(c.index, "keep")} title="Leave this sentence in the message. It will be listed as kept by you, not as backed.">
                           Keep
                         </button>
+                        {!present.includes(c) && (
+                          <button className="claim-btn" disabled={working} onClick={() => claim(c.index, "delete")} title="This is not in the message as it stands, so there is nothing to take out. Clear it from the list.">
+                            Dismiss
+                          </button>
+                        )}
                         {present.includes(c) && (
                           <button className="claim-btn is-del" disabled={working} onClick={() => claim(c.index, "delete")} title={isSubject(c.text) ? `This is the subject line. Deleting it puts a plain subject in its place: "${plain}".` : "Take this sentence out of the message."}>
                             {isSubject(c.text) ? "Use a plain subject" : "Delete"}
@@ -140,13 +145,13 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
                     </li>
                   ))}
                 </ul>
-                {loose.length > 0 && <div className="text-faint mt-1.5 leading-snug">{present.length ? "One of these was" : loose.length === 1 ? "This was" : "These were"} not found word for word, so nothing is marked for it. Use Edit to take it out, or keep it.</div>}
+                {loose.length > 0 && <div className="text-faint mt-1.5 leading-snug">{loose.length === 1 ? "One of these is" : `${loose.length} of these are`} not in the message word for word, so nothing is marked for {loose.length === 1 ? "it" : "them"}. Check with Edit, then keep or dismiss.</div>}
               </div>
             )}
 
             {gone.length > 0 && (
               <div className="mb-3.5">
-                <span className="mark-key text-faint">Deleted by you</span>
+                <span className="mark-key text-faint">Removed by you</span>
                 <ul className="list-none m-0 mt-1.5 p-0 grid gap-1.5 text-faint">
                   {gone.map((c, i) => (
                     <li key={i} className="leading-snug line-clamp-1 line-through">
@@ -233,7 +238,7 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
         </div>
       )}
 
-      <div className="flex items-center gap-2 mt-5">
+      <div className="flex items-center gap-2 mt-5 flex-wrap">
         {editing ? (
           <>
             <button className="btn" onClick={save} disabled={working}>
@@ -290,7 +295,7 @@ export function ApprovalsTab({ ws, act, busy }: { ws: Workspace; act: Act; busy:
     <div>
       <SectionTitle count={drafts.length}>Waiting for you</SectionTitle>
       {drafts.length === 0 && <div className="text-faint text-sm">All caught up.</div>}
-      <div className="grid gap-4">
+      <div className="grid gap-4 grid-cols-[minmax(0,1fr)]">
         {drafts.map((m) => (
           <Draft key={m.id} m={m} ws={ws} act={act} busy={busy} />
         ))}

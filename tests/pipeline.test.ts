@@ -175,8 +175,15 @@ test("a full run on sample data", async (t) => {
     assert.ok(!m.body.includes(keep));
     assert.equal(m.claims[at].removed, true);
     assert.throws(() => p.decideClaim(m.id, "all", "delete"), /Nothing is marked/);
+    // A claim that is not in the message can only be dismissed, and dismissing it changes nothing.
+    m.claims.push({ text: "Their warehouses doubled in size after the merger", fact: null, supported: false, note: "" });
+    const was = { subject: m.subject, body: m.body };
+    p.decideClaim(m.id, m.claims.length - 1, "delete");
+    assert.deepEqual({ subject: m.subject, body: m.body }, was);
+    assert.equal(m.claims[m.claims.length - 1].removed, true);
     assert.throws(() => p.decideClaim(m.id, 0, "delete"), /No such claim/, "a backed claim is not the rep's to delete this way");
     assert.equal(s.state.audit.filter((a) => /unbacked sentence|nothing backs/.test(a.action)).length, 4);
+    assert.equal(s.state.audit.filter((a) => /Dismissed a claim/.test(a.action)).length, 1);
   });
 
   await t.test("the setting: at 'more' the writer adds a sentence of its own and it reaches the rep marked", async () => {

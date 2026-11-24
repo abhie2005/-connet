@@ -108,7 +108,7 @@ export function Calendar({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set
           );
         })}
       </div>
-      <div className="grid gap-2.5 mt-3">
+      <div className="grid gap-2.5 mt-3 grid-cols-[minmax(0,1fr)]">
         {meetings.map((m) => (
           <Entry key={`${m.id}:${m.start}:${m.status}`} m={m} ws={ws} act={act} busy={busy.has(`mt:${m.id}`)} />
         ))}

@@ -78,6 +78,29 @@ test("the plain subject that replaces a deleted one reads like the claim it repl
 
 test("the greeting is the person it goes to, or nobody", () => {
   assert.equal(greet("Hi Mike,\n\nManaging trucks by phone is slow.", null), "Hi there,\n\nManaging trucks by phone is slow.");
-  assert.equal(greet("Hello Mike Smith,\n\nBody", "Shinichiro"), "Hi Shinichiro,\n\nBody");
-  assert.equal(greet("Managing trucks by phone is slow.\n\nYoon", null), "Managing trucks by phone is slow.\n\nYoon", "a message with no greeting is left alone");
+  assert.equal(greet("Hi,\n\nBody", null), "Hi there,\n\nBody");
+  assert.equal(greet("Hello Mike Smith,\n\nBody", "Shinichiro Ikeda"), "Hi Shinichiro,\n\nBody");
+  // What is already right is left exactly as written.
+  assert.equal(greet("Hello Shinichiro,\n\nBody", "Shinichiro Ikeda"), "Hello Shinichiro,\n\nBody");
+  assert.equal(greet("Dear Mr Ikeda,\n\nBody", "Shinichiro Ikeda"), "Dear Mr Ikeda,\n\nBody");
+  assert.equal(greet("Hi there,\n\nBody", null), "Hi there,\n\nBody");
+  // A first line that is more than a greeting keeps the rest of itself.
+  assert.equal(greet("Hi Mike, I saw you are hiring.\n\nBody", null), "Hi there, I saw you are hiring.\n\nBody");
+  assert.equal(greet("Hi Maya\n\nBody", "Maya Okafor"), "Hi Maya\n\nBody");
+  assert.equal(greet("Hey Mike\n\nBody", "Maya Okafor"), "Hi Maya,\n\nBody");
+  assert.equal(greet("Managing trucks by phone is slow.\n\nYoon", null), "Managing trucks by phone is slow.\n\nYoon");
+  assert.equal(greet("Higher volumes are coming.\n\nYoon", null), "Higher volumes are coming.\n\nYoon");
+});
+
+test("a short subject that made no claim is left alone when a sentence is deleted from the body", () => {
+  const next = without("Dock scheduling", "Hi Sam,\n\nParents in your area have asked for this by name.\n\nYoon", ["Parents in your area have asked for this by name"], "Dockline for Acme");
+  assert.equal(next.subject, "Dock scheduling");
+  assert.ok(!next.body.includes("Parents"));
+});
+
+test("a claim about an invented figure is found by the figure", () => {
+  assert.equal(says("We cut detention fees by 40% last year.", "Uses the number 40%"), true);
+  assert.equal(says("Founded in 2015, the team has grown.", "Uses the number 15"), false);
+  assert.equal(says("It raised $12,500 in a day.", "Uses the number $12500"), true);
+  assert.equal(strip("Hi,\n\nWe cut fees by 40% last year. Could I show you?", ["Uses the number 40%"]), "Hi,\n\nCould I show you?");
 });

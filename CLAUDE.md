@@ -154,7 +154,27 @@ Then every button was pressed by script on sample data at his window size, each 
 - **The agents' names in the open Agents bar looked like buttons and only closed the bar.** They are switches now: press one to read only what that agent said; "N stopped" shows only what was stopped.
 - **"New search" had no way back.** The first screen has **Back** when there is already a search.
 
-## Status (Nov 24, 05:00)
+## A look for mistakes before he tests again, and a spotlight from the legend (Nov 24, 04:44 to 04:53)
+
+He asked: "check for ANY possible mistakes before I test again and fix ALL of it". Nobody can promise all. What was done: the new rules were re-read against real-world input, a saved workspace was made to look like his live one (13 companies with long names, companies with nobody found, six competitors with long names, a draft to nobody, a garbled company), every screen was photographed and measured at **1190 x 773**, and every button was pressed by script (66 checks, all pass). Found and fixed:
+
+- **`garbledName` could have deleted a real company on start** ("3PL Center LLC": one digit-led word, few vowels). It now needs no small letters, hardly a vowel, and two odd words. Tested on a list of real odd names. The page rule no longer drops a line of services in capitals.
+- **The greeting fix could cut a first line** that was more than a greeting, and overrode greetings that were right. It now replaces only the greeting itself, and only when it names the wrong person.
+- **The meeting reader took "thus", "sat" and "9/10" for days and dates.** Weekdays are whole names or the usual short forms; a slashed date counts only after "on" or "for".
+- **Deleting a sentence from the body replaced a short subject** with the plain one, though the subject had made no claim (`without`). Only a subject that lost something is replaced.
+- **A claim the reviewer paraphrased is not found in the message, and could only be kept.** It can be **dismissed** now. A claim about an invented figure ("Uses the number 40%") is found by the figure, so its sentence is marked and can be deleted.
+- **The approval card was wider than its panel at his window size** (the two-column grid grew with the "Use a plain subject" button), and its row of buttons ran out of the card. Both wrap now. The tour script measures every screen for this.
+- **A section opened scrolled to wherever the last one was left.** Each opens at its top.
+- **Names on the graph were written over each other, cut off at the edge, and under the "Best first" flag** (13 companies and six competitors). A name is written only where it is free (its usual side, then the other), in order of importance; the rest wait for a hover. Names and ring captions slide inwards at the edge.
+- **A proposed meeting waiting to be booked was not mentioned anywhere but Pipeline.** The line at the top says so ("Open the calendar"), the menu shows the count, and the menu button shows its dot.
+
+**"If you click each of the labels in the legend, it brightens them and makes the rest the background" (04:53).** The names in the legend are switches (`Spot` in `GraphView.tsx`, `Legend` in `App.tsx`): Company, Person, Reason to write, Competitor, Draft waiting for you. Pressed, that kind gets a soft light behind it and is named (people and reasons to write too), everything else fades to the background, and the other legend names dim. Press again, or switch nets, to let go. Whoever the net is about is never dimmed.
+
+## Status (Nov 24, 05:25)
+
+74 checks pass; lint and build are clean. Every button pressed (66 checks) and every screen measured on live-like sample data at 1190 x 773. **Still never run against the live services:** the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google. Those are the places a mistake could still be hiding.
+
+### Earlier status (Nov 24, 05:00)
 
 71 checks pass (3 new in `tests/marks.test.ts`, more in the pipeline run); lint and build are clean. Every button pressed on sample data. On live data he has seen: the light look, logos, Dockline (nine companies), drafts and approvals. Not yet run live: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link.
 

@@ -7,6 +7,17 @@ const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9%$]+/g, " ").split
     the piece, or the piece is nearly all made of the claim's words (a claim can span two
     sentences). Short pieces never match: a greeting shares words with anything. */
 export function says(piece: string, claim: string): boolean {
+  // The plain-code check for invented figures words its finding "Uses the number 40%": the
+  // sentence it means is the one with that figure in it.
+  const figure = claim.match(/^Uses the number (.+)$/);
+  if (figure) {
+    const want = figure[1].replace(/,/g, "").toLowerCase().trim();
+    const at = piece.replace(/,/g, "").toLowerCase().indexOf(want);
+    if (at < 0 || !want) return false;
+    // "15" is not found inside "2015" or "1.15".
+    const flat = piece.replace(/,/g, "").toLowerCase();
+    return !/[\d.]/.test(flat[at - 1] || " ") && !/\d/.test(flat[at + want.length] || " ");
+  }
   const c = words(claim), p = words(piece);
   if (c.length < 3 || p.length < 3) return false;
   const inPiece = new Set(p), inClaim = new Set(c);
@@ -80,7 +91,9 @@ export function located(subject: string, body: string, claim: string): boolean {
     but the claim becomes the plain one given. */
 export function without(subject: string, body: string, claims: string[], plainSubject: string): { subject: string; body: string } {
   const left = strip(subject, claims);
-  return { subject: left.split(/\s+/).filter(Boolean).length >= 3 ? left : plainSubject, body: strip(body, claims) };
+  // Only a subject that lost something is ever replaced: a short subject that made no claim stays.
+  const cut = left !== subject.trim();
+  return { subject: cut && left.split(/\s+/).filter(Boolean).length < 3 ? plainSubject : cut ? left : subject, body: strip(body, claims) };
 }
 
 const stem = (w: string) => w.replace(/(ing|ers|er|ed|es|s)$/, "");
@@ -95,11 +108,15 @@ export function topicOnly(subject: string, ownWords: string): boolean {
   return said.length > 0 && said.every((w) => /^\d/.test(w) ? false : FILLER.has(w) || own.has(stem(w)));
 }
 
-/** The message with its greeting put right: the person it is going to by first name, or "Hi
-    there," when nobody has been found. A writer with no name to use sometimes borrows one. */
-export function greet(body: string, firstName: string | null): string {
-  const line = firstName ? `Hi ${firstName},` : "Hi there,";
-  const m = body.match(/^\s*(hi|hello|hey|dear|good (?:morning|afternoon))\b[^\n]{0,60}\n/i);
+/** The message with its greeting put right. A writer with nobody to address sometimes borrows a
+    name from a fact ("Hi Mike,"); a greeting may only name the person the message is going to.
+    Only the greeting at the very start is touched (the rest of that line stays), and one that
+    already names the right person is left exactly as written. */
+export function greet(body: string, name: string | null): string {
+  const m = body.match(/^[ \t]*(hi|hello|hey|dear)\b[ \t]*([^\n,!.:;?]{0,40})([,!:]|(?=[ \t]*\n))/i);
   if (!m) return body;
-  return line + "\n" + body.slice(m[0].length);
+  const said = m[2].trim().toLowerCase();
+  const parts = (name || "").toLowerCase().split(/\s+/).filter((p) => p.length > 1);
+  if (name ? parts.some((p) => said.split(/\s+/).includes(p)) : said === "there" || said === "team") return body;
+  return `Hi ${name ? name.split(/\s+/)[0] : "there"},` + body.slice(m[0].length);
 }

@@ -9,7 +9,7 @@ import { COSTS, type Freedom, type Lead, type Workspace } from "@/lib/types";
 import { ApprovalsTab } from "./ApprovalsTab";
 import { BriefTab, type Act } from "./BriefTab";
 import { Feed } from "./Feed";
-import { GraphView, type Flow, type Highlight } from "./GraphView";
+import { GraphView, type Flow, type Highlight, type Spot } from "./GraphView";
 import { Intake } from "./Intake";
 import { LeadsTab } from "./LeadsTab";
 import { PipelineTab } from "./PipelineTab";
@@ -227,29 +227,39 @@ function NetSwitch({ net, onChange, product, canYou, within }: { net: Net; onCha
 }
 
 /** What the shapes on the graph mean. Only the few that need saying: the rest is named on the graph. */
-function Legend({ net, waiting, competitors }: { net: Net; waiting: boolean; competitors: boolean }) {
-  type Item = { key: string; label: string; mark: React.ReactNode };
+function Legend({ net, waiting, competitors, spot, onSpot }: { net: Net; waiting: boolean; competitors: boolean; spot: Spot | null; onSpot: (s: Spot | null) => void }) {
+  type Item = { key: string; label: string; mark: React.ReactNode; spot?: Spot; hint?: string };
   // Your net needs no key of its own: each ring says what it means on the graph.
   const items: Item[] =
     net === "you"
       ? [{ key: "rings", label: "The closer to you, the closer the tie", mark: <><circle cx="9" cy="9" r="7" fill="none" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.200" strokeDasharray="2 2.600" /><circle cx="9" cy="9" r="3" fill="#5A34D6" /></> }]
       : [
-          { key: "company", label: "Company", mark: <circle cx="9" cy="9" r="6" fill="#FFFFFF" stroke="#1B1640" strokeWidth="2.200" /> },
-          { key: "person", label: "Person", mark: <circle cx="9" cy="9" r="4.400" fill="#2E2863" stroke="#FFFFFF" strokeWidth="1.400" /> },
-          { key: "signal", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5A34D6" stroke="#FFFFFF" strokeWidth="1.200" /> },
-          ...(competitors ? [{ key: "competitor", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#CBC8F6" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.600" /> }] : []),
+          { key: "company", spot: "company", hint: "the companies that could buy", label: "Company", mark: <circle cx="9" cy="9" r="6" fill="#FFFFFF" stroke="#1B1640" strokeWidth="2.200" /> },
+          { key: "person", spot: "person", hint: "the people found there", label: "Person", mark: <circle cx="9" cy="9" r="4.400" fill="#2E2863" stroke="#FFFFFF" strokeWidth="1.400" /> },
+          { key: "signal", spot: "signal", hint: "the reasons to write now", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5A34D6" stroke="#FFFFFF" strokeWidth="1.200" /> },
+          ...(competitors ? [{ key: "competitor", spot: "competitor" as Spot, hint: "what they could buy instead", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#CBC8F6" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.600" /> }] : []),
         ];
-  if (waiting) items.push({ key: "waiting", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="3 2.600" /> });
+  if (waiting) items.push({ key: "waiting", spot: "waiting", hint: "who has a draft waiting for you", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="3 2.600" /> });
   return (
-    <div className="legend" aria-label="What the shapes on the graph mean">
-      {items.map((it) => (
-        <span key={it.key} className="legend-item">
-          <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
-            {it.mark}
-          </svg>
-          {it.label}
-        </span>
-      ))}
+    <div className={`legend ${spot ? "has-spot" : ""}`} aria-label="What the shapes on the graph mean. Press one to pick it out.">
+      {items.map((it) =>
+        it.spot ? (
+          // Press a name to pick that kind out on the graph; press it again to let go.
+          <button key={it.key} className="legend-item legend-btn" aria-pressed={spot === it.spot} title={spot === it.spot ? "Show everything again" : `Pick out ${it.hint}`} onClick={() => onSpot(spot === it.spot ? null : it.spot!)}>
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              {it.mark}
+            </svg>
+            {it.label}
+          </button>
+        ) : (
+          <span key={it.key} className="legend-item">
+            <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
+              {it.mark}
+            </svg>
+            {it.label}
+          </span>
+        ),
+      )}
     </div>
   );
 }
@@ -258,6 +268,7 @@ function Legend({ net, waiting, competitors }: { net: Net; waiting: boolean; com
 function Guide({ ws, tab, go, onNew, graphOpen, toggleGraph }: { ws: Workspace; tab: Tab; go: (t: Tab) => void; onNew: () => void; graphOpen: boolean; toggleGraph: () => void }) {
   const drafts = ws.messages.filter((m) => m.status === "draft").length;
   const sent = ws.messages.filter((m) => m.status === "sent").length;
+  const toBook = (ws.meetings || []).filter((m) => m.status === "proposed").length;
   const next = bestNext(ws);
   let lamp: "busy" | "wait" | "calm" = "calm";
   let text: React.ReactNode;
@@ -293,6 +304,22 @@ function Guide({ ws, tab, go, onNew, graphOpen, toggleGraph }: { ws: Workspace; 
       button = (
         <button className="btn" onClick={() => go("approve")}>
           Review {drafts === 1 ? "it" : "them"}
+          <Icon name="right" size={15} />
+        </button>
+      );
+  } else if (toBook > 0) {
+    // A reply agreed to talk and the agent has put a meeting on the calendar: it waits for the rep.
+    lamp = "wait";
+    text = (
+      <>
+        <span className="font-bold">{toBook === 1 ? "A meeting is" : `${toBook} meetings are`} waiting for you to book. </span>
+        <span className="text-soft">The agent proposed {toBook === 1 ? "it" : "them"} from a reply.</span>
+      </>
+    );
+    if (tab !== "pipeline")
+      button = (
+        <button className="btn" onClick={() => go("pipeline")}>
+          Open the calendar
           <Icon name="right" size={15} />
         </button>
       );
@@ -362,6 +389,8 @@ export function App() {
   const [pop, setPop] = useState<"credits" | "connections" | null>(null);
   const [graphOpen, setGraphOpen] = useState(true);
   const [menu, setMenu] = useState(false);
+  /** The kind of thing picked out in the legend. */
+  const [spot, setSpot] = useState<Spot | null>(null);
   /** The setting as just clicked, shown at once while the server catches up. */
   const [leeway, setLeeway] = useState<Freedom | null>(null);
   const [flows, setFlows] = useState<Flow[]>([]);
@@ -521,6 +550,7 @@ export function App() {
   const canYou = ws.graph.nodes.some((n) => n.props.isFounder);
   const turn = (to: Net) => {
     setNet(to);
+    setSpot(null);
     // The lit way in runs through you and the school you share, which only your net shows.
     if (to === "product") setPathFor(null);
   };
@@ -547,8 +577,11 @@ export function App() {
     if (ws.competitors.some((c) => c.id === id)) setRival(id);
   };
 
-  const counts: Record<Tab, number | null> = { target: null, leads: ws.leads.filter((l) => l.status === "active").length, approve: drafts, pipeline: null };
+  const toBook = (ws.meetings || []).filter((m) => m.status === "proposed").length;
+  const counts: Record<Tab, number | null> = { target: null, leads: ws.leads.filter((l) => l.status === "active").length, approve: drafts, pipeline: toBook || null };
   const here = TABS.find((x) => x.key === tab)!;
+  // A spotlight on something that is no longer there (the last waiting draft was approved) is let go.
+  const shownSpot: Spot | null = spot === "waiting" && waiting.size === 0 ? null : spot === "competitor" && !ws.graph.nodes.some((n) => n.label === "Competitor") ? null : spot;
   const freedom: Freedom = leeway ?? ws.settings?.freedom ?? "balanced";
 
   return (
@@ -568,7 +601,7 @@ export function App() {
       <header className="flex items-center gap-4 px-6 pt-5 pb-3 flex-none">
         <button className="menu-btn frost" onClick={() => setMenu(true)} aria-label="Open menu" aria-haspopup="dialog" aria-expanded={menu}>
           <Icon name="menu" size={20} />
-          {drafts > 0 && tab !== "approve" && <span className="waitdot menu-dot" />}
+          {((drafts > 0 && tab !== "approve") || (toBook > 0 && tab !== "pipeline")) && <span className="waitdot menu-dot" />}
         </button>
         <div className="flex items-center gap-2.5">
           <Logo size={38} />
@@ -613,11 +646,11 @@ export function App() {
               Hide graph
             </button>
           </div>
-          <Legend net={net} waiting={waiting.size > 0} competitors={ws.graph.nodes.some((n) => n.label === "Competitor")} />
+          <Legend net={net} waiting={waiting.size > 0} competitors={ws.graph.nodes.some((n) => n.label === "Competitor")} spot={shownSpot} onSpot={setSpot} />
           <div className="relative flex-1 min-h-0">
             <div className="dots absolute inset-0 pointer-events-none" />
             <div className="absolute inset-0">
-              <GraphView nodes={ws.graph.nodes} edges={ws.graph.edges} leads={ws.leads} net={net} reach={reach} highlight={highlight} flows={flows} waiting={waiting} best={best?.lead.id || null} onPick={pick} />
+              <GraphView nodes={ws.graph.nodes} edges={ws.graph.edges} leads={ws.leads} net={net} reach={reach} highlight={highlight} spot={shownSpot} flows={flows} waiting={waiting} best={best?.lead.id || null} onPick={pick} />
             </div>
             {pathLead && (
               <div className="absolute left-0 top-0 tag !py-1.5 arrive">
@@ -636,7 +669,8 @@ export function App() {
 
         <section className="sheet flex-1 min-w-0 flex flex-col overflow-hidden">
           <Guide ws={ws} tab={tab} go={go} onNew={() => setIntake(true)} graphOpen={graphOpen} toggleGraph={() => setGraphOpen(!graphOpen)} />
-          <div className="scroll flex-1 min-h-0 px-7 py-6">
+          {/* Keyed by section, so each one opens at its top and not where the last one was left. */}
+          <div key={tab} className="scroll flex-1 min-h-0 px-7 py-6">
             {tab === "target" && <BriefTab ws={ws} act={act} busy={busy} />}
             {tab === "leads" && <LeadsTab ws={ws} act={act} busy={busy} onOpen={open} onDraft={draft} onReview={() => go("approve")} />}
             {tab === "approve" && <ApprovalsTab ws={ws} act={act} busy={busy} />}

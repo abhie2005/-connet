@@ -245,7 +245,7 @@ export function PipelineTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: 
             return (
               <div key={a.id} className={`grid grid-cols-[76px_92px_1fr] gap-3 py-1.5 text-[13.5px] ${i ? "rowline" : ""}`}>
                 <span className="text-faint">{new Date(a.at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", second: "2-digit" })}</span>
-                <span className={`chip ${a.actor === "rep" ? "chip-bright" : ""} justify-self-start`}>{a.actor === "rep" ? "You" : a.agent ? AGENTS[a.agent].name : "Agent"}</span>
+                <span className={`chip ${a.actor === "rep" ? "chip-bright" : ""} justify-self-start self-start`}>{a.actor === "rep" ? "You" : a.agent ? AGENTS[a.agent].name : "Agent"}</span>
                 <span className="leading-snug">
                   <span className="font-semibold">{a.action}</span>
                   {lead ? `: ${lead.company}` : ""}

@@ -365,7 +365,7 @@ export async function enrichLead(leadId: string, by: "agent" | "rep" = "rep") {
       if (c) {
         m.contactId = c.id;
         m.to = `${c.name}, ${c.title}`;
-        m.body = greet(m.body, c.name.split(" ")[0]);
+        m.body = greet(m.body, c.name);
       }
     }
     if (c?.email) m.toEmail = c.email;
@@ -441,13 +441,18 @@ export function decideClaim(messageId: string, index: number | "all", action: "d
   if (!claim || claim.supported) throw new Error("No such claim");
   const quote = claim.text.length > 90 ? `${claim.text.slice(0, 87)}...` : claim.text;
   if (action === "delete") {
-    const next = without(message.subject, message.body, [claim.text], `${s.state.product?.name || "A note"} for ${lead.company}`);
+    const before = { subject: message.subject, body: message.body };
+    // Not in the message as it stands (the reviewer paraphrased, or it was edited out): nothing
+    // to take out, and above all the subject is not to be swapped for a plain one.
+    const there = located(message.subject, message.body, claim.text);
+    const next = there ? without(message.subject, message.body, [claim.text], `${s.state.product?.name || "A note"} for ${lead.company}`) : before;
     message.subject = next.subject;
     message.body = next.body;
-    message.editedByRep = true;
+    if (there) message.editedByRep = true;
     claim.kept = false;
     claim.removed = true;
-    s.audit("rep", "Deleted an unbacked sentence", { leadId: lead.id, messageId, note: quote });
+    const changed = next.subject !== before.subject || next.body !== before.body;
+    s.audit("rep", changed ? "Deleted an unbacked sentence" : "Dismissed a claim that is not in the message", { leadId: lead.id, messageId, note: quote });
   } else {
     claim.kept = action === "keep";
     s.audit("rep", claim.kept ? "Kept a sentence nothing backs" : "Marked a sentence as unbacked again", { leadId: lead.id, messageId, note: quote });
