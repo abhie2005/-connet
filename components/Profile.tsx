@@ -9,7 +9,7 @@ import { COSTS, type Competitor, type Contact, type Lead, type Workspace } from 
 import type { Act } from "./BriefTab";
 import { EmailChip } from "./LeadsTab";
 import { COST_NOTE, type LeadView } from "./leads";
-import { Icon, Monogram, Quote, initials } from "./ui";
+import { Icon, Monogram, Quote, Score, initials } from "./ui";
 
 const TIER_STROKE = { A: "#F2F2F2", B: "#9E9E9E", C: "#5C5C5C" } as const;
 
@@ -32,14 +32,14 @@ function Sprite({ lead, to }: { lead: Lead; to: Contact | null }) {
       ))}
       {warm && warmAt && (
         <>
-          <path className="sprite-way" d={`M${warmAt.x} ${warmAt.y} L160 24 L184 56`} fill="none" stroke="#E3F5FF" strokeWidth="1.8" strokeDasharray="5 4" />
+          <path className="sprite-way" d={`M${warmAt.x} ${warmAt.y} L160 24 L184 56`} fill="none" stroke="#FFEADF" strokeWidth="1.8" strokeDasharray="5 4" />
           <rect x="154" y="18" width="12" height="12" rx="3" fill="#0A0A0A" stroke="#B5B5B5" strokeWidth="1.5" />
-          <circle cx="184" cy="56" r="5.500" fill="#5CC8FF" stroke="#000" strokeWidth="2" />
+          <circle cx="184" cy="56" r="5.500" fill="#F4A98C" stroke="#000" strokeWidth="2" />
           <text x="184" y="74" textAnchor="middle" className="sprite-t">you</text>
         </>
       )}
       {S.map(({ s, x, y }) => (
-        <path key={s.id} d={`M${x} ${y - 6}L${x + 6} ${y}L${x} ${y + 6}L${x - 6} ${y}Z`} fill="#5CC8FF" stroke="#000" strokeWidth="1.5">
+        <path key={s.id} d={`M${x} ${y - 6}L${x + 6} ${y}L${x} ${y + 6}L${x - 6} ${y}Z`} fill="#F4A98C" stroke="#000" strokeWidth="1.5">
           <title>{s.summary}</title>
         </path>
       ))}
@@ -252,9 +252,8 @@ function Entry({
             </a>
           )}
         </div>
-        <div className="text-right flex-none">
-          <div className="text-[40px] font-extrabold leading-[0.9]">{lead.score.total}</div>
-          <div className="text-[12.5px] text-faint font-semibold mt-1.5">match out of 100</div>
+        <div className="flex-none">
+          <Score total={lead.score.total} tier={lead.score.tier} size={42} />
         </div>
       </div>
 
@@ -348,7 +347,7 @@ function Entry({
               </div>
             </More>
           )}
-          <More title={`Why it scored ${lead.score.total}`}>
+          <More title={`Why it scored ${lead.score.total}/100`}>
             {lead.summary && <p className="m-0 mb-4 text-[14.5px] leading-relaxed text-soft">{lead.summary}</p>}
             <div className="grid gap-2.5">
               {lead.score.parts.map((p) => (

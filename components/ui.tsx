@@ -11,7 +11,7 @@ export function Logo({ size = 40 }: { size?: number }) {
       <rect x="0.500" y="0.500" width="39" height="39" rx="10" fill="#000" stroke="#3A3A3A" />
       {/* a lowercase c in one pen stroke, and in its opening the node it reaches for, in the live color */}
       <path d="M25.300 12.600A9.800 9.800 0 1 0 25.300 27.400" fill="none" stroke="#F2F2F2" strokeWidth="4" strokeLinecap="round" />
-      <circle cx="28.500" cy="20" r="3.100" fill="#5CC8FF" />
+      <circle cx="28.500" cy="20" r="3.100" fill="#F4A98C" />
     </svg>
   );
 }
@@ -67,6 +67,16 @@ export function Monogram({ name, size = 40, square, bright }: { name: string; si
   return (
     <span className={`mono-face ${bright ? "is-bright" : ""}`} style={{ width: size, height: size, borderRadius: square ? Math.round(size * 0.24) : size, fontSize: Math.round(size * 0.36) }} aria-hidden="true">
       {initials(name)}
+    </span>
+  );
+}
+
+/** A match score out of 100, colored by how good it is: green (70 and up), yellow, or red (under 45). */
+export function Score({ total, tier, size = 17 }: { total: number; tier: "A" | "B" | "C"; size?: number }) {
+  return (
+    <span className={`score rate-${tier}`} style={{ fontSize: size }} title={`Match: ${total} out of 100`}>
+      {total}
+      <span className="score-of">/100</span>
     </span>
   );
 }

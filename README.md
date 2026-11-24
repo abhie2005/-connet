@@ -36,7 +36,7 @@ For the demo itself, the production build is faster and has no dev overlay:
 npm run build && npm start
 ```
 
-Other commands: `npm test` (46 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
+Other commands: `npm test` (51 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
 
 ## Keys
 
@@ -100,9 +100,11 @@ The screen is built so that the next thing to do is never a guess.
 - **One line says what to do next.** At the top of the work: "3 messages are waiting for your approval", "Next: write to Maya Okafor", with the button that does it.
 - **The best lead is set apart.** The Leads tab opens on one card, "Best to contact first": the person, why now, the way in, the address. The rest follow in order. Companies on hold and left out are folded away below.
 - **Every company and person has a profile card.** Click a row, or anything on the graph. The card opens on three things: who to write to (title, address, LinkedIn), why now, and the way in. The other people there, the score bar by bar with the reason for each point, and the rest of the proof are folded underneath. The arrow keys flip through the entries.
-- **Little on each screen.** A lead is one row: a person, one line on why now, one button. A draft is the message, one line on what the second agent made of it, and three buttons. The detail is always one click away, never in the way.
+- **Little on each screen.** A lead is one row: a person, one line on why now, one button. The detail is always one click away, never in the way.
+- **A draft shows what to delete.** The message stands beside what the second agent made of it. A sentence that makes a claim nothing backs is struck out in red, with one button to delete them all. What an agent added (a way to opt out) is green. What is backed links to its source.
+- **The match score is out of 100 and colored:** green from 70, yellow from 45, red below.
 - **Two nets, one switch.** Above the graph: "Glyph's net" shows who the product is connected to (companies, their people, reasons to write, competitors). "Your net" puts you in the middle and sets everyone found on a ring by how close they are: the same school or employer, one introduction away, or no way in yet. Hover a person to read how you are tied to them.
-- **The graph shows messages moving.** When a draft is asked for, dots run from the product to the person it is for. An amber ring round a person means a draft is waiting for your approval. When you approve, the dots run again in white. The lead to contact first wears a "Best first" flag.
+- **The graph shows messages moving.** When a draft is asked for, dots run from the product to the person it is for. A yellow ring round a person means a draft is waiting for your approval. When you approve, the dots run again in white. The lead to contact first wears a "Best first" flag.
 - **Nothing is sent without you.** A draft stops in the Approve tab until you click approve. The same rule is stated wherever a draft is mentioned.
 - **Plain names.** "Find emails" looks up the people at a company and their addresses (Hunter.io) and marks each one verified or guessed.
 

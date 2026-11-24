@@ -1,8 +1,10 @@
 @import "tailwindcss";
 
 /* The look: black and grey. Brightness carries the hierarchy (white is the main action and what
-   is selected), ice blue is kept for what is live (the running lamp, buying signals, the way in
-   on the graph), and amber for what an agent stopped. Hairlines instead of shadows. */
+   is selected), a warm peach (the one Glyph used) is kept for what is live (the running lamp,
+   reasons to write, the way in on the graph, your own net), and yellow for what an agent
+   stopped or what is waiting for you. A match score is green, yellow or red by how good it is.
+   Hairlines instead of shadows. */
 @theme {
   --color-void: #000000;
   --color-panel: #0e0e0e;
@@ -13,11 +15,11 @@
   --color-ink: #f2f2f2;
   --color-soft: #ababab;
   --color-faint: #858585;
-  --color-signal: #5cc8ff;
-  --color-signal-pale: rgb(92 200 255 / 0.12);
+  --color-signal: #f4a98c;
+  --color-signal-pale: rgb(244 169 140 / 0.12);
   --color-good: #5fd08a;
-  --color-warn: #f2b45a;
-  --color-flag: rgb(242 180 90 / 0.11);
+  --color-warn: #f0cb52;
+  --color-flag: rgb(240 203 82 / 0.11);
   --color-bad: #ff6b6b;
   --radius-lg: 6px;
   --radius-xl: 8px;
@@ -69,7 +71,7 @@ button:disabled {
 }
 
 ::selection {
-  background: rgb(92 200 255 / 0.3);
+  background: rgb(244 169 140 / 0.3);
 }
 
 h1,
@@ -192,8 +194,8 @@ h3 {
   align-items: center;
   gap: 6px;
   background: var(--color-signal-pale);
-  box-shadow: inset 0 0 0 1px rgb(92 200 255 / 0.38);
-  color: #d6f1ff;
+  box-shadow: inset 0 0 0 1px rgb(244 169 140 / 0.38);
+  color: #ffe2d5;
   border-radius: 6px;
   padding: 3px 10px;
   font-size: 12.5px;
@@ -216,12 +218,12 @@ h3 {
 
 .chip-flag {
   background: var(--color-flag);
-  color: #f7d49d;
+  color: #f6e3a3;
 }
 
 .chip-signal {
   background: var(--color-signal-pale);
-  color: #c6ebff;
+  color: #ffdccb;
 }
 
 .chip-bright {
@@ -283,7 +285,7 @@ h3 {
 /* The way in: the one box that carries the live color. */
 .waybox {
   background: var(--color-signal-pale);
-  box-shadow: inset 0 0 0 1px rgb(92 200 255 / 0.38);
+  box-shadow: inset 0 0 0 1px rgb(244 169 140 / 0.38);
   border-radius: 10px;
 }
 
@@ -352,7 +354,7 @@ textarea.input {
 .link {
   color: var(--color-signal);
   text-decoration: underline;
-  text-decoration-color: rgb(92 200 255 / 0.4);
+  text-decoration-color: rgb(244 169 140 / 0.4);
   text-underline-offset: 3px;
 }
 
@@ -461,7 +463,7 @@ textarea.input {
 
 .lamp.busy {
   background: var(--color-signal);
-  box-shadow: 0 0 10px rgb(92 200 255 / 0.9);
+  box-shadow: 0 0 10px rgb(244 169 140 / 0.9);
   animation: pulse 0.9s ease-in-out infinite;
 }
 
@@ -530,18 +532,18 @@ textarea.input {
   flex: none;
 }
 
-/* Amber means "this is waiting for you". */
+/* Yellow means "this is waiting for you". */
 .waitdot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--color-warn);
-  box-shadow: 0 0 8px rgb(242 180 90 / 0.7);
+  box-shadow: 0 0 8px rgb(240 203 82 / 0.7);
   flex: none;
 }
 
 .btn-main .waitdot {
-  background: #b06a00;
+  background: #9a7a00;
   box-shadow: none;
 }
 
@@ -649,7 +651,7 @@ textarea.input {
 
 .leadrow {
   display: grid;
-  grid-template-columns: 22px 40px minmax(0, 1fr) 44px 138px;
+  grid-template-columns: 22px 40px minmax(0, 1fr) 62px 138px;
   gap: 12px;
   align-items: start;
   padding: 12px 8px;
@@ -706,8 +708,8 @@ textarea.input {
 
 .chip-link {
   background: transparent;
-  box-shadow: inset 0 0 0 1px rgb(92 200 255 / 0.4);
-  color: #c6ebff;
+  box-shadow: inset 0 0 0 1px rgb(244 169 140 / 0.4);
+  color: #ffdccb;
   text-decoration: none;
 }
 
@@ -832,7 +834,7 @@ textarea.input {
 }
 
 .sprite-way {
-  filter: drop-shadow(0 0 4px rgb(92 200 255 / 0.9));
+  filter: drop-shadow(0 0 4px rgb(244 169 140 / 0.9));
 }
 
 .dex-site {
@@ -913,7 +915,7 @@ a.dex-site[href]:hover {
   padding: 9px 10px 9px 14px;
   border-radius: 10px;
   background: var(--color-flag);
-  color: #f7d49d;
+  color: #f6e3a3;
   font-size: 14px;
   line-height: 1.35;
 }
@@ -995,7 +997,7 @@ a.dex-site[href]:hover {
   background: var(--color-signal);
 }
 
-/* In your net the light behind the graph turns a little blue. It is a second still layer that
+/* In your net the light behind the graph turns a little peach. It is a second still layer that
    fades in over the first, so nothing is repainted while it changes. */
 .field::after {
   content: "";
@@ -1003,7 +1005,7 @@ a.dex-site[href]:hover {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(46% 52% at 21% 42%, rgba(92, 200, 255, 0.1), transparent 72%);
+  background: radial-gradient(46% 52% at 21% 42%, rgba(244,169,140, 0.1), transparent 72%);
   opacity: 0;
   transition: opacity 0.7s ease;
 }
@@ -1017,24 +1019,59 @@ a.dex-site[href]:hover {
   color: var(--color-ink);
 }
 
-/* Under a draft: what the second agent made of it, in one line. */
-.checked {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin-top: 18px;
-  padding: 10px 8px 10px 14px;
-  border-radius: 10px;
-  background: var(--color-raise);
-  font-size: 14px;
-  color: var(--color-soft);
+/* ---- the match score ----------------------------------------------------------------- */
+
+/* A score out of 100, colored by how good it is: green, yellow, red. */
+.score {
+  font-weight: 800;
+  line-height: 1;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
 }
 
-.checked > :first-child {
-  margin-top: 2px;
+.score-of {
+  font-size: max(0.52em, 11.5px);
+  font-weight: 700;
+  opacity: 0.7;
+  margin-left: 1px;
 }
 
-.checked.is-flag {
-  background: var(--color-flag);
-  color: #f7d49d;
+.rate-A {
+  color: var(--color-good);
+}
+
+.rate-B {
+  color: var(--color-warn);
+}
+
+.rate-C {
+  color: var(--color-bad);
+}
+
+/* ---- what to delete and what was added, in a draft ----------------------------------- */
+
+.mark-del {
+  background: rgb(255 107 107 / 0.15);
+  color: #ffb4b4;
+  text-decoration: line-through;
+  text-decoration-color: rgb(255 107 107 / 0.85);
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.mark-add {
+  background: rgb(95 208 138 / 0.14);
+  color: #baf0d0;
+  border-radius: 3px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.mark-key {
+  display: inline-block;
+  padding: 0 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
 }

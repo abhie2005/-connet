@@ -377,7 +377,7 @@ export function GraphView({
           if (!ringsInUse.has(ring.at)) continue;
           ctx.beginPath();
           ctx.arc(0, 0, ring.at, 0, Math.PI * 2);
-          ctx.strokeStyle = ring.ring === 1 ? "rgba(92,200,255,.34)" : ring.ring === 2 ? "rgba(255,255,255,.2)" : "rgba(255,255,255,.11)";
+          ctx.strokeStyle = ring.ring === 1 ? "rgba(244,169,140,.34)" : ring.ring === 2 ? "rgba(255,255,255,.2)" : "rgba(255,255,255,.11)";
           ctx.stroke();
         }
         ctx.setLineDash([]);
@@ -390,7 +390,7 @@ export function GraphView({
         const ease = 1 - Math.pow(1 - t, 3);
         ctx.beginPath();
         ctx.arc(0, 0, 24 + ease * 330, 0, Math.PI * 2);
-        ctx.strokeStyle = you ? `rgba(92,200,255,${0.5 * (1 - t)})` : `rgba(255,255,255,${0.42 * (1 - t)})`;
+        ctx.strokeStyle = you ? `rgba(244,169,140,${0.5 * (1 - t)})` : `rgba(255,255,255,${0.42 * (1 - t)})`;
         ctx.lineWidth = 1.6 / Math.sqrt(v.k);
         ctx.stroke();
       }
@@ -410,27 +410,27 @@ export function GraphView({
         if (lit) {
           // The way in: a soft halo under the line, then a bright dashed line that runs along it.
           ctx.globalAlpha = 1;
-          ctx.strokeStyle = "rgba(92,200,255,.2)";
+          ctx.strokeStyle = "rgba(244,169,140,.2)";
           ctx.lineWidth = 9 / Math.sqrt(v.k);
           ctx.stroke();
-          ctx.strokeStyle = "#E3F5FF";
+          ctx.strokeStyle = "#FFEADF";
           ctx.lineWidth = 2.6 / Math.sqrt(v.k);
           ctx.setLineDash([9, 7]);
           ctx.lineDashOffset = -dash;
-          ctx.shadowColor = "rgba(92,200,255,.95)";
+          ctx.shadowColor = "rgba(244,169,140,.95)";
           ctx.shadowBlur = 14;
         } else if (yours) {
-          ctx.strokeStyle = "rgba(214,241,255,.86)";
+          ctx.strokeStyle = "rgba(255,226,213,.86)";
           ctx.lineWidth = 1.7 / Math.sqrt(v.k);
           ctx.setLineDash([6, 5]);
           ctx.lineDashOffset = 0;
-          ctx.shadowColor = "rgba(92,200,255,.7)";
+          ctx.shadowColor = "rgba(244,169,140,.7)";
           ctx.shadowBlur = 7;
         } else if (type === "REPLIED_TO") {
-          ctx.strokeStyle = "rgba(92,200,255,.95)";
+          ctx.strokeStyle = "rgba(244,169,140,.95)";
           ctx.lineWidth = 2.2;
         } else if (type === "CONTACTED_VIA") {
-          ctx.strokeStyle = "rgba(92,200,255,.6)";
+          ctx.strokeStyle = "rgba(244,169,140,.6)";
           ctx.lineWidth = 1.4;
           ctx.setLineDash([4, 5]);
           ctx.lineDashOffset = 0;
@@ -473,7 +473,7 @@ export function GraphView({
           ctx.lineTo(n.x, n.y + r * 1.25);
           ctx.lineTo(n.x - r * 1.25, n.y);
           ctx.closePath();
-          ctx.fillStyle = "#5CC8FF";
+          ctx.fillStyle = "#F4A98C";
           ctx.fill();
           ctx.lineWidth = 1.5;
           ctx.strokeStyle = "#000";
@@ -484,23 +484,23 @@ export function GraphView({
           ctx.fillStyle = "#0A0A0A";
           ctx.fill();
           ctx.lineWidth = 1.6;
-          ctx.strokeStyle = you && reach.get(n.id)?.dist === 1 ? "#E3F5FF" : "#B5B5B5";
+          ctx.strokeStyle = you && reach.get(n.id)?.dist === 1 ? "#FFEADF" : "#B5B5B5";
           ctx.stroke();
         } else {
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
           if (label === "Product" || (founder && you)) {
             // Whoever the net is about is the one bright thing: a disc with light around it.
-            // The product's is white. The founder's is the live blue.
+            // The product's is white. The founder's is the live peach.
             const halo = ctx.createRadialGradient(n.x, n.y, r * 0.7, n.x, n.y, r * 2.6);
-            halo.addColorStop(0, founder ? "rgba(92,200,255,.34)" : "rgba(255,255,255,.3)");
-            halo.addColorStop(1, founder ? "rgba(92,200,255,0)" : "rgba(255,255,255,0)");
+            halo.addColorStop(0, founder ? "rgba(244,169,140,.34)" : "rgba(255,255,255,.3)");
+            halo.addColorStop(1, founder ? "rgba(244,169,140,0)" : "rgba(255,255,255,0)");
             ctx.beginPath();
             ctx.arc(n.x, n.y, r * 2.6, 0, Math.PI * 2);
             ctx.fillStyle = halo;
             ctx.fill();
             ctx.beginPath();
             ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-            ctx.fillStyle = founder ? "#5CC8FF" : "#F2F2F2";
+            ctx.fillStyle = founder ? "#F4A98C" : "#F2F2F2";
             ctx.fill();
           } else if (label === "Company") {
             // A company is a ring. The brighter the ring, the better the match.
@@ -508,7 +508,7 @@ export function GraphView({
             ctx.fillStyle = "#0A0A0A";
             ctx.fill();
             ctx.lineWidth = !lead ? 1.4 : tier === "A" ? 2.6 : tier === "B" ? 2 : 1.6;
-            ctx.strokeStyle = !lead ? (you && reach.get(n.id)?.dist === 1 ? "#E3F5FF" : "#6A6A6A") : tier === "A" ? "#F2F2F2" : tier === "B" ? "#9E9E9E" : "#5C5C5C";
+            ctx.strokeStyle = !lead ? (you && reach.get(n.id)?.dist === 1 ? "#FFEADF" : "#6A6A6A") : tier === "A" ? "#F2F2F2" : tier === "B" ? "#9E9E9E" : "#5C5C5C";
             if (off) ctx.setLineDash([3, 3]);
             ctx.stroke();
             ctx.setLineDash([]);
@@ -520,11 +520,11 @@ export function GraphView({
             ctx.stroke();
           } else {
             if (founder) {
-              ctx.shadowColor = "rgba(92,200,255,.9)";
+              ctx.shadowColor = "rgba(244,169,140,.9)";
               ctx.shadowBlur = 12;
             }
             // Your net: the nearer the ring, the brighter the person.
-            ctx.fillStyle = founder ? "#5CC8FF" : you && n.ring === 1 ? "#F2F2F2" : you && n.ring === 0 ? "#8A8A8A" : "#C4C4C4";
+            ctx.fillStyle = founder ? "#F4A98C" : you && n.ring === 1 ? "#F2F2F2" : you && n.ring === 0 ? "#8A8A8A" : "#C4C4C4";
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.lineWidth = 2;
@@ -533,13 +533,13 @@ export function GraphView({
           }
         }
         if (live.current.waiting.has(n.id)) {
-          // A draft is waiting for the rep: a slow amber ring, the color of "needs you".
+          // A draft is waiting for the rep: a slow yellow ring, the color of "needs you".
           ctx.globalAlpha = dim(n.id) ? 0.3 : 1;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r + 5.5, 0, Math.PI * 2);
           ctx.setLineDash([3.5, 3.5]);
           ctx.lineDashOffset = -dash * 0.22;
-          ctx.strokeStyle = "#F2B45A";
+          ctx.strokeStyle = "#F0CB52";
           ctx.lineWidth = 1.7;
           ctx.stroke();
           ctx.setLineDash([]);
@@ -580,6 +580,7 @@ export function GraphView({
       // Your net: what each ring means, written on the ring where nothing stands in the way.
       if (you) {
         const px = Math.max(10, Math.min(16, 10.5 / v.k));
+        const written: { x: number; y: number }[] = [];
         for (const ring of RINGS) {
           if (!ringsInUse.has(ring.at)) continue;
           let at = -Math.PI / 2;
@@ -589,14 +590,17 @@ export function GraphView({
             const x = Math.cos(a) * ring.at, y = Math.sin(a) * ring.at;
             let clear = Infinity;
             for (const n of d.nodes) if (n.x != null && n.y != null) clear = Math.min(clear, Math.hypot((n.x - x) / 2.2, n.y - y) - n.r);
+            // Keep clear of what the other rings have already had written on them, too.
+            for (const w of written) clear = Math.min(clear, Math.hypot((w.x - x) / 5, w.y - y) - 12);
             if (clear > room) {
               room = clear;
               at = a;
             }
             if (clear > 46) break;
           }
+          written.push({ x: Math.cos(at) * ring.at, y: Math.sin(at) * ring.at });
           ctx.globalAlpha = hl ? 0.4 : 1;
-          pill(ring.means, Math.cos(at) * ring.at, Math.sin(at) * ring.at, px, 600, ring.ring === 1 ? "#BFE6FF" : ring.ring === 2 ? "#B8B8B8" : "#8A8A8A", "rgba(0,0,0,.86)");
+          pill(ring.means, Math.cos(at) * ring.at, Math.sin(at) * ring.at, px, 600, ring.ring === 1 ? "#FFD5C2" : ring.ring === 2 ? "#B8B8B8" : "#8A8A8A", "rgba(0,0,0,.86)");
         }
         ctx.globalAlpha = 1;
       }
@@ -642,8 +646,8 @@ export function GraphView({
         }
         if (total < 1) continue;
         const send = f.tone === "send";
-        const core = send ? "#FFFFFF" : "#D6F1FF";
-        const glow = send ? "rgba(255,255,255,.9)" : "rgba(92,200,255,.95)";
+        const core = send ? "#FFFFFF" : "#FFE2D5";
+        const glow = send ? "rgba(255,255,255,.9)" : "rgba(244,169,140,.95)";
         const travel = (total / DOT_SPEED) * 1000;
         const until = Math.min(now, f.end ?? now);
         const last = Math.floor((until - f.start) / DOT_GAP);
@@ -655,7 +659,7 @@ export function GraphView({
           ctx.beginPath();
           ctx.moveTo(pts[0].x!, pts[0].y!);
           for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x!, pts[i].y!);
-          ctx.strokeStyle = send ? "rgba(255,255,255,.16)" : "rgba(92,200,255,.16)";
+          ctx.strokeStyle = send ? "rgba(255,255,255,.16)" : "rgba(244,169,140,.16)";
           ctx.lineWidth = 7 / Math.sqrt(v.k);
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
@@ -700,7 +704,7 @@ export function GraphView({
           const beat = (landed % 900) / 900;
           ctx.beginPath();
           ctx.arc(target.x!, target.y!, target.r + 4 + beat * 15, 0, Math.PI * 2);
-          ctx.strokeStyle = send ? `rgba(255,255,255,${0.75 * (1 - beat)})` : `rgba(92,200,255,${0.8 * (1 - beat)})`;
+          ctx.strokeStyle = send ? `rgba(255,255,255,${0.75 * (1 - beat)})` : `rgba(244,169,140,${0.8 * (1 - beat)})`;
           ctx.lineWidth = 1.8;
           ctx.stroke();
         }

@@ -45,9 +45,9 @@ He first chose Glyph's sky blue and pink, then asked for "black for me and cool 
 
 - **Black field** `#000000`, panels `#0E0E0E`, boxes inside a panel `#171717`, hairlines `#262626`. Hairlines instead of shadows; corners 6 to 14 px.
 - **Brightness is the hierarchy.** White `#F2F2F2` is the main action, the selected tab, Tier A. Tier B is a grey outline, Tier C a dim one.
-- **Ice blue `#5CC8FF` only for what is live:** the running lamp, buying signals, the founder, the warm path on the graph (a bright dashed line with a glow), links, focus.
-- **Amber `#F2B45A` only for what an agent stopped** or what needs the rep: dropped quotes, unsupported claims, guessed addresses.
-- Green and red appear as small ticks and error text, nowhere else.
+- **Peach `#F4A98C` (Glyph's, his request of Nov 24, 02:48; it was ice blue `#5CC8FF` before) only for what is live:** the running lamp, buying signals, the founder, the warm path on the graph (a bright dashed line with a glow), links, focus, your net.
+- **Yellow `#F0CB52` (was amber) only for what an agent stopped** or what needs the rep: dropped quotes, guessed addresses, a draft waiting for approval.
+- Green, yellow and red color the match score. Red also strikes out what to delete in a draft and green marks what was added. Otherwise green and red are small ticks and error text.
 - Agents are told apart by a small mark each (ring, square, eye, triangle), not by a color each.
 - The graph sits straight on the black with a faint dot grid. The product is a white disc with light round it; accounts are rings, brighter for a better tier.
 - Archivo for everything; JetBrains Mono for Cypher and the few instrument-style readouts (`.mono`, `.num`).
@@ -78,6 +78,14 @@ After the first live run he said the screen was "all complex and hard", that eve
 - **Above the graph:** the switch, "Hide graph", and one plain line of marks (Company, Person, Reason to write, Competitor, Draft waiting for you), with no box and no counts. Your net has no key: the rings say what they mean. Cut: the caption beside the switch, the line of node and edge counts under the graph, "Selling Glyph" in the header, the "N stopped" chip on the closed agents bar.
 - **Approve:** a draft is "To", the subject, the message, one line ("A second agent checked it: 3 claims, each backed by a source", or in amber what it stopped), and Approve, Edit, Reject. "Show proof" opens the claims with their sources, the security note and the LinkedIn note. Cut: the two columns, the variant chip, the tier badge, the box explaining the rule (the line at the top says "Nothing is sent until you approve it").
 
+**Nov 24, 02:48 (he sent the Approve tab on live data, with a long reviewer note open). These replace what is said above where they differ:**
+
+- **"Make the color like the peach color that glyph was."** The one accent is Glyph's peach `#F4A98C` now, not ice blue: the running lamp, reasons to write, the way in, links, focus, and everything about "Your net" (the thumb, the founder's disc, the light behind the graph). Read as the accent, not the background: the field stays black. Because peach and amber are too close, "waiting for you / an agent stopped this" moved from amber to yellow `#F0CB52`.
+- **"Make the number rating 49/100 rather than match out of 100 and color it … green yellow red."** `Score` in `components/ui.tsx`: "49/100", green from 70 (tier A), yellow from 45 (tier B), red below (tier C). Used on the best card, the rows and the profile card.
+- **"Remove the compress and keep the old version of that."** The Approve card is two columns again (the message, and beside it what the second agent made of it), with nothing folded. The folds in the profile card stay: he asked for those to be simpler and did not ask for them back.
+- **"Less wordy and simple to understand what needs to be added and deleted."** In the message itself, a sentence that makes a claim nothing backs is struck out in red, and the line the security check added is green (`lib/marks.ts`, tested). The right column is short lists under small labels: Delete, Added, Backed by a source, Taken out before you saw it. The reviewer's paragraph of instructions is no longer shown (each claim's reason is its tooltip). "Delete them" takes the red sentences out in one click (an edit by the rep, so it is recorded as one); a subject that was nothing but the claim becomes "<product> for <company>".
+- **"Is it possible to change the initials to a profile picture of their LinkedIn?"** No, and it was not built: LinkedIn has no public way to fetch a member's photo and forbids scraping them, and for most people found there is only a search link, not a profile. Initials stay. Offered instead, not built: a Gravatar looked up from a verified work email (it sends a hash of each lead's address to an outside service, so it waits for his yes).
+
 What he has said about interfaces, from a week of Glyph feedback. Follow these without being asked:
 
 - No lag and no shaking. Nothing resizes while it animates. No text that scrambles or types itself letter by letter into place.
@@ -87,7 +95,11 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 - Don't show how long the model took (he had "answered in N s" removed from Glyph's cards).
 - He found strong pink too much in Glyph. If a color comes back, keep it soft.
 
-## Status (Nov 24, 02:40)
+## Status (Nov 24, 03:00)
+
+**Checked on sample data only** (1512 wide): the peach accent in both nets, the colored scores, the two-column Approve card on a draft made to look like his live one (three unbacked claims: struck out, then "Delete them"), a clean draft, a rewritten one. He has not seen it yet. 51 checks pass (5 new in `tests/marks.test.ts`).
+
+## Status before that (Nov 24, 02:40)
 
 **The simpler screens are checked on sample data only** (1512 wide): leads, the profile card with each fold opened, an approval card, both nets, a Draft click. He has not seen them yet. 46 checks pass.
 
@@ -111,7 +123,7 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 
 **Setup commands (Nov 23, midnight).** `npm run setup:flexprice` creates the customer, the metered features and the wallet from one API key; `npm run setup:band` registers the four agents, makes the room and writes the keys from one user key (Band's human API may be refused on a free plan: the command then prints the by-hand steps). Both are tested against stand-ins, not the real services.
 
-**46 checks pass (`npm test`).** 23 are the sample run and the quote check, 1 is the name, 6 are the two nets. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
+**51 checks pass (`npm test`).** 23 are the sample run and the quote check, 1 is the name, 6 are the two nets, 5 are the marks in a draft. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
 
 **Still never run against the real services** (the machine it was built on could not reach them). What that leaves open:
 

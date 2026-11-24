@@ -168,7 +168,7 @@ function Connections({ ws }: { ws: Workspace }) {
   );
 }
 /** The switch between the two nets. The thumb takes the color of whoever the net is about:
-    white for the product, the live blue for you. Both halves are the same width, so nothing
+    white for the product, the live peach for you. Both halves are the same width, so nothing
     resizes when it moves. */
 function NetSwitch({ net, onChange, product, canYou, within }: { net: Net; onChange: (n: Net) => void; product: string; canYou: boolean; within: number }) {
   return (
@@ -199,14 +199,14 @@ function Legend({ net, waiting, competitors }: { net: Net; waiting: boolean; com
   // Your net needs no key of its own: each ring says what it means on the graph.
   const items: Item[] =
     net === "you"
-      ? [{ key: "rings", label: "The closer to you, the closer the tie", mark: <><circle cx="9" cy="9" r="7" fill="none" stroke="#8A8A8A" strokeWidth="1.200" strokeDasharray="2 2.600" /><circle cx="9" cy="9" r="3" fill="#5CC8FF" /></> }]
+      ? [{ key: "rings", label: "The closer to you, the closer the tie", mark: <><circle cx="9" cy="9" r="7" fill="none" stroke="#8A8A8A" strokeWidth="1.200" strokeDasharray="2 2.600" /><circle cx="9" cy="9" r="3" fill="#F4A98C" /></> }]
       : [
           { key: "company", label: "Company", mark: <circle cx="9" cy="9" r="6" fill="#0A0A0A" stroke="#F2F2F2" strokeWidth="2.200" /> },
           { key: "person", label: "Person", mark: <circle cx="9" cy="9" r="4.200" fill="#C4C4C4" /> },
-          { key: "signal", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5CC8FF" /> },
+          { key: "signal", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#F4A98C" /> },
           ...(competitors ? [{ key: "competitor", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#2B2B2B" stroke="#8A8A8A" strokeWidth="1.600" /> }] : []),
         ];
-  if (waiting) items.push({ key: "waiting", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#F2B45A" strokeWidth="1.800" strokeDasharray="3 2.600" /> });
+  if (waiting) items.push({ key: "waiting", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#F0CB52" strokeWidth="1.800" strokeDasharray="3 2.600" /> });
   return (
     <div className="legend" aria-label="What the shapes on the graph mean">
       {items.map((it) => (

@@ -7,6 +7,19 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 03:00. Yoon Woo's Claude: peach, scores out of 100, and a draft that shows what to delete
+
+**Done (on `main`), all at Yoon Woo's request.**
+- **The accent is Glyph's peach** (it was ice blue). "Waiting for you" is yellow now, so the two are not mistaken.
+- **The match score reads "49/100"** and is green from 70, yellow from 45, red below.
+- **The Approve card is two columns again**, nothing folded. A sentence that makes a claim nothing backs is struck out in red in the message, with one "Delete them" button; what the security check added is green. The long reviewer note is gone.
+- LinkedIn photos in place of initials: not possible (no public way to fetch them, and scraping them is against LinkedIn's terms). Initials stay.
+- 51 checks pass. Checked in a browser on sample data only.
+
+**Need.**
+- `[open]` Yoon Woo: `git pull`, `npm run clean`, `npm run dev`.
+- `[open]` Skylar: the video should show the peach look. One click changed in `docs/DEMO.md` at 1:48 (no more "Show proof").
+
 ## Nov 24, 02:40. Yoon Woo's Claude: every screen cut down
 
 **Why.** Yoon Woo, looking at the profile card on live data: "Still too much going on", "it'll just make the judges get overwhelmed".

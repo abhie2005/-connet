@@ -6,7 +6,7 @@ import { useState } from "react";
 import { COSTS, type Contact, type Lead, type Workspace } from "@/lib/types";
 import type { Act } from "./BriefTab";
 import { COST_NOTE, bestNext, ranked, viewOf, type LeadView } from "./leads";
-import { Empty, Icon, Monogram, SourceLink } from "./ui";
+import { Empty, Icon, Monogram, Score, SourceLink } from "./ui";
 
 export function EmailChip({ c }: { c: Contact }) {
   if (!c.email) return <span className="chip chip-line">no address yet</span>;
@@ -107,9 +107,8 @@ function Best({ view, h }: { view: LeadView; h: Handlers }) {
             )}
           </div>
         </div>
-        <div className="text-right flex-none">
-          <div className="text-[34px] font-extrabold leading-none">{lead.score.total}</div>
-          <div className="text-faint text-[12.5px] font-semibold mt-1">match out of 100</div>
+        <div className="flex-none">
+          <Score total={lead.score.total} tier={lead.score.tier} size={36} />
         </div>
       </div>
 
@@ -176,14 +175,7 @@ function Row({ view, rank, h, force, quiet }: { view: LeadView; rank?: number; h
           </div>
         )}
       </div>
-      <div className="text-right flex-none w-[44px]">
-        {!quiet && (
-          <>
-            <div className="font-extrabold text-[17px] leading-none">{lead.score.total}</div>
-            <div className="text-faint text-[11.5px] font-semibold mt-1">match</div>
-          </>
-        )}
-      </div>
+      <div className="text-right flex-none w-[62px] pt-1">{!quiet && <Score total={lead.score.total} tier={lead.score.tier} size={19} />}</div>
       <div className="flex justify-end flex-none" onClick={(e) => e.stopPropagation()}>
         {!off && !quiet && <Next view={view} h={h} force={force} />}
       </div>

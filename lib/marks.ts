@@ -1,0 +1,72 @@
+// What in a draft has to go, and what was added to it, worked out from the reviewer's claims.
+// Plain text functions: the page marks the message up with them, and one click deletes with them.
+
+const words = (s: string) => s.toLowerCase().replace(/[^a-z0-9%$]+/g, " ").split(" ").filter(Boolean);
+
+/** Does this piece of a message make this claim? Either nearly all of the claim's words are in
+    the piece, or the piece is nearly all made of the claim's words (a claim can span two
+    sentences). Short pieces never match: a greeting shares words with anything. */
+export function says(piece: string, claim: string): boolean {
+  const c = words(claim), p = words(piece);
+  if (c.length < 3 || p.length < 3) return false;
+  const inPiece = new Set(p), inClaim = new Set(c);
+  const claimCovered = c.filter((w) => inPiece.has(w)).length / c.length;
+  const pieceCovered = p.filter((w) => inClaim.has(w)).length / p.length;
+  return claimCovered >= 0.8 || (p.length >= 5 && pieceCovered >= 0.85);
+}
+
+/** A text cut into sentences and line breaks. Nothing is lost: joined, the pieces give the text back. */
+export function pieces(text: string): string[] {
+  const out: string[] = [];
+  let start = 0;
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    if (ch === "\n") {
+      if (i > start) out.push(text.slice(start, i));
+      let j = i;
+      while (text[j] === "\n") j++;
+      out.push(text.slice(i, j));
+      start = j;
+      i = j - 1;
+      continue;
+    }
+    if (ch !== "." && ch !== "!" && ch !== "?") continue;
+    let j = i + 1;
+    while (j < text.length && "\"'”’)]".includes(text[j])) j++;
+    const gap = text.slice(j).match(/^[ \t]+/)?.[0] || "";
+    const after = text[j + gap.length];
+    // A sentence ends where its full stop is followed by the end of the line, or by a space and
+    // a capital. "$12.5M" and "e.g. this" are not ends.
+    if (after === undefined || after === "\n" || (gap && /[A-Z"“'(\[]/.test(after))) {
+      out.push(text.slice(start, j + gap.length));
+      start = j + gap.length;
+      i = start - 1;
+    }
+  }
+  if (start < text.length) out.push(text.slice(start));
+  return out;
+}
+
+export interface Marked {
+  text: string;
+  /** del: it makes a claim nothing backs. add: an agent added it. */
+  mark: "del" | "add" | null;
+}
+
+export function markUp(text: string, unbacked: string[], added: RegExp | null = null): Marked[] {
+  return pieces(text).map((piece) => ({
+    text: piece,
+    mark: !/\S/.test(piece) ? null : unbacked.some((claim) => says(piece, claim)) ? "del" : added && added.test(piece) ? "add" : null,
+  }));
+}
+
+/** The text with every piece that makes an unbacked claim taken out, and the gaps closed. */
+export function strip(text: string, unbacked: string[]): string {
+  return markUp(text, unbacked)
+    .filter((m) => m.mark !== "del")
+    .map((m) => m.text)
+    .join("")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
