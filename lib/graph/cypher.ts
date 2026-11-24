@@ -24,6 +24,13 @@ RETURN c.id AS companyId, k.id AS competitorId, k.name AS competitorName`,
 
   signals: `MATCH (s:Signal:Tact)-[:ABOUT]->(c:Company:Tact)-[:MATCHED_TO]->(:Product)
 RETURN c.id AS companyId, s.id AS signalId, s.kind AS kind`,
+
+  jobSignals: `MATCH (c:Company:Tact)-[:MATCHED_TO]->(:Product),
+      (c)-[:POSTED]->(j:JobPost:Tact)-[:NEEDS]->(:Product)
+WHERE j.date IS NOT NULL AND j.date >= toString(date() - duration({days: 30}))
+RETURN c.id AS companyId, j.id AS jobId, j.title AS title, j.date AS date,
+       j.team AS team, j.firstHire AS firstHire
+ORDER BY j.date DESC`,
 } as const;
 
 export type QueryName = keyof typeof CYPHER;
@@ -34,4 +41,5 @@ export const QUERY_MEANING: Record<QueryName, string> = {
   referralPaths: "Someone who replied, and a former colleague of theirs at another target account",
   displacement: "Target accounts that already use a competitor",
   signals: "Buying signals attached to target accounts",
+  jobSignals: "New job postings linked to buying cycles: target accounts hiring for a role our product serves, in the last 30 days",
 };

@@ -27,6 +27,49 @@ function recency(date: string | null, now: number): number {
   return 0.4;
 }
 
+// What the Radar adds to "Why now". A role that does not exist yet is a bigger buying signal
+// than a backfill, and a team being built out is bigger still. Both stay inside the 24-point cap.
+const FIRST_HIRE_BONUS = 6;
+const TEAM_BONUS = 5;
+const TEAM_WINDOW_DAYS = 30;
+const TEAM_MIN_ROLES = 3;
+
+/** The extra points the postings on a lead earn, each with the reason to show next to it. */
+export function radarBonus(lead: Lead, now = Date.now()): { points: number; notes: string[] } {
+  const recent = (lead.jobPosts || []).filter((j) => {
+    const d = daysSince(j.date, now);
+    return d != null && d <= TEAM_WINDOW_DAYS;
+  });
+  const notes: string[] = [];
+  let points = 0;
+
+  const first = recent.find((j) => j.firstHire);
+  if (first) {
+    points += FIRST_HIRE_BONUS;
+    notes.push(`their first ${first.title}, not a backfill`);
+  }
+
+  const counts = new Map<string, { n: number; team: string }>();
+  for (const j of recent) {
+    if (!j.team) continue;
+    const key = j.team.toLowerCase();
+    counts.set(key, { n: (counts.get(key)?.n || 0) + 1, team: j.team });
+  }
+  const building = [...counts.values()].sort((a, b) => b.n - a.n).find((c) => c.n >= TEAM_MIN_ROLES);
+  if (building) {
+    points += TEAM_BONUS;
+    notes.push(`building a team: ${building.n} roles on the ${building.team} team inside ${TEAM_WINDOW_DAYS} days`);
+  }
+  return { points, notes };
+}
+
+/** Who a posting reports to is usually who signs for the tool. */
+export function buyerTitles(lead: Lead): string[] {
+  const seen = new Set<string>();
+  for (const j of lead.jobPosts || []) if (j.reportsTo) seen.add(j.reportsTo.trim());
+  return [...seen];
+}
+
 const words = (s: string) => s.toLowerCase().split(/[^a-z]+/).filter((w) => w.length > 2 && !["and", "the", "for", "head"].includes(w));
 
 /** Does this job title look like one of the personas we want to reach? */
@@ -46,11 +89,18 @@ export function matchPersona(title: string, icp: ICP | null): IcpPersona | null 
   );
 }
 
-/** Who at this company to write to: the person with a warm path first, then a target persona, then a checked address. */
+/** Who at this company to write to: the person with a warm path first, then whoever a posting
+    says the role reports to (the buyer), then a target persona, then a checked address. */
 export function bestContact(lead: Lead, icp: ICP | null): Contact | null {
   if (lead.contacts.length === 0) return null;
   const warm = lead.warmPaths.find((w) => w.kind !== "referral");
-  const rank = (c: Contact) => (warm && warm.contactId === c.id ? 8 : 0) + (personaMatch(c.title, icp) ? 4 : 0) + (c.emailStatus === "verified" ? 2 : c.email ? 1 : 0);
+  const buyers = buyerTitles(lead).map((t) => t.toLowerCase());
+  const isBuyer = (c: Contact) => {
+    const title = c.title.toLowerCase();
+    return buyers.some((b) => b.length > 2 && (title.includes(b) || b.includes(title)));
+  };
+  const rank = (c: Contact) =>
+    (warm && warm.contactId === c.id ? 8 : 0) + (isBuyer(c) ? 6 : 0) + (personaMatch(c.title, icp) ? 4 : 0) + (c.emailStatus === "verified" ? 2 : c.email ? 1 : 0);
   return [...lead.contacts].sort((a, b) => rank(b) - rank(a))[0];
 }
 
@@ -85,9 +135,11 @@ export function scoreLead(lead: Lead, icp: ICP | null, now = Date.now()): LeadSc
 
   let signalPoints = 0;
   for (const s of lead.signals) signalPoints += (SIGNAL_POINTS[s.kind] ?? 6) * recency(s.date, now);
-  signalPoints = Math.min(24, Math.round(signalPoints));
+  const radar = radarBonus(lead, now);
+  signalPoints = Math.min(24, Math.round(signalPoints + radar.points));
   const top = strongestSignal(lead.signals, now);
-  parts.push({ label: "Why now", points: signalPoints, max: 24, note: top ? top.summary : "No buying signal found" });
+  const whyNow = [top ? top.summary : "No buying signal found", ...radar.notes].join(". ");
+  parts.push({ label: "Why now", points: signalPoints, max: 24, note: whyNow });
 
   parts.push({ label: "Competitor in use", points: lead.usesCompetitor ? 7 : 0, max: 7, note: lead.usesCompetitor ? `Uses ${lead.usesCompetitor.name}` : "None found" });
 

@@ -18,6 +18,7 @@ import { bestContact, scoreLead, strongestSignal } from "./score";
 import { emptyStats, store, type Store } from "./store";
 import { greet, located, without } from "./marks";
 import { fromStamp, wantsMeeting, whenFrom } from "./meetings";
+import { findJobs, watchTitles } from "./agents/radar";
 import { COSTS, FREEDOMS, STAGE_NAMES, type Evidence, type Founder, type Freedom, type Lead, type Meeting, type Product, type Stage, type WarmPath } from "./types";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : /(s|ch|sh|x)$/.test(word) ? "es" : "s"}`;
@@ -198,6 +199,25 @@ export async function runPipeline(product: Product, founder: Founder) {
     });
     reportLine(s, "Buying signals", signalTotals);
 
+    // 3b. The Hiring Radar: postings first, and each one that holds up is a hiring signal.
+    const radarTitles = watchTitles(s.state.icp);
+    if (radarTitles.length > 0) {
+      s.state.run.step = "Watching job postings";
+      s.touch();
+      s.log("builder", "say", `Watching job boards for ${plural(radarTitles.length, "role")} the plan names: ${radarTitles.join(", ")}. A posting is a buying signal with a date on it.`, { to: "planner" });
+      try {
+        const radar = await findJobs(s);
+        reportLine(s, "Job postings", radar);
+        if (radar.postings.length > 0) {
+          const firsts = radar.postings.filter((j) => j.firstHire).length;
+          s.log("builder", "say", `${plural(radar.postings.length, "posting")} held up${firsts ? `, ${firsts} of them a first hire for that function` : ""}.`, { to: "planner" });
+        }
+        for (const lead of s.state.leads) rescore(s, lead);
+      } catch (e) {
+        s.log("builder", "error", `Hiring Radar: ${(e as Error).message}`);
+      }
+    }
+
     // 4. People, and a warm way in.
     s.state.run.step = "Finding the people";
     s.touch();
@@ -307,6 +327,60 @@ export async function runPipeline(product: Product, founder: Founder) {
 }
 
 // ---- what the rep (or the agent, during a run) can do afterwards ----------------------
+
+/**
+ * Watch mode. Runs only the Radar on the plan already in hand, adds only postings that are not
+ * in the graph yet, then scores and drafts whatever is new so it lands in the Approve queue.
+ * Metered on its own as radar.scan, and blocked when the credits run out.
+ */
+export async function scanJobs() {
+  const s = store();
+  if (!s.state.icp) throw new Error("Describe the product first: the Radar watches the roles the plan names.");
+  const titles = watchTitles(s.state.icp);
+  if (titles.length === 0) throw new Error("The plan names no roles to watch yet.");
+  if (!s.canSpend(COSTS["radar.scan"])) throw new Error(`Out of credits: a scan costs ${COSTS["radar.scan"]}. Top up to continue.`);
+  s.spend("radar.scan", COSTS["radar.scan"], `Radar: ${titles.length} roles`);
+
+  s.log("rep", "step", "Scan for new job posts");
+  s.log("builder", "say", `Scanning for ${plural(titles.length, "role")}: ${titles.join(", ")}.`, { to: "planner" });
+  const before = new Set(s.state.leads.map((l) => l.id));
+  const r = await findJobs(s);
+  reportLine(s, "Job postings", r);
+
+  if (r.postings.length === 0) {
+    s.log("builder", "say", `Nothing new. ${r.known ? `${plural(r.known, "posting")} already on the board.` : "No posting on those roles held up."}`, { to: "rep" });
+    s.touch();
+    return { postings: 0, known: r.known, leads: 0, drafted: 0 };
+  }
+
+  for (const lead of s.state.leads) rescore(s, lead);
+  await reason(s);
+  sortLeads(s);
+
+  const fresh = r.leads.filter((l) => !before.has(l.id));
+  const firsts = r.postings.filter((j) => j.firstHire).length;
+  s.log(
+    "builder",
+    "say",
+    `${plural(r.postings.length, "new posting")}${firsts ? `, ${firsts} a first hire for that function` : ""}${fresh.length ? `, ${plural(fresh.length, "new account")}` : ""}. Drafting where there is a reason to write.`,
+    { to: "planner" },
+  );
+
+  let drafted = 0;
+  for (const lead of r.leads.filter((l) => l.status === "active")) {
+    try {
+      await draftLead(lead.id, "agent");
+      drafted += 1;
+    } catch (e) {
+      s.log("builder", "flag", (e as Error).message);
+      if (/credits/i.test((e as Error).message)) break;
+    }
+  }
+  s.log("planner", "say", `${plural(drafted, "message")} waiting for your approval. Nothing is sent until you approve it.`, { to: "rep" });
+  s.touch();
+  void s.refreshWallet();
+  return { postings: r.postings.length, known: r.known, leads: fresh.length, drafted };
+}
 
 function leadOrThrow(s: Store, id: string): Lead {
   const lead = s.state.leads.find((l) => l.id === id);

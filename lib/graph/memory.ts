@@ -33,6 +33,15 @@ export interface SignalRow {
   kind: string;
 }
 
+export interface JobSignalRow {
+  companyId: string;
+  jobId: string;
+  title: string;
+  date: string | null;
+  team: string | null;
+  firstHire: boolean;
+}
+
 const SHARED: EdgeType[] = ["STUDIED_AT", "WORKS_AT", "PREVIOUSLY_EMPLOYED_AT"];
 
 export class MemoryGraph {
@@ -148,6 +157,32 @@ export class MemoryGraph {
       rows.push({ companyId: e.from, competitorId: comp.id, competitorName: comp.name });
     }
     return rows;
+  }
+
+  /**
+   * The brief's "job postings linked to buying cycles": target accounts that put up a posting
+   * for a role our product serves in the last 30 days, newest first.
+   */
+  jobSignals(now = Date.now()): JobSignalRow[] {
+    const cutoff = now - 30 * 86_400_000;
+    const rows: JobSignalRow[] = [];
+    for (const e of this.edges.values()) {
+      if (e.type !== "POSTED" || !this.isTarget(e.from)) continue;
+      const job = this.nodes.get(e.to);
+      if (!job || job.label !== "JobPost") continue;
+      if (this.out(job.id, ["NEEDS"]).length === 0) continue;
+      const date = job.props.date == null ? null : String(job.props.date);
+      if (!date || Number.isNaN(Date.parse(date)) || Date.parse(date) < cutoff) continue;
+      rows.push({
+        companyId: e.from,
+        jobId: job.id,
+        title: job.name,
+        date,
+        team: job.props.team == null ? null : String(job.props.team),
+        firstHire: job.props.firstHire === true,
+      });
+    }
+    return rows.sort((a, b) => String(b.date).localeCompare(String(a.date)));
   }
 
   /** Signals attached to target accounts. */

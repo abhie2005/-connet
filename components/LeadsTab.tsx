@@ -4,12 +4,41 @@
 // about them is in their profile card, a click away.
 import { useState } from "react";
 import { cleanDomain } from "@/lib/logo";
-import { strongestSignal } from "@/lib/score";
-import { COSTS, type Contact, type Lead, type Workspace } from "@/lib/types";
+import { daysSince, strongestSignal } from "@/lib/score";
+import { COSTS, type Contact, type JobPost, type Lead, type Workspace } from "@/lib/types";
 import { useLogo } from "./logos";
 import type { Act } from "./BriefTab";
 import { COST_NOTE, bestNext, ranked, viewOf, type LeadView } from "./leads";
 import { Empty, Icon, Monogram, Score, SourceLink, WayIn } from "./ui";
+
+/** How long ago a posting went up, in as few words as possible. */
+function ago(date: string | null): string {
+  const d = daysSince(date);
+  if (d == null) return "";
+  return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d} days ago`;
+}
+
+/** The posting to show on a row: a first hire if there is one, otherwise the newest. */
+function topPost(lead: Lead): JobPost | null {
+  const posts = lead.jobPosts || [];
+  if (posts.length === 0) return null;
+  return [...posts].sort((a, b) => Number(b.firstHire) - Number(a.firstHire) || String(b.date || "").localeCompare(String(a.date || "")))[0];
+}
+
+/** A lead the Radar found: the role, and how long ago it went up, linking to the posting. */
+function HiringTag({ lead }: { lead: Lead }) {
+  const post = topPost(lead);
+  if (!post) return null;
+  const more = (lead.jobPosts || []).length - 1;
+  return (
+    <a className="tag" href={post.url || undefined} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} title={`"${post.evidence.quote}"`}>
+      <Icon name="brief" size={13} />
+      Hiring: {post.firstHire ? `their first ${post.title}` : post.title}
+      {post.date && <span className="text-faint">{ago(post.date)}</span>}
+      {more > 0 && <span className="text-faint">+{more}</span>}
+    </a>
+  );
+}
 
 export function EmailChip({ c }: { c: Contact }) {
   if (!c.email) return <span className="chip chip-line">no address yet</span>;
@@ -43,6 +72,23 @@ interface Handlers {
   onOpen: (leadId: string) => void;
   onDraft: (lead: Lead, force?: boolean) => void;
   onReview: () => void;
+  onScan: () => void;
+}
+
+/** Watch mode: job postings go up all day, so the rep can look again without a whole new run. */
+function ScanLine({ h }: { h: Handlers }) {
+  const running = h.ws.run.status === "running";
+  const scanning = h.busy.has("scan");
+  const broke = !h.ws.icp || h.ws.credits.balance < COSTS["radar.scan"];
+  return (
+    <div className="flex items-center gap-2 justify-end mb-2">
+      <button className="chip" disabled={running || scanning || broke} onClick={h.onScan} title={broke ? `A scan costs ${COSTS["radar.scan"]} credits` : "Read the job boards again for the roles in the plan"}>
+        <Icon name="brief" size={13} />
+        {scanning ? "Scanning job posts" : "Scan for new job posts"}
+      </button>
+      <span className="text-faint text-[12.5px]">{COSTS["radar.scan"]} credits</span>
+    </div>
+  );
 }
 
 /** The one thing to do next for this lead. */
@@ -172,12 +218,15 @@ function Row({ view, rank, h, force, quiet }: { view: LeadView; rank?: number; h
         <div className="text-[14px] leading-snug mt-0.5 text-soft line-clamp-2">
           {off ? `Left out: ${lead.negative?.signal || "do not contact"}` : signal ? signal.summary : <span className="text-faint">No reason to write found yet</span>}
         </div>
-        {warm && !off && !quiet && (
-          <div className="mt-1.5">
-            <span className="tag" title={warm.note}>
-              <Icon name="path" size={13} />
-              {warm.kind === "referral" ? `Intro via ${warm.via}` : `Way in: ${warm.via}`}
-            </span>
+        {!off && !quiet && (warm || (lead.jobPosts || []).length > 0) && (
+          <div className="mt-1.5 flex flex-wrap gap-1.5">
+            {warm && (
+              <span className="tag" title={warm.note}>
+                <Icon name="path" size={13} />
+                {warm.kind === "referral" ? `Intro via ${warm.via}` : `Way in: ${warm.via}`}
+              </span>
+            )}
+            <HiringTag lead={lead} />
           </div>
         )}
       </div>
@@ -304,6 +353,7 @@ export function LeadsTab(h: Handlers) {
 
   return (
     <div>
+      <ScanLine h={h} />
       {best ? <Best view={best} h={h} /> : list.length > 0 ? <div className="box p-4 text-soft">Everyone with a reason to write now has been written to. Replies are logged under Pipeline.</div> : <div className="box p-4 text-soft">Nobody has a reason to write right now. The companies on hold below fit, but nothing says they are buying.</div>}
 
       {rest.length > 0 && (

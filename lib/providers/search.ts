@@ -10,7 +10,7 @@ import { hooks } from "./hooks";
 import type { Source } from "../types";
 
 export interface SearchHint {
-  purpose: "accounts" | "signals" | "competitors" | "people" | "warm";
+  purpose: "accounts" | "signals" | "competitors" | "people" | "warm" | "jobs";
   segment?: string;
   company?: string;
 }
@@ -24,6 +24,9 @@ export interface FoundPage {
 
 // How much of each page the model is shown (and quotes are checked against).
 const SHOWN_CHARS = 3200;
+
+/** Where job postings live. A jobs search is pointed at these, with careers pages picked up too. */
+const JOB_BOARDS = ["boards.greenhouse.io", "jobs.lever.co", "jobs.ashbyhq.com", "apply.workable.com", "job-boards.greenhouse.io"];
 
 const squash = (t: string) => t.replace(/\s+/g, " ").trim().toLowerCase();
 
@@ -57,7 +60,15 @@ async function tavily(query: string, hint: SearchHint, max: number): Promise<Fou
     const res = await fetch("https://api.tavily.com/search", {
       method: "POST",
       headers: { "content-type": "application/json", authorization: `Bearer ${config.tavilyKey}` },
-      body: JSON.stringify({ query, max_results: max, search_depth: "basic", include_answer: false, include_raw_content: true }),
+      body: JSON.stringify({
+        query,
+        max_results: max,
+        search_depth: "basic",
+        include_answer: false,
+        include_raw_content: true,
+        // Postings only: the boards plus whatever careers page the query names.
+        ...(hint.purpose === "jobs" ? { include_domains: JOB_BOARDS } : {}),
+      }),
       signal: ctrl.signal,
       cache: "no-store",
     });

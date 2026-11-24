@@ -11,7 +11,8 @@ Built for HackwithBay 4.0 ("Thoughtful Agents for Productivity") by Yoon Woo and
 1. **It cannot make things up.** The model only proposes facts. Each one must come with a quote, and plain code checks that the quote is on the page it cites, word for word. No match, no fact. A company with no checked quote does not appear at all.
 2. **It needs a reason to write.** An account with no buying signal is held, not emailed. An account that shows a bad fit (a hiring freeze, a do-not-contact) is left out and the agent refuses to draft for it.
 3. **It looks for a warm way in.** The graph links the founder's schools and past employers to people at target accounts, and after a reply it finds former colleagues of that person at other accounts ("ask Maya for an introduction to Hannah").
-4. **Every draft is reviewed before you see it.** A second model call checks each claim against the checked facts, and plain code rejects any number that is not in them. One rewrite is allowed; after that the draft comes to you marked "needs you". A security pass checks links and adds a way to opt out. Nothing is sent without your approval.
+4. **It watches job postings, not just companies.** The Hiring Radar works the other way round from the rest: it reads the job boards for the roles the plan names, and every posting that holds up becomes a lead with its "why now" already attached. A job went up yesterday; thirty seconds later there is a checked, reviewed email waiting for approval.
+5. **Every draft is reviewed before you see it.** A second model call checks each claim against the checked facts, and plain code rejects any number that is not in them. One rewrite is allowed; after that the draft comes to you marked "needs you". A security pass checks links and adds a way to opt out. Nothing is sent without your approval.
 
 ## Run it
 
@@ -88,10 +89,25 @@ If your Band plan refuses the first step, the command says so and prints the by-
 1. **Target.** The planner reads the product and writes the ideal customer profile: industries (with NAICS codes), company size, personas, trigger events, signs of a bad fit, each with a confidence. It also suggests adjacent segments, which you accept, adjust or dismiss.
 2. **Leads.** The builder searches each segment and extracts companies, each fact with a quote. The verifier keeps only what is on the page.
 3. **Signals and people.** One more search per account for fresh buying signals, one for the people in the roles the ICP names, and one for people who share a school or employer with the founder.
+3b. **Job postings.** The Hiring Radar reads the boards for the roles the plan names and turns each posting it can prove into a hiring signal, on an account already found or on a new one.
 4. **Competitors.** Positioning, pricing where the page states it, and how the product differs.
 5. **Graph reasoning.** Multi-hop queries: warm paths, accounts using a competitor, signals per account. Then a fit and intent score from 0 to 100, as plain arithmetic you can read, and a tier.
 6. **Outreach.** The agent looks up email addresses for the best leads and drafts a message to the top three (both metered). The rest wait until you click **Draft**. Each draft is reviewed, rewritten once if needed, security-checked, and queued for you.
 7. **Pipeline.** Approve, edit or reject. Log a reply and the agent reads it, moves the account, and looks for referral paths. Every move is recorded with who made it, the agent or you.
+
+## Hiring Radar
+
+A job posting is a buying signal with a date on it. When a company posts "hiring our first Head of RevOps", it is about to buy tools for that role, and it has said so in public.
+
+- **What it watches.** Three to six job titles worked out from the plan: the personas who buy this, plus any trigger that names a role of its own. `lib/agents/radar.ts`.
+- **What it keeps.** A posting is kept only when its quote is on the page it cites and that page names the company, the same rule as every other fact here. What it cannot prove, it drops and counts.
+- **What it adds.** Each kept posting becomes a `hiring` signal on a lead, so people, warm paths, scoring and drafts carry on unchanged, plus a `JobPost` node on the graph.
+- **What it is worth.** A first hire for a function (`first`, `founding`, `build the team`) is worth 6 more than a backfill. Three or more roles on one team inside 30 days adds 5 more. Both stay inside the 24-point cap on "Why now".
+- **Who to write to.** When a posting says what the role reports to, that person comes first: they sign for the tool.
+- **Scanning again.** **Scan for new job posts**, above the leads, runs only the Radar on the plan in hand and adds only postings that are not already there. It costs 3 credits, is metered as `radar.scan`, and is refused when the credits will not cover it. There is no scheduler: postings go up during the day, so press it again. A daily rerun would be a cron job calling the same `scanJobs()`.
+- **Offline.** `npm run demo` includes four invented postings, three of them on one team at one company, and one whose quote is not on its page so the check can be seen working.
+
+A scan is at most six searches, deduped by URL and capped at ten pages for a single extract call, to stay inside the Tavily and Gemini quotas.
 
 ## The screen
 
@@ -132,7 +148,7 @@ The screen is built so that the next thing to do is never a guess.
 | Path | What it holds |
 |---|---|
 | `lib/pipeline.ts` | The run, start to finish, and every action the rep can take |
-| `lib/agents/` | ICP, discovery (accounts, people, competitors), outreach (writer, reviewer, security) |
+| `lib/agents/` | ICP, discovery (accounts, people, competitors), the Hiring Radar (`radar.ts`), outreach (writer, reviewer, security) |
 | `lib/verify.ts` | The quote check that every fact has to pass |
 | `lib/score.ts` | Fit and intent scoring |
 | `lib/graph/` | The graph: `cypher.ts` (the reasoning queries), `index.ts` (Neo4j), `memory.ts` (embedded fallback), `nets.ts` (the product's net and yours, and how far everyone is from the founder) |

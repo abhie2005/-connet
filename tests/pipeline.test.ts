@@ -22,8 +22,11 @@ test("a full run on sample data", async (t) => {
 
   await t.test("a company whose only quote is not on the page is dropped", () => {
     assert.equal(lead("Atlas STEM Labs"), undefined);
-    assert.equal(s.state.run.stats.claimsDropped, 1);
+    // Two quotes cannot be found: Atlas STEM Labs's, and the Cedarline Academies posting the
+    // Hiring Radar reads. Only Atlas was proposed as a company, so one company is dropped.
+    assert.equal(s.state.run.stats.claimsDropped, 2);
     assert.equal(s.state.run.stats.companiesDropped, 1);
+    assert.equal(lead("Cedarline Academies"), undefined);
   });
 
   await t.test("every fact that is kept has a verified quote", () => {

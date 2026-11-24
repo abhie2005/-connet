@@ -71,6 +71,26 @@ export interface PeopleOut {
   people: PersonOut[];
 }
 
+export interface JobsIn {
+  shown: Source[];
+  titles: string[]; // the titles the Radar is watching for
+  product: Product;
+}
+
+export interface JobPostOut {
+  company: string;
+  title: string;
+  team?: string | null;
+  reports_to?: string | null;
+  date?: string | null;
+  source: number;
+  quote: string;
+}
+
+export interface JobsOut {
+  postings: JobPostOut[];
+}
+
 export interface CompetitorsIn {
   shown: Source[];
   product: Product;

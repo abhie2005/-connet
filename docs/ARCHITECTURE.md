@@ -44,7 +44,7 @@ Four roles, matching the Band multi-agent brief. They are steps in one pipeline,
 | Agent | Job | Where |
 |---|---|---|
 | Planner | Reads the product, writes the ICP, sets the search plan, sums up, reads replies | `lib/agents/icp.ts`, `lib/pipeline.ts` |
-| Builder | Searches, extracts accounts, signals, people and competitors, writes to the graph, runs graph queries, enriches, drafts | `lib/agents/discover.ts`, `lib/agents/outreach.ts` |
+| Builder | Searches, extracts accounts, signals, people and competitors, watches job postings, writes to the graph, runs graph queries, enriches, drafts | `lib/agents/discover.ts`, `lib/agents/radar.ts`, `lib/agents/outreach.ts` |
 | Reviewer | Checks every quote against its source (code) and every claim in a draft against the facts (a second model call plus code) | `lib/verify.ts`, `lib/agents/outreach.ts` |
 | Security | Checks what is about to leave: links, stray addresses, opt-out line, guessed addresses | `securityCheck` in `lib/agents/outreach.ts` |
 
@@ -54,7 +54,7 @@ Human in the loop: the rep accepts or dismisses suggested segments, approves, ed
 
 ### Ontology
 
-Nodes: `Product`, `Company`, `Person`, `Competitor`, `Signal`, `School`. Every node also carries the label `Tact` and a unique `id`.
+Nodes: `Product`, `Company`, `Person`, `Competitor`, `Signal`, `School`, `JobPost`. Every node also carries the label `Tact` and a unique `id`.
 
 | Relationship | From → to | Meaning |
 |---|---|---|
@@ -63,6 +63,8 @@ Nodes: `Product`, `Company`, `Person`, `Competitor`, `Signal`, `School`. Every n
 | `PREVIOUSLY_EMPLOYED_AT` | Person → Company | A past employer, with the `quote` and `sourceId` that prove it. |
 | `STUDIED_AT` | Person → School | With `quote` and `sourceId`. |
 | `ABOUT` | Signal → Company | A buying signal (`kind`, `date`). |
+| `POSTED` | Company → JobPost | The account put up this job posting (`title`, `date`, `team`, `reportsTo`, `firstHire`, `url`). |
+| `NEEDS` | JobPost → Product | The role this posting is for is one the product serves. |
 | `USES` | Company → Competitor | The account uses a competing tool. |
 | `COMPETES_WITH` | Competitor → Product | With `category`. |
 | `CONTACTED_VIA` | Product → Person | A message was approved and sent (`channel`, `at`, `messageId`). |
@@ -97,6 +99,17 @@ MATCH (p1:Person:Tact)-[:REPLIED_TO]->(:Product),
 WHERE p1 <> p2 AND c <> hub AND NOT (:Product)-[:CONTACTED_VIA]->(p2)
 RETURN DISTINCT p1.id AS fromPersonId, p2.id AS toPersonId, c.id AS companyId,
        hub.id AS hubId, hub.name AS hubName
+```
+
+**New job postings linked to buying cycles.** The brief's own example. Target accounts that put up a posting for a role the product serves in the last 30 days, newest first:
+
+```cypher
+MATCH (c:Company:Tact)-[:MATCHED_TO]->(:Product),
+      (c)-[:POSTED]->(j:JobPost:Tact)-[:NEEDS]->(:Product)
+WHERE j.date IS NOT NULL AND j.date >= toString(date() - duration({days: 30}))
+RETURN c.id AS companyId, j.id AS jobId, j.title AS title, j.date AS date,
+       j.team AS team, j.firstHire AS firstHire
+ORDER BY j.date DESC
 ```
 
 **Competitor displacement** and **signals per account** are the two shorter queries in the same file.
@@ -149,11 +162,20 @@ Plain arithmetic, no model, so the same lead always gets the same score and ever
 | Size | 12 | Size stated in a source |
 | Buyer found | 16 | A contact whose title matches a target persona |
 | Proof | 12 | 6 per checked quote, up to two |
-| Why now | 24 | Signal kind (funding 14, hiring 12, launch, leadership and expansion 10, ...) times recency |
+| Why now | 24 | Signal kind (funding 14, hiring 12, launch, leadership and expansion 10, ...) times recency, plus the Radar's bonuses below |
 | Competitor in use | 7 | A `USES` edge to a competitor |
 | Warm path | 9 | A warm or referral path exists |
 
 Tier A is 70 and up, B is 45 and up, C below. A sign of a bad fit forces C.
+
+The Hiring Radar adds two reasons inside the same 24-point cap (`radarBonus`), each printed next to the points it earns:
+
+| Reason | Points | Rule |
+|---|---|---|
+| A first hire | 6 | A posting in the last 30 days whose title or quote says `first`, `founding` or `build the team`: a function that does not exist yet, not a backfill |
+| Building a team | 5 | Three or more postings on one team inside 30 days |
+
+`bestContact` also prefers whoever a posting says the role reports to, ahead of a plain persona match, and their title goes to the front of the people search.
 
 ## 6. Pipeline, attribution and analytics
 
@@ -173,6 +195,7 @@ Analytics are computed from the audit trail on the page: stage-to-stage conversi
 | `discovery.run` | 5 |
 | `lead.enriched` | 2 |
 | `outreach.drafted` | 1 |
+| `radar.scan` | 3 |
 | `outreach.sent`, `graph.query` | 0 (counted, not charged) |
 
 Before a paid step, `canSpend()` checks the balance. The balance starts from the Flexprice wallet when one can be read for the customer and follows it down whenever Flexprice has charged more than Connet counted; Connet also counts every spend itself, so the gate works even when the events have no price attached in Flexprice yet. When the balance is too low the step is refused with a message and the run moves on without it. The top-up button calls Flexprice's wallet top-up when a wallet exists.
