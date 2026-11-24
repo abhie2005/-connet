@@ -3,6 +3,7 @@
 // where a fact came from.
 import type { ReactNode } from "react";
 import { host } from "@/lib/client";
+import { wayInParts } from "./leads";
 import type { AgentName, Evidence, Message, Source, WarmPath } from "@/lib/types";
 
 export function Logo({ size = 40 }: { size?: number }) {
@@ -200,18 +201,12 @@ export function SectionTitle({ children, count, right }: { children: ReactNode; 
 /** A way in, in as few words as say it, with what is shared in bold: "Maya Okafor studied at UCLA".
     The full sentence the agent wrote is the tooltip. */
 export function WayIn({ warm, who }: { warm: WarmPath; who?: string | null }) {
-  const person = who || "Someone there";
+  const { before, via, after } = wayInParts(warm, who);
   return (
     <span title={warm.note}>
-      {warm.kind === "referral" ? (
-        <>
-          <b className="wayin">{warm.via}</b> can introduce you to {person}
-        </>
-      ) : (
-        <>
-          {person} {warm.kind === "shared_school" ? "studied at" : "worked at"} <b className="wayin">{warm.via}</b>
-        </>
-      )}
+      {before}
+      <b className="wayin">{via}</b>
+      {after}
     </span>
   );
 }

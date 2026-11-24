@@ -1,7 +1,7 @@
 // What the page needs to know about a lead at a glance: who to write to, and how far along it is.
 import { FOUNDER, type Net } from "@/lib/graph/nets";
 import { bestContact } from "@/lib/score";
-import type { Contact, Lead, Message, Signal, Workspace } from "@/lib/types";
+import type { Contact, Lead, Message, Signal, WarmPath, Workspace } from "@/lib/types";
 
 export interface LeadView {
   lead: Lead;
@@ -50,3 +50,12 @@ export const COST_NOTE = {
   draft: (credits: number) => `Writes a first email from the checked facts. Uses ${credits} credit${credits === 1 ? "" : "s"}. Nothing is sent until you approve it.`,
   emails: (credits: number) => `Looks up the people at this company and their email addresses, and marks each one verified or guessed. Uses ${credits} credits.`,
 };
+
+/** A way in, in as few words as say it, split so each UI can mark the shared thing its own way.
+    "Maya Okafor" + "studied at" + "UCLA". The app bolds the via in violet; the dashboard, which
+    may not touch that stylesheet, bolds it in its own ink. The words are the same either way. */
+export function wayInParts(warm: WarmPath, who?: string | null): { before: string; via: string; after: string } {
+  const person = who || "Someone there";
+  if (warm.kind === "referral") return { before: "", via: warm.via, after: ` can introduce you to ${person}` };
+  return { before: `${person} ${warm.kind === "shared_school" ? "studied at" : "worked at"} `, via: warm.via, after: "" };
+}

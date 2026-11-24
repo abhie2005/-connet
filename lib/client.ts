@@ -81,3 +81,39 @@ export function host(url: string): string {
     return url;
   }
 }
+
+/** Doing something to the workspace: post it, note what is in flight, read the workspace back.
+    The app at / and the dashboard at /home both act through this, so a draft asked for on one
+    page is recorded exactly as it would have been on the other. */
+export function useActions(refresh: () => Promise<void>) {
+  const [busy, setBusy] = useState<Set<string>>(new Set());
+  const [toast, setToast] = useState<string | null>(null);
+
+  const act = useCallback(
+    async (body: Record<string, unknown>, key?: string) => {
+      if (key) setBusy((b) => new Set(b).add(key));
+      const res = await post("/api/action", body);
+      if (key)
+        setBusy((b) => {
+          const next = new Set(b);
+          next.delete(key);
+          return next;
+        });
+      await refresh();
+      if (res.error) {
+        setToast(res.error);
+        return false;
+      }
+      return true;
+    },
+    [refresh],
+  );
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 6000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  return { act, busy, toast, setToast };
+}
