@@ -113,7 +113,7 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 - A company's domain is the one the search found. **A school is known by name only**, so a one-word name is tried as `name.edu` ("UCLA" gives `ucla.edu`) and anything longer is not guessed at.
 - No domain, a reserved one (sample data is all `.example`), no icon, or the 16 px globe the service sends for an unknown site: the plain white disc or initials, as before. So **sample data shows no logos**; they appear on live data.
 - People still have initials: there is no public way to get LinkedIn photos (see the Nov 24, 02:48 notes).
-- **Checked only with stand-in pictures** (the sandbox cannot reach Google): a square logo, a wide one, and the "no icon" answer falling back to white. Not yet seen with real logos on his Mac.
+- Checked here only with stand-in pictures (the sandbox cannot reach Google). **On his Mac, 03:36, a real logo showed (Pilgrim School) and then the graph crashed:** a logo already in the browser's cache arrived while its node was still growing in from radius zero, and `stamp` clipped to a negative radius, which throws and stops the drawing loop. Fixed (`stamp` draws nothing until the shape has room). Lesson: anything drawn inside a node must cope with a radius near zero.
 
 ## Status (Nov 24, 04:00)
 

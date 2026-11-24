@@ -13,6 +13,8 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 **Done (on `main`).** A company's disc on the graph, and its picture on the profile card, show the icon its own website publishes. A school with a one-word name ("UCLA") is tried as `name.edu`. No icon found: white, as before. Sample data shows none (its sites are not real). People keep their initials. 58 checks pass. Checked with stand-in pictures only: the real service could not be reached from where this was built.
 
+**03:40, a crash and its fix.** On live data the graph threw "radius is negative" as soon as a cached logo arrived (his screenshot). Fixed in `e9d3d7c`; pull again.
+
 **Need.**
 - `[open]` Yoon Woo: `git pull`, `npm run clean`, `npm run dev`, then a live search, and say whether the logos look right (size, any wrong one).
 
