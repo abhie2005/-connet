@@ -17,10 +17,13 @@
     "setup:band": "tsx scripts/setup-band.ts"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@radix-ui/react-dialog": "^1.3.1",
     "@radix-ui/react-tabs": "^1.2.1",
     "@radix-ui/react-tooltip": "^1.4.1",
     "d3-force": "^3.0.1",
+    "gsap": "^3.15.1",
+    "lucide-react": "^1.79.0",
     "motion": "^14.14.0",
     "neo4j-driver": "^6.3.2",
     "next": "16.4.6",
