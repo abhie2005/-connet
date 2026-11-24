@@ -231,7 +231,7 @@ function Row({ view, rank, h, force, quiet }: { view: LeadView; rank?: number; h
         )}
       </div>
       <div className="text-right flex-none w-[62px] pt-1">{!quiet && <Score total={lead.score.total} tier={lead.score.tier} size={19} />}</div>
-      <div className="flex justify-end flex-none" onClick={(e) => e.stopPropagation()}>
+      <div className="nextcell" onClick={(e) => e.stopPropagation()}>
         {!off && !quiet && <Next view={view} h={h} force={force} />}
       </div>
     </div>

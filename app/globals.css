@@ -500,7 +500,8 @@ textarea.input {
    straight on the gradient, dark text and a white mark had almost nothing to read against. */
 .legend {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  max-width: 640px;
   align-items: center;
   gap: 1px;
   padding: 5px 6px;
@@ -1661,6 +1662,21 @@ a.dex-site[href]:hover {
   background: var(--color-ink);
   color: var(--color-on-ink);
   box-shadow: none;
+}
+
+/* The one thing to do next, in a column of its own. "Review draft" is 124px and "Draft" is 83,
+   and right-aligning both left a 41px jog down the list. Every control now fills the same cell,
+   so both edges line up whatever the row happens to offer. */
+.nextcell {
+  flex: none;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* A floor, not a fixed width: "Draft anyway" is wider than the rest and must not be clipped. */
+.nextcell > .btn,
+.nextcell > .chip {
+  min-width: 134px;
 }
 
 /* A name in the legend is a switch: point at it and that kind of thing is picked out on the graph. */

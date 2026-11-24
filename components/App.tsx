@@ -240,7 +240,7 @@ function Legend({ net, waiting, competitors, jobposts, spot, onSpot }: { net: Ne
           ...(jobposts ? [{ key: "jobpost", spot: "jobpost" as Spot, hint: "the job postings behind them", label: "Job post", mark: <><rect x="4.400" y="2.600" width="9.200" height="12.800" rx="2" fill="#CBC8F6" stroke="#5A34D6" strokeWidth="1.300" /><path d="M6.800 7.400h4.400M6.800 10.600h4.400" stroke="#5A34D6" strokeWidth="1.100" /></> }] : []),
           ...(competitors ? [{ key: "competitor", spot: "competitor" as Spot, hint: "what they could buy instead", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#CBC8F6" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.600" /> }] : []),
         ];
-  if (waiting) items.push({ key: "waiting", spot: "waiting", hint: "who has a draft waiting for you", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="3 2.600" /> });
+  if (waiting) items.push({ key: "waiting", spot: "waiting", hint: "who has a draft waiting for you", label: "Draft waiting", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="3 2.600" /> });
   return (
     <div className={`legend ${spot ? "has-spot" : ""}`} aria-label="What the shapes on the graph mean. Point at one to pick it out." onMouseLeave={() => onSpot(null)}>
       {items.map((it) =>
