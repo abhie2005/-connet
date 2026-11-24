@@ -405,6 +405,8 @@ export function decideMessage(messageId: string, action: "approve" | "reject" | 
     s.audit("rep", "Rejected a draft", { leadId: lead.id, messageId });
   } else {
     if (message.status !== "draft") throw new Error("Already decided");
+    // A message with nobody to send it to cannot be approved for sending.
+    if (!message.toEmail) throw new Error("There is no address for this message yet. Find one or type one in, then approve.");
     message.status = "sent";
     message.decidedAt = new Date().toISOString();
     // Sending is simulated: the message is recorded as sent and nothing leaves this machine.
@@ -413,6 +415,27 @@ export function decideMessage(messageId: string, action: "approve" | "reject" | 
     s.audit("rep", "Approved and sent", { leadId: lead.id, messageId, note: `To ${message.to}${message.editedByRep ? " (edited by the rep)" : ""}. Sending is simulated.` });
     if (lead.stage === "matched") setStage(s, lead, "contacted", "rep", "Message approved");
   }
+  s.touch();
+}
+
+/** The rep types in the address a message should go to, when the lookup has none. */
+export function setAddress(messageId: string, email: string) {
+  const s = store();
+  const message = s.state.messages.find((m) => m.id === messageId);
+  if (!message) throw new Error("No such message");
+  if (message.status !== "draft") throw new Error("Only a draft can be changed");
+  const address = email.trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(address)) throw new Error("That does not look like an email address.");
+  const lead = leadOrThrow(s, message.leadId);
+  if (s.state.doNotContact.some((d) => address.toLowerCase().endsWith(`@${d}`) || address.toLowerCase().endsWith(`.${d}`))) throw new Error("That address is at a domain that asked not to be contacted.");
+  message.toEmail = address;
+  const contact = lead.contacts.find((c) => c.id === message.contactId);
+  if (contact && !contact.email) {
+    contact.email = address;
+    contact.emailStatus = "unverified";
+    contact.emailConfidence = null;
+  }
+  s.audit("rep", "Typed in an address", { leadId: lead.id, messageId, note: address });
   s.touch();
 }
 

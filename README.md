@@ -114,6 +114,7 @@ The screen is built so that the next thing to do is never a guess.
 - **The match score is out of 100 and colored:** green from 70, amber from 45, red below.
 - **Two nets, one switch.** Above the graph: "Glyph's net" shows who the product is connected to (companies, their people, reasons to write, competitors). "Your net" puts you in the middle and sets everyone found on a ring by how close they are: the same school or employer, one introduction away, or no way in yet. Hover a person to read how you are tied to them.
 - **The graph shows messages moving.** When a draft is asked for, dots run from the product to the person it is for. A dashed white ring round a person means a draft is waiting for your approval. When you approve, the dots run again, dark this time. The lead to contact first wears a "Best first" flag.
+- **No address, no send.** A draft with no address cannot be approved. Its card offers a lookup or a box to type the address in. (This build never sends real email in any case: approving records the message as sent, and nothing leaves your computer.)
 - **Nothing is sent without you.** A draft stops under Approve until you click approve. The same rule is stated wherever a draft is mentioned.
 - **Plain names.** "Find emails" looks up the people at a company and their addresses (Hunter.io) and marks each one verified or guessed.
 

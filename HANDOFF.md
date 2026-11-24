@@ -7,6 +7,16 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 05:55. Yoon Woo's Claude: no address, no send
+
+**Why.** Yoon Woo, 05:28, on a draft marked "no address yet" with an Approve button: "Then how will it send the email".
+
+**Done (on `main`).** A draft with no address can no longer be approved. Its card says why and offers **Find their address** or a box to type one in. Worth knowing for the pitch: this build never sends real email; approving records the message as sent and nothing leaves the computer. 75 checks pass.
+
+**Need.**
+- `[open]` Yoon Woo: pull, `npm run clean`, `npm run dev`.
+- `[open]` Skylar: if a judge asks "does it really send?", the answer is no, by design: sending is the one step left switched off, and it would go through the same approval.
+
 ## Nov 24, 05:40. Yoon Woo's Claude: Target at a glance, and a shorter "way in"
 
 **Why.** Yoon Woo, 05:20, looking at Target on live data: make the right side "clean and readable at first glance", "minimal words". And the way in should just say "Maya Okafor studied at UCLA" with UCLA in bold.

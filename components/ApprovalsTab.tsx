@@ -35,6 +35,7 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
   const [subject, setSubject] = useState(m.subject);
   const [body, setBody] = useState(m.body);
   const [showNote, setShowNote] = useState(false);
+  const [address, setAddress] = useState("");
   const working = busy.has(`m:${m.id}`);
   const evidenceFor = (fact: number | null): Evidence | null => {
     const f = m.facts.find((x) => x.n === fact);
@@ -81,9 +82,10 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
         <span className="text-faint text-[13.5px]">To</span>
         <span className="font-bold leading-snug">{m.to.split(",")[0]}</span>
         <span className="text-soft text-[14px] leading-snug">
-          {lead?.company}
-          {m.toEmail ? `, ${m.toEmail}` : ", no address yet"}
+          {m.contactId ? lead?.company : "nobody found there yet"}
+          {m.toEmail ? `, ${m.toEmail}` : ""}
         </span>
+        {!m.toEmail && <span className="chip chip-flag">no address yet</span>}
       </div>
 
       {editing ? (
@@ -238,6 +240,26 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
         </div>
       )}
 
+      {!m.toEmail && !editing && lead && (
+        // No address, so nothing can be sent: look one up, or type one in.
+        <div className="needaddr">
+          <div className="font-bold text-[14.5px] leading-snug">It cannot be sent yet: there is no address.</div>
+          <div className="text-soft text-[13.5px] leading-snug">{lead.enriched ? `The lookup found none${lead.domain ? ` at ${lead.domain}` : ""}. Type one in.` : lead.domain ? "Look one up, or type one in." : "No website is known for this company, so type one in."}</div>
+          <div className="flex items-center gap-2 flex-wrap mt-2.5">
+            {lead.domain && !lead.enriched && (
+              <button className="btn btn-main !py-1.5" disabled={working || busy.has(`e:${lead.id}`)} title={`Looks up the people and addresses at ${lead.domain}. Costs ${COSTS["lead.enriched"]} credits.`} onClick={() => act({ type: "enrich", leadId: lead.id }, `e:${lead.id}`)}>
+                <Icon name="search" size={15} />
+                {busy.has(`e:${lead.id}`) ? "Looking" : "Find their address"}
+              </button>
+            )}
+            <input className="input needaddr-in" type="email" placeholder="name@company.com" value={address} onChange={(e) => setAddress(e.target.value)} aria-label="Their email address" onKeyDown={(e) => e.key === "Enter" && address.trim() && act({ type: "address", messageId: m.id, email: address }, `m:${m.id}`)} />
+            <button className="btn !py-1.5" disabled={working || !address.trim()} onClick={() => act({ type: "address", messageId: m.id, email: address }, `m:${m.id}`)}>
+              Use this address
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center gap-2 mt-5 flex-wrap">
         {editing ? (
           <>
@@ -250,16 +272,10 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
           </>
         ) : (
           <>
-            <button className="btn btn-main !py-2" disabled={working} title={m.toEmail ? undefined : "There is no address yet, so this records your approval and sends nothing."} onClick={() => act({ type: "message", messageId: m.id, action: "approve" }, `m:${m.id}`)}>
+            <button className="btn btn-main !py-2" disabled={working || !m.toEmail} title={m.toEmail ? "Records your approval. This build does not send real email: nothing leaves this computer." : "There is no address to send this to yet."} onClick={() => act({ type: "message", messageId: m.id, action: "approve" }, `m:${m.id}`)}>
               <Icon name="check" />
-              {m.toEmail ? "Approve and send" : "Approve"}
+              Approve and send
             </button>
-            {!m.toEmail && lead && (
-              <button className="btn" disabled={working || busy.has(`e:${lead.id}`)} title={lead.domain ? `Looks up the people and addresses at ${lead.domain}. Costs ${COSTS["lead.enriched"]} credits.` : "No website is known for this company yet. Open its profile to add one."} onClick={() => act({ type: "enrich", leadId: lead.id }, `e:${lead.id}`)}>
-                <Icon name="search" />
-                {busy.has(`e:${lead.id}`) ? "Looking" : "Find their address"}
-              </button>
-            )}
             <button
               className="btn btn-quiet"
               onClick={() => {

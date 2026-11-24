@@ -178,7 +178,18 @@ He asked: "check for ANY possible mistakes before I test again and fix ALL of it
 - **The rule from now on: the fewest words that say it.** A name and a number beat a sentence; a sentence of reasoning goes behind a press, not beside the name. He has now asked for this four times (Nov 24, 00:59, 02:31, 02:48, 05:20).
 - Also: a name on the graph is no longer written across another company's disc.
 
-## Status (Nov 24, 05:40)
+## "No address yet? Then how will it send the email" (Nov 24, 05:28)
+
+A fair question about a draft to Cold Locker Storage: nobody had been found there, so the draft was "To Cold Locker Storage, no address yet", with an Approve button. Two honest answers, both now in the product:
+- **A message with no address cannot be approved** (the button is off and `decideMessage` refuses). The card says "It cannot be sent yet: there is no address" and offers the two ways out: **Find their address** (the lookup, 2 credits, when a website is known and it has not been tried) and **an address typed in by hand** (`setAddress`, action `address`; checked for shape and against do-not-contact; audited). When the lookup has been tried and found none, the card says so.
+- **Nothing is really sent by this build, with or without an address.** "Approve and send" records the message as sent; nothing leaves his machine (`decideMessage`, the comment "Sending is simulated"). The button's tooltip says so now. Real sending would need a mail provider and his say; do not wire one up while the product being sold is invented and the people are real.
+- The "To" line no longer repeats the company's name when nobody was found there ("nobody found there yet").
+
+## Status (Nov 24, 05:55)
+
+75 checks pass; lint and build are clean; every button pressed again (68 checks) at 1190 x 773. Still never run against the live services: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google.
+
+### Earlier status (Nov 24, 05:40)
 
 74 checks pass; lint and build are clean; every button pressed again (66 checks) and every screen measured at 1190 x 773 after the Target rebuild. Still never run against the live services: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google.
 

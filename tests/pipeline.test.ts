@@ -186,6 +186,20 @@ test("a full run on sample data", async (t) => {
     assert.equal(s.state.audit.filter((a) => /Dismissed a claim/.test(a.action)).length, 1);
   });
 
+  await t.test("a message with no address cannot be approved until one is found or typed in", async () => {
+    const l = s.state.leads.find((x) => x.status === "active")!;
+    const m = await p.draftLead(l.id, "rep", true);
+    m.toEmail = null;
+    assert.throws(() => p.decideMessage(m.id, "approve"), /no address/);
+    assert.equal(m.status, "draft");
+    assert.throws(() => p.setAddress(m.id, "not an address"), /does not look like/);
+    p.setAddress(m.id, "  dana@example.org ");
+    assert.equal(m.toEmail, "dana@example.org");
+    p.decideMessage(m.id, "approve");
+    assert.equal(m.status, "sent");
+    assert.ok(s.state.audit.some((a) => a.action === "Typed in an address"));
+  });
+
   await t.test("the setting: at 'more' the writer adds a sentence of its own and it reaches the rep marked", async () => {
     assert.equal(s.state.settings.freedom, "balanced");
     p.setFreedom("open");
