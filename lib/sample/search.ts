@@ -8,6 +8,9 @@ export function sampleSearch(query: string, hint: SearchHint): FoundPage[] {
   let pages = PAGES.filter((p) => p.purpose.includes(hint.purpose));
   if (hint.purpose === "accounts") {
     pages = pages.filter((p) => same(p.segment, hint.segment));
+  } else if (hint.purpose === "jobs") {
+    // A scan looks across companies, so a jobs search is not narrowed to one.
+    if (hint.company) pages = pages.filter((p) => same(p.company, hint.company));
   } else if (hint.purpose === "signals" || hint.purpose === "people") {
     pages = pages.filter((p) => same(p.company, hint.company));
   } else if (hint.purpose === "warm") {

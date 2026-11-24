@@ -1,6 +1,6 @@
 // Shared shapes for the whole app. Server and client both import from here.
 
-export type NodeLabel = "Product" | "Company" | "Person" | "Competitor" | "Signal" | "School";
+export type NodeLabel = "Product" | "Company" | "Person" | "Competitor" | "Signal" | "School" | "JobPost";
 
 export type EdgeType =
   | "WORKS_AT"
@@ -11,7 +11,9 @@ export type EdgeType =
   | "CONTACTED_VIA"
   | "REPLIED_TO"
   | "ABOUT"
-  | "USES";
+  | "USES"
+  | "POSTED"
+  | "NEEDS";
 
 export type Props = Record<string, string | number | boolean | null>;
 
@@ -104,6 +106,26 @@ export interface Signal {
   evidence: Evidence;
 }
 
+/**
+ * A public job posting: the buying signal the Hiring Radar watches. A posting is only kept when
+ * its quote is on the page it cites, like every other fact here.
+ */
+export interface JobPost {
+  id: string;
+  companyId: string;
+  title: string;
+  team: string | null;
+  /** Who the role reports to, when the posting says. That person is usually the buyer. */
+  reportsTo: string | null;
+  date: string | null; // ISO date the posting went up, when the page gives one
+  url: string;
+  /** "first", "founding", "build the team": a new function, not a backfill. */
+  firstHire: boolean;
+  /** The hiring Signal this posting backs. */
+  signalId: string;
+  evidence: Evidence;
+}
+
 export interface Contact {
   id: string;
   name: string;
@@ -167,6 +189,8 @@ export interface Lead {
   summary: string;
   evidence: Evidence[];
   signals: Signal[];
+  /** Postings the Radar found. Left out of older saved workspaces, so read it as `|| []`. */
+  jobPosts?: JobPost[];
   contacts: Contact[];
   usesCompetitor: { name: string; evidence: Evidence } | null;
   negative: { signal: string; evidence: Evidence | null } | null;
@@ -260,7 +284,7 @@ export interface AuditEntry {
 
 export interface LedgerEntry {
   at: string;
-  event: "discovery.run" | "lead.enriched" | "outreach.drafted" | "outreach.sent" | "graph.query" | "credits.topup";
+  event: "discovery.run" | "lead.enriched" | "outreach.drafted" | "outreach.sent" | "graph.query" | "credits.topup" | "radar.scan";
   credits: number; // negative = spent
   ref: string;
   synced: "sent" | "failed" | "local";
@@ -368,4 +392,5 @@ export const COSTS = {
   "discovery.run": 5,
   "lead.enriched": 2,
   "outreach.drafted": 1,
+  "radar.scan": 3,
 } as const;

@@ -4,7 +4,7 @@ import neo4j, { type Driver } from "neo4j-driver";
 import { config, modes } from "../config";
 import type { EdgeType, GEdge, GNode, NodeLabel, Props } from "../types";
 import { CYPHER, type QueryName } from "./cypher";
-import { MemoryGraph, type DisplacementRow, type PathRow, type ReferralRow, type SignalRow } from "./memory";
+import { MemoryGraph, type DisplacementRow, type JobSignalRow, type PathRow, type ReferralRow, type SignalRow } from "./memory";
 
 export interface QueryResult<T> {
   rows: T[];
@@ -18,9 +18,10 @@ export type Rows = {
   referralPaths: ReferralRow;
   displacement: DisplacementRow;
   signals: SignalRow;
+  jobSignals: JobSignalRow;
 };
 
-const LABELS: NodeLabel[] = ["Product", "Company", "Person", "Competitor", "Signal", "School"];
+const LABELS: NodeLabel[] = ["Product", "Company", "Person", "Competitor", "Signal", "School", "JobPost"];
 
 export class Graph {
   memory = new MemoryGraph();

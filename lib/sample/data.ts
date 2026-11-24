@@ -10,7 +10,7 @@ export interface SamplePage {
   url: string;
   title: string;
   text: string;
-  purpose: ("accounts" | "signals" | "people" | "warm" | "competitors")[];
+  purpose: ("accounts" | "signals" | "people" | "warm" | "competitors" | "jobs")[];
   company?: string;
   segment?: string;
 }
@@ -30,7 +30,7 @@ export const PAGES: SamplePage[] = [
     url: `${U}/brightpath/careers`,
     title: "Careers at Brightpath Learning Centers",
     text: "We are hiring 60 part-time math tutors for the spring term as we open six new centers in the Phoenix area. Posted November 12, 2026. Tutors guide students through paper worksheets and give hints, not answers.",
-    purpose: ["signals"],
+    purpose: ["signals", "jobs"],
     company: "Brightpath Learning Centers",
   },
   {
@@ -81,7 +81,7 @@ export const PAGES: SamplePage[] = [
     url: `${U}/northlight/jobs/instructional-technology`,
     title: "Northlight Charter Network - Director of Instructional Technology",
     text: "Northlight Charter Network, which operates 14 K-8 campuses in Colorado, is hiring its first Director of Instructional Technology. Posted November 3, 2026. The role will evaluate classroom AI tools that support handwritten student work. Website: northlight.example.",
-    purpose: ["accounts", "signals"],
+    purpose: ["accounts", "signals", "jobs"],
     company: "Northlight Charter Network",
     segment: "Charter school networks",
   },
@@ -156,6 +156,36 @@ export const PAGES: SamplePage[] = [
     title: "TutorBot Pro for schools",
     text: "TutorBot Pro is a chat-based AI tutor for schools. Students type questions into a chat window and get explanations. District pricing on request.",
     purpose: ["competitors"],
+  },
+  {
+    url: `${U}/meridian/jobs/head-of-revenue-operations`,
+    title: "Meridian Tutoring Group - Head of Revenue Operations",
+    text: "Meridian Tutoring Group is hiring its first Head of Revenue Operations to build the team that will run our go-to-market systems. Posted November 23, 2026. Reports to the VP Sales. Meridian runs 31 tutoring centers across Texas and Oklahoma. Website: meridiantutoring.example.",
+    purpose: ["accounts", "jobs"],
+    company: "Meridian Tutoring Group",
+    segment: "Tutoring center chains",
+  },
+  {
+    url: `${U}/meridian/jobs/revenue-operations-analyst`,
+    title: "Meridian Tutoring Group - Revenue Operations Analyst",
+    text: "Meridian Tutoring Group is hiring a Revenue Operations Analyst on the Revenue Operations team. Posted November 21, 2026. Reports to the Head of Revenue Operations.",
+    purpose: ["jobs"],
+    company: "Meridian Tutoring Group",
+  },
+  {
+    url: `${U}/meridian/jobs/sales-engineer`,
+    title: "Meridian Tutoring Group - Sales Engineer",
+    text: "Meridian Tutoring Group is hiring a Sales Engineer on the Revenue Operations team to support new tooling rollouts. Posted November 19, 2026. Reports to the Head of Revenue Operations.",
+    purpose: ["jobs"],
+    company: "Meridian Tutoring Group",
+  },
+  {
+    url: `${U}/cedarline/jobs/data-engineer`,
+    title: "Cedarline Academies - Data Engineer",
+    text: "Cedarline Academies is hiring a Data Engineer to work on student records. Posted November 18, 2026. Cedarline runs nine campuses in Oregon.",
+    purpose: ["jobs"],
+    company: "Cedarline Academies",
+    segment: "Charter school networks",
   },
 ];
 
@@ -296,6 +326,75 @@ export const ACCOUNTS: SampleAccount[] = [
     summary: "Rolling out paper-based AI tutoring to 30 partner schools.",
     evidence: [{ url: `${U}/atlas-stem/home`, quote: "is rolling out paper-based AI tutoring to 30 partner schools this year" }],
     signals: [],
+  },
+];
+
+/** What a model would pull out of each posting page. The Cedarline quote is not on its page on
+    purpose, so the verifier is seen dropping a posting in the offline demo too. */
+export interface SampleJobPost {
+  company: string;
+  title: string;
+  team?: string | null;
+  reportsTo?: string | null;
+  date: string;
+  url: string;
+  quote: string;
+}
+
+export const POSTINGS: SampleJobPost[] = [
+  {
+    company: "Meridian Tutoring Group",
+    title: "Head of Revenue Operations",
+    team: "Revenue Operations",
+    reportsTo: "VP Sales",
+    date: "2026-11-23",
+    url: `${U}/meridian/jobs/head-of-revenue-operations`,
+    quote: "is hiring its first Head of Revenue Operations to build the team that will run our go-to-market systems",
+  },
+  {
+    company: "Meridian Tutoring Group",
+    title: "Revenue Operations Analyst",
+    team: "Revenue Operations",
+    reportsTo: "Head of Revenue Operations",
+    date: "2026-11-21",
+    url: `${U}/meridian/jobs/revenue-operations-analyst`,
+    quote: "is hiring a Revenue Operations Analyst on the Revenue Operations team",
+  },
+  {
+    company: "Meridian Tutoring Group",
+    title: "Sales Engineer",
+    team: "Revenue Operations",
+    reportsTo: "Head of Revenue Operations",
+    date: "2026-11-19",
+    url: `${U}/meridian/jobs/sales-engineer`,
+    quote: "is hiring a Sales Engineer on the Revenue Operations team to support new tooling rollouts",
+  },
+  {
+    company: "Northlight Charter Network",
+    title: "Director of Instructional Technology",
+    team: "Technology",
+    reportsTo: null,
+    date: "2026-11-03",
+    url: `${U}/northlight/jobs/instructional-technology`,
+    quote: "is hiring its first Director of Instructional Technology",
+  },
+  {
+    company: "Brightpath Learning Centers",
+    title: "Math Tutor",
+    team: null,
+    reportsTo: null,
+    date: "2026-11-12",
+    url: `${U}/brightpath/careers`,
+    quote: "We are hiring 60 part-time math tutors for the spring term as we open six new centers in the Phoenix area",
+  },
+  {
+    company: "Cedarline Academies",
+    title: "Data Engineer",
+    team: "Data",
+    reportsTo: null,
+    date: "2026-11-18",
+    url: `${U}/cedarline/jobs/data-engineer`,
+    quote: "is hiring its first Data Engineer to found the data team",
   },
 ];
 

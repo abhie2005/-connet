@@ -1,10 +1,10 @@
 // The sample model. It answers each task from the made-up data in data.ts, in the same JSON
 // shapes a real model is asked for, so every other part of the app runs exactly as it does live.
 import type {
-  AccountsIn, AccountsOut, CompetitorsIn, CompetitorsOut, IcpOut, PeopleIn, PeopleOut,
+  AccountsIn, AccountsOut, CompetitorsIn, CompetitorsOut, IcpOut, JobsIn, JobsOut, PeopleIn, PeopleOut,
   ReplyIn, ReplyOut, ReviewIn, ReviewOut, WriteIn, WriteOut,
 } from "../agents/shapes";
-import { ACCOUNTS, COMPETITORS, PEOPLE } from "./data";
+import { ACCOUNTS, COMPETITORS, PEOPLE, POSTINGS } from "./data";
 
 const ICP: IcpOut = {
   summary:
@@ -60,6 +60,21 @@ function accounts(input: AccountsIn): AccountsOut {
     })
     .filter((c): c is NonNullable<typeof c> => c !== null);
   return { companies };
+}
+
+function jobs(input: JobsIn): JobsOut {
+  const index = (url: string) => input.shown.findIndex((s) => s.url === url) + 1;
+  return {
+    postings: POSTINGS.filter((j) => index(j.url) > 0).map((j) => ({
+      company: j.company,
+      title: j.title,
+      team: j.team ?? null,
+      reports_to: j.reportsTo ?? null,
+      date: j.date,
+      source: index(j.url),
+      quote: j.quote,
+    })),
+  };
 }
 
 function people(input: PeopleIn): PeopleOut {
@@ -226,6 +241,8 @@ export function sampleAnswer(task: string, input: unknown): unknown {
       return ICP;
     case "extract_accounts":
       return accounts(input as AccountsIn);
+    case "extract_jobs":
+      return jobs(input as JobsIn);
     case "extract_people":
       return people(input as PeopleIn);
     case "extract_competitors":
