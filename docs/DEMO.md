@@ -44,7 +44,7 @@ Before recording: click **New search** so the workspace is empty, and set the br
 
 | Criterion | Weight | Where it shows |
 |---|---|---|
-| ICP & discovery | 20% | Target tab (confidence, reasons, expansions), quotes with sources on every lead |
+| ICP & discovery | 20% | Target (field-level confidence 0.00 to 1.00 on every inferred field, reasons, expansions), quotes with sources on every lead |
 | Enrichment & outreach | 20% | Profile cards (Hunter contacts with verification status, LinkedIn), warm paths, reviewed drafts, the approval gate |
 | Dashboard | 15% | Pipeline board, funnel, by segment and tier, variant test, agent vs rep, audit record |
 | Startup viability | 15% | A clear buyer, pricing per result, a reason to trust it, and a screen that says what to do next |

@@ -7,6 +7,15 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 06:25. Yoon Woo's Claude: field-level confidence, 0.00 to 1.00
+
+**Why.** Yoon Woo, 05:50, quoting the brief: "Field-level confidence scores (0.00-1.00) reflecting inference certainty".
+
+**Done (on `main`).** Every inferred field on Target shows the agent's confidence as a bar, a score to two places and a word (0.90 High, 0.62 Medium, 0.55 Low): the Sell to and Company size boxes, each segment, each role, each trigger, each suggested segment. Only scores the model really gave are shown. 77 checks pass.
+
+**Need.**
+- `[open]` Skylar: say the words "field-level confidence" at 0:52, pointing at the scores: it is the brief's own phrase.
+
 ## Nov 24, 06:15. Yoon Woo's Claude: "Already decided" fixed, hover for the legend and the rings, read what was sent
 
 **Why.** Yoon Woo, 05:39, from his live run.

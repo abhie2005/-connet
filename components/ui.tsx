@@ -90,17 +90,24 @@ export function Tier({ tier }: { tier: "A" | "B" | "C" }) {
   );
 }
 
-/** How sure the agent is of something. With `word`, the number says what it is: "95% sure". */
-export function Confidence({ value, word }: { value: number; word?: string }) {
-  const pct = Math.round(value * 100);
+/** The word for a confidence score: High from 0.80, Medium from 0.60, Low below. */
+export const confidenceWord = (value: number) => (value >= 0.8 ? "High" : value >= 0.6 ? "Medium" : "Low");
+
+/** How sure the agent is of one field: its own score from 0.00 to 1.00, as a bar, the score and
+    a word. `compact` leaves the bar out where there is no room for it. These are the model's own
+    figures for its inference, shown as it gave them and never made up for a field it gave none for. */
+export function Confidence({ value, compact }: { value: number; compact?: boolean }) {
+  const v = Math.max(0, Math.min(1, value));
+  const level = confidenceWord(v);
   return (
-    <span className="inline-flex items-center gap-2 flex-none" title={`How sure the agent is that this is right: ${pct} out of 100`}>
-      <span className="bar" style={{ width: 54 }}>
-        <i style={{ width: `${pct}%` }} />
-      </span>
-      <span className="text-[12.5px] text-faint whitespace-nowrap" style={{ minWidth: word ? 62 : 30 }}>
-        {pct}%{word ? ` ${word}` : ""}
-      </span>
+    <span className="conf" title={`Confidence ${v.toFixed(2)} out of 1.00 (${level.toLowerCase()}): how sure the agent is that this is right, from your description alone`}>
+      {!compact && (
+        <span className="bar" style={{ width: 46 }}>
+          <i style={{ width: `${Math.round(v * 100)}%` }} />
+        </span>
+      )}
+      <span className="conf-n">{v.toFixed(2)}</span>
+      <span className={`conf-w is-${level.toLowerCase()}`}>{level}</span>
     </span>
   );
 }

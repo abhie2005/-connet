@@ -193,7 +193,17 @@ A fair question about a draft to Cold Locker Storage: nobody had been found ther
 - **"The right side isn't intuitive. What do those percentages mean?"** Target opens with one line saying what it is ("Who should buy X, worked out from your description. Each line shows how sure the agent is. Press a line to see why.") and each number reads "95% sure".
 - **"Once you send a message, clicking it on the pipeline should show the message."** Pressing a Pipeline card (or the company's name on it) opens "Written to X": every message to that lead as it stands, with who approved it and when (`Letter` in `ui.tsx`). A card with nothing written opens the profile. A small envelope on the card says there is something to read. In Approve, a row under Decided opens the same way.
 
-## Status (Nov 24, 06:15)
+## Field-level confidence, 0.00 to 1.00 (the brief's wording; his message of Nov 24, 05:50)
+
+He quoted the judging brief: "Field-level confidence scores (0.00-1.00) reflecting inference certainty". The scores were always in the ICP (the model gives one per segment, for company size, per persona, per trigger, per suggested segment); they were shown as a bare percentage, then as "95% sure". Now `Confidence` in `components/ui.tsx` shows each as **a bar, the score to two places, and a word** (High from 0.80, Medium from 0.60, Low below), on every Target field that has one: the Sell to and Company size boxes, Who buys, Who to reach, Write when, Also worth a look. The line at the top of Target says the scale. A verified address shows the lookup's own confidence the same way (0.94).
+- **Only real scores are shown.** "Start in" and "Leave out when" have none, because the ICP prompt never asked for one, and the prompt is not to be changed before the event (a new prompt means a new answer, and the saved Glyph run would no longer replay). Do not put a made-up number on a field.
+- This replaces "95% sure" from an hour earlier: same number, the brief's scale, plus a word so it still reads at a glance.
+
+## Status (Nov 24, 06:25)
+
+77 checks pass; lint and build are clean; every button pressed again (71 checks) at 1190 x 773. Still never run against the live services: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google.
+
+### Earlier status (Nov 24, 06:15)
 
 77 checks pass; lint and build are clean; every button pressed again (71 checks) at 1190 x 773. Still never run against the live services: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google.
 

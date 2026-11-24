@@ -15,11 +15,12 @@ export function EmailChip({ c }: { c: Contact }) {
   if (!c.email) return <span className="chip chip-line">no address yet</span>;
   if (c.emailStatus === "verified")
     return (
-      <span className="chip" title={`Verified address${c.emailConfidence ? `, ${c.emailConfidence}% confidence` : ""}`}>
+      <span className="chip" title={`Verified address${c.emailConfidence ? `. The lookup's own confidence in it: ${(c.emailConfidence / 100).toFixed(2)} out of 1.00` : ""}`}>
         <span className="text-good">
           <Icon name="check" size={13} />
         </span>
         {c.email}
+        {c.emailConfidence ? <span className="conf-n !text-[11.5px] text-soft">{(c.emailConfidence / 100).toFixed(2)}</span> : null}
       </span>
     );
   if (c.emailStatus === "guess")
