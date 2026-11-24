@@ -4,6 +4,7 @@
 import { garbledName } from "../garbled";
 import { companyId, competitorId, canonicalName, personId, schoolId, slug } from "../ids";
 import { llm } from "../providers/llm";
+import { buyerTitles } from "../score";
 import { search, type FoundPage, type SearchHint } from "../providers/search";
 import type { Store } from "../store";
 import type { Competitor, Contact, Evidence, Lead, Signal, SignalKind, Source } from "../types";
@@ -324,7 +325,8 @@ function mergePeople(s: Store, out: PeopleOut, shown: Source[], t: Tally): Conta
 /** Find the people to talk to at one account. `anchor` makes it a warm-path search. */
 export async function findPeople(s: Store, lead: Lead, anchor: string | null = null): Promise<StepReport & { contacts: Contact[] }> {
   const icp = s.state.icp!;
-  const titles = icp.personas.map((p) => p.title);
+  // Whoever a posting says the role reports to comes first: they are the buyer for that tool.
+  const titles = [...buyerTitles(lead), ...icp.personas.map((p) => p.title)].filter((t, i, all) => all.findIndex((x) => x.toLowerCase() === t.toLowerCase()) === i);
   const query = anchor ? `"${lead.company}" "${anchor}" ${titles[0] || ""} linkedin` : `"${lead.company}" ${titles.slice(0, 3).join(" OR ")} leadership team`;
   const shown = await look(s, query, { purpose: anchor ? "warm" : "people", company: lead.company }, 5);
   const t = tally();
