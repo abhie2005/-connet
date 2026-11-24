@@ -70,7 +70,7 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 **Still never run against the real services** (the machine it was built on could not reach them). What that leaves open:
 
 - Whether the services answer as their documentation says. `npm run doctor` checks each one, lists which Gemini models the key can use, and never reads a saved answer.
-- Two request bodies are guesses from the documentation: the Flexprice wallet top-up (`credits_to_add`) and the Band event (`{event: {content, message_type}}`).
+- The two request bodies that were guesses are now confirmed against the API references (Nov 23): the Flexprice wallet top-up takes `credits_to_add` (a string), `transaction_reason` and `description`; a Band event is `{event: {content, message_type, metadata?}}` with `message_type` one of `tool_call`, `tool_result`, `thought`, `error`, `task`, `attention`.
 - How many quotes a real model gets word for word. If the first live run keeps too little, look at the prompts in `lib/agents/discover.ts` (they ask for short quotes of 5 to 25 words copied exactly) and at what `lib/passages.ts` showed the model, before touching `lib/verify.ts`. Don't loosen the check to make numbers look better: it is the pitch.
 - Neo4j itself (no database could be run here). The embedded graph answers the same four questions if it fails.
 
