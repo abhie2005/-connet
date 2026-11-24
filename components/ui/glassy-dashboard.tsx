@@ -710,6 +710,13 @@ export function GlassyDashboard({
   const [reduced, setReduced] = useState(false);
   useGSAP({ scope: root });
 
+  /* The app's components are re-skinned in this page's greys while it is mounted. It goes on
+     <body> because Profile portals its dialog out of the page; see the gd-skin block. */
+  useEffect(() => {
+    document.body.classList.add("gd-skin");
+    return () => document.body.classList.remove("gd-skin");
+  }, []);
+
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReduced(media.matches);
@@ -850,7 +857,7 @@ export function GlassyDashboard({
                   <span className="gd-live" data-live={source?.live ? "yes" : "no"} aria-hidden="true" />
                   {source?.label}
                 </button>
-                <Pop open={pop === "stack"} onClose={() => setPop(null)}><Connections ws={ws} /></Pop>
+                <Pop open={pop === "stack"} onClose={() => setPop(null)} width={392}><Connections ws={ws} /></Pop>
               </div>
             )}
             {ws && (
@@ -906,18 +913,17 @@ export function GlassyDashboard({
                   <p>{failed ? "The app has to be running for this page to read it." : "Describe a product in the app and run a search. Every figure here comes from that run — this page has no numbers of its own."}</p>
                   <a className="gd-primary" href={appHref}>Open the app <ArrowRight aria-hidden="true" /></a>
                 </div>
-              ) : (
-                <div className="gd-content" ref={content} key={view} data-view={view}>
-                  {/* The graph is pinned beside the work on every section, as it is in the app: it
+              ) : /* The graph is pinned beside the work on every section, as it is in the app: it
                       is the picture the product is about, and scrolling the work should not lose it.
-                      The four sections are the app's own components, not a reading of them — what is
-                      approved or moved here is approved or moved for real. */}
-                  {ws && (
-                    <div className="gd-split">
-                      <div className="gd-split-net">
-                        <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} net={net} onNet={setNet} flows={flows} />
-                      </div>
-                      <div className="gd-split-work">
+                      It sits outside the keyed content on purpose — keyed, it would be torn down and
+                      rebuilt on every view change, restarting the layout and throwing away wherever
+                      the reader had dragged it to. Only the work is re-keyed and re-animated. */
+              ws ? (
+                  <div className="gd-split">
+                    <div className="gd-split-net">
+                      <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} net={net} onNet={setNet} flows={flows} />
+                    </div>
+                    <div className="gd-content gd-split-work" ref={content} key={view} data-view={view}>
                         {view === "target" && (
                           <>
                             <CommandView d={d} open={selectView} />
@@ -934,11 +940,9 @@ export function GlassyDashboard({
                         )}
                         {view === "approve" && <div className="gd-app-tab"><ApprovalsTab ws={ws} act={act} busy={busy} /></div>}
                         {view === "pipeline" && <div className="gd-app-tab"><PipelineTab ws={ws} act={act} busy={busy} onOpen={(id) => open(id)} /></div>}
-                      </div>
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+              ) : null}
             </div>
           </main>
           <Dock active={active} select={selectView} />

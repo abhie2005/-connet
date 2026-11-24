@@ -319,7 +319,8 @@ export function GraphView({
     let dash = 0;
 
     const size = () => {
-      const box = wrap.current!.getBoundingClientRect();
+      const box = wrap.current?.getBoundingClientRect();
+      if (!box) return;
       const dpr = Math.min(2, window.devicePixelRatio || 1);
       el.width = Math.round(box.width * dpr);
       el.height = Math.round(box.height * dpr);

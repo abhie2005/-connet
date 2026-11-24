@@ -398,7 +398,10 @@ export const dashboardStyles = `
 .gd-live { inline-size: 8px; block-size: 8px; border-radius: 999px; background: #807BA6; }
 .gd-live[data-live="yes"] { background: #17914F; }
 .gd-pop-catch { position: fixed; inset: 0; z-index: 30; }
-.gd-pop { position: absolute; inset-inline-end: 0; inset-block-start: calc(100% + 10px); z-index: 40; max-inline-size: calc(100vw - 32px); padding: 15px; border-radius: 18px; border: 1px solid var(--gd-rim); background: var(--gd-raised); color: #1b1b1f; backdrop-filter: blur(var(--gd-panel-frost)); box-shadow: 0 16px 40px rgb(var(--gd-dark-shadow) / 22%); }
+/* Solid, not frosted: these panels are dense text, and reading them through the page behind
+   them was the one place the glass cost more than it gave. */
+.gd-pop { position: absolute; inset-inline-end: 0; inset-block-start: calc(100% + 10px); z-index: 40; max-inline-size: calc(100vw - 32px); padding: 15px; border-radius: 18px; border: 1px solid var(--gd-rim); background: #ffffff; color: #1b1b1f; box-shadow: 0 16px 40px rgb(var(--gd-dark-shadow) / 26%); }
+.gd-app[data-theme="dark"] .gd-pop { background: #26262b; color: #f4f4f5; border-color: rgb(236 236 240 / 20%); }
 .gd-new:disabled { opacity: .5; cursor: not-allowed; }
 .gd-toast { position: fixed; inset-block-end: calc(84px + env(safe-area-inset-bottom)); inset-inline: 0; z-index: 60; inline-size: fit-content; max-inline-size: calc(100% - 32px); margin-inline: auto; padding: 10px 16px; border-radius: 999px; background: var(--gd-primary); color: var(--gd-primary-ink); font-size: 12px; font-weight: 740; box-shadow: 0 10px 30px rgb(var(--gd-dark-shadow) / 26%); }
 
@@ -428,6 +431,40 @@ export const dashboardStyles = `
 .gd-split-work .gd-command-grid > .gd-activity { grid-column: 1 / -1; }
 .gd-split-work .gd-metric-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .gd-split-work .gd-analytics-grid { grid-template-columns: minmax(0, 1fr); }
+
+/* The app's own components, re-skinned for this page.
+
+   They are the real BriefTab, ApprovalsTab, PipelineTab, Profile and Intake — so they arrive
+   dressed by app/globals.css in the product's violet. Every one of those colours is a token in
+   that stylesheet's @theme, so remapping the tokens re-skins the lot without touching a single
+   component or changing anything at /. The three that carry meaning rather than brand — good,
+   warn, bad — are left alone: a green that said "verified" must go on saying it.
+
+   This rides on <body> while the dashboard is mounted, because Profile portals its dialog out
+   of the page and would otherwise keep the violet on its own in front of everything else. */
+body.gd-skin {
+  --color-void: #8c8c93;
+  --color-panel: #ffffff;
+  --color-raise: #f4f4f5;
+  --color-raise-2: #e4e4e7;
+  --color-line: #e4e4e7;
+  --color-line-strong: #c3c3ca;
+  --color-ink: #18181b;
+  --color-on-ink: #fafafa;
+  --color-soft: #52525b;
+  --color-faint: #8e8e99;
+  --color-signal: #3f3f46;
+  --color-signal-ink: #27272a;
+  --color-signal-pale: rgb(63 63 70 / 0.1);
+  --frost: rgba(250, 250, 252, 0.62);
+}
+/* The field's backdrop is painted, not tokenised, so it is repainted here. */
+body.gd-skin .field::before {
+  background:
+    radial-gradient(48% 56% at 21% 44%, rgba(255, 255, 255, 0.34), transparent 72%),
+    linear-gradient(118deg, #b4b4bb 0%, #94949c 48%, #7c7c85 100%);
+}
+body.gd-skin .dots { background-image: radial-gradient(rgba(24, 24, 27, 0.13) 1px, transparent 1.3px); }
 
 @media (max-width: 1060px) {
   .gd-split { grid-template-columns: minmax(0, 1fr); }

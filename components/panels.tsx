@@ -66,22 +66,30 @@ export function CreditsPanel({ ws, act, busy }: { ws: Workspace; act: Act; busy:
 
 export function Connections({ ws }: { ws: Workspace }) {
   const m = ws.modes;
-  const rows: [string, string, boolean][] = [
-    ["Model", m.llm === "gemini" ? "Gemini" : "Sample answers", m.llm !== "sample"],
-    ["Web search", m.search === "tavily" ? "Tavily" : "Sample pages", m.search !== "sample"],
-    ["Contact data", m.enrich === "hunter" ? "Hunter.io" : "Sample records", m.enrich !== "sample"],
-    ["Knowledge graph", m.graph === "neo4j" ? "Neo4j" : "Embedded graph", m.graph === "neo4j"],
-    ["Usage billing", m.billing === "flexprice" ? "Flexprice" : "Local ledger", m.billing === "flexprice"],
-    ["Agent room", m.band ? "Mirrored to Band" : "In this app only", m.band],
-    ["Sending", "Simulated: nothing leaves this machine", false],
+  /* Each row names the integration this product is built on, and then says what this particular
+     run actually used it for. The two are not the same thing and must not be allowed to look the
+     same: the keys decide the second, and with none set every lookup is answered from the sample
+     workspace. Printing "Gemini" on a run that never called Gemini would make this panel — the one
+     surface whose whole job is to say what was really wired up — the least trustworthy on the page. */
+  const rows: { name: string; vendor: string; note: string; live: boolean }[] = [
+    { name: "Model", vendor: "Gemini", note: "sample answers", live: m.llm !== "sample" },
+    { name: "Web search", vendor: "Tavily", note: "sample pages", live: m.search !== "sample" },
+    { name: "Contact data", vendor: "Hunter.io", note: "sample records", live: m.enrich !== "sample" },
+    { name: "Knowledge graph", vendor: m.graph === "neo4j" ? "Neo4j" : "Embedded graph", note: "", live: m.graph === "neo4j" },
+    { name: "Usage billing", vendor: "Flexprice", note: "local ledger", live: m.billing === "flexprice" },
+    { name: "Agent room", vendor: "Band", note: "in this app only", live: !!m.band },
+    { name: "Sending", vendor: "Simulated", note: "nothing leaves this machine", live: false },
   ];
   return (
     <div className="grid gap-2 text-[14px]">
-      {rows.map(([name, value, live]) => (
-        <div key={name} className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full flex-none" style={{ background: live ? "#17914F" : "#B9B3DE" }} />
-          <span className="font-semibold w-[118px] flex-none">{name}</span>
-          <span className="text-soft">{value}</span>
+      {rows.map((r) => (
+        <div key={r.name} className="flex items-center gap-2.5">
+          <span className="w-2 h-2 rounded-full flex-none" style={{ background: r.live ? "#17914F" : "#B9B3DE" }} />
+          <span className="font-semibold w-[118px] flex-none">{r.name}</span>
+          <span className="text-soft">
+            {r.vendor}
+            {!r.live && r.note ? <span className="text-faint"> &middot; {r.note} this run</span> : null}
+          </span>
         </div>
       ))}
       {(ws.run.stats.replayed || 0) > 0 && (
