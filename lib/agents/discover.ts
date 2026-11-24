@@ -18,13 +18,14 @@ export function numbered(shown: Source[]): string {
   return shown.map((s, i) => `[${i + 1}] ${s.title}\nURL: ${s.url}\n${s.text}`).join("\n\n");
 }
 
-async function look(s: Store, query: string, hint: SearchHint, max = 5): Promise<Source[]> {
+async function look(s: Store, query: string, hint: SearchHint, max = 5, failed?: (why: string) => void): Promise<Source[]> {
   s.state.run.stats.searches += 1;
   let pages: FoundPage[] = [];
   try {
     pages = await search(query, hint, max);
   } catch (e) {
     s.log("builder", "error", `Search failed for "${query}": ${(e as Error).message}`);
+    failed?.((e as Error).message);
   }
   return pages.filter((p) => p.text.trim().length > 40).map((p) => s.addSource(p));
 }
@@ -178,10 +179,14 @@ function mergeAccount(s: Store, out: AccountOut, shown: Source[], segments: stri
   return lead;
 }
 
-function accountsPrompt(input: AccountsIn, negatives: string[]): string {
+// The first round's wording is left exactly as it was, so answers saved from earlier runs still
+// replay. The wider round reads more pages and is told that a list of companies is a fine source.
+function accountsPrompt(input: AccountsIn, negatives: string[], wide = false): string {
   const focus = input.focus
     ? `Only report on this one organisation: ${input.focus}. Look for recent buying signals about it.`
-    : `Report organisations that could BUY the product (not directories, not the publisher of a list, not the product's competitors). At most 6, the best fits first.`;
+    : wide
+      ? `Report organisations that could BUY the product (not directories, not the publisher of a list, not the product's competitors). A page that lists, ranks or reports on several such organisations, or a job post by one, is a good source: report the organisations it names, each with its own quote. At most 8, the best fits first.`
+      : `Report organisations that could BUY the product (not directories, not the publisher of a list, not the product's competitors). At most 6, the best fits first.`;
   return `THE PRODUCT BEING SOLD
 ${input.product.name}: ${input.product.description}
 
@@ -214,19 +219,24 @@ export interface StepReport {
   verified: number;
   dropped: string[];
   leads: Lead[];
+  /** Set by a search for accounts, so a run that finds nobody can say why. */
+  pages?: number;
+  named?: number;
+  searchError?: string;
 }
 
 /** Run one search and pull accounts out of what it found. */
-export async function findAccounts(s: Store, query: string, segment: string, focus: string | null = null): Promise<StepReport> {
+export async function findAccounts(s: Store, query: string, segment: string, focus: string | null = null, max = 5): Promise<StepReport> {
   const icp = s.state.icp!;
-  const shown = await look(s, query, focus ? { purpose: "signals", company: focus } : { purpose: "accounts", segment }, 5);
+  let searchError: string | undefined;
+  const shown = await look(s, query, focus ? { purpose: "signals", company: focus } : { purpose: "accounts", segment }, max, (why) => (searchError = why));
   const t = tally();
   const leads: Lead[] = [];
-  if (shown.length === 0) return { ...t, leads };
+  if (shown.length === 0) return { ...t, leads, pages: 0, named: 0, searchError };
   const segments = [...icp.industries.map((i) => i.name), ...icp.expansions.filter((e) => e.status === "accepted").map((e) => e.segment)];
   const input: AccountsIn = { shown, segments, focus, product: s.state.product! };
   s.state.run.stats.llmCalls += 1;
-  const out = await llm().json<AccountsOut>({ task: "extract_accounts", system: EXTRACT_SYSTEM, user: accountsPrompt(input, icp.negatives.map((n) => n.signal)), input });
+  const out = await llm().json<AccountsOut>({ task: "extract_accounts", system: EXTRACT_SYSTEM, user: accountsPrompt(input, icp.negatives.map((n) => n.signal), max > 5), input });
   for (const company of out.companies || []) {
     if (focus && companyId(company.name || "") !== companyId(focus)) continue;
     const lead = mergeAccount(s, company, shown, segments, segment, t, !!focus);
@@ -234,7 +244,7 @@ export async function findAccounts(s: Store, query: string, segment: string, foc
   }
   addTally(s, t);
   s.touch();
-  return { ...t, leads };
+  return { ...t, leads, pages: shown.length, named: (out.companies || []).length };
 }
 
 function peoplePrompt(input: PeopleIn): string {

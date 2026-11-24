@@ -115,7 +115,23 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 - People still have initials: there is no public way to get LinkedIn photos (see the Nov 24, 02:48 notes).
 - Checked here only with stand-in pictures (the sandbox cannot reach Google). **On his Mac, 03:36, a real logo showed (Pilgrim School) and then the graph crashed:** a logo already in the browser's cache arrived while its node was still growing in from radius zero, and `stamp` clipped to a negative radius, which throws and stops the drawing loop. Fixed (`stamp` draws nothing until the shape has room). Lesson: anything drawn inside a node must cope with a radius near zero.
 
-## Status (Nov 24, 04:00)
+## Any product, not only Glyph (his request, Nov 24, 03:54)
+
+He tried an invented product on live data (Dockline, dock scheduling for warehouses) and the run ended on "No account survived the quote check". **Why is not known:** the run could not be read from here, and that one message covered four different failures. He asked "why did this fail", "get rid of glyph", "make it work for any company". Nothing on the live path was ever specific to Glyph (only the sample data and the example button were). What changed:
+- **A run that finds nobody now says which step failed** (`whyNobody` in `lib/agents/widen.ts`, tested): the web search itself failed (with what Tavily said), no pages came back, the model could not read the pages (with what Gemini said, e.g. a usage limit), the pages named no buyer, or companies were named and every quote was dropped.
+- **A run that finds fewer than three companies searches again, wider**, before giving up: up to four more searches built by plain code from the ICP (`widerQueries`: news of growth, and job posts, per segment, in the first region), eight pages each instead of five, with wording that says a list of companies or a job post is a fine source. Not when the search itself is what failed.
+- **The first round's prompt and page count are unchanged on purpose**, so the answers saved from his earlier Glyph runs (72 hours, `lib/cache.ts`) still replay at the demo. Do not reword `accountsPrompt`'s first-round text before the event.
+- **The first screen offers no Glyph example on live data.** Without keys it offers "Fill in the sample product" and says plainly that whatever is typed, the sample's companies are shown.
+- **The wider round has never run against the live services.** Only its two pure functions are tested. If Dockline fails again, the message will say which step, and the Agents bar has the detail.
+- Not built, and maybe what he meant by "search up any startup company": typing only a company's name or website and having the app read the site and write the description itself. Offered.
+
+**"I want the web to be shown at all times" (same message):** the graph no longer hides itself on Pipeline. "Hide graph" is still there for whoever wants the room.
+
+## Status (Nov 24, 04:15)
+
+60 checks pass (2 new in `tests/widen.test.ts`); lint and build are clean. Since 03:11, checked on sample data only: the menu, the setting, Keep and Delete per claim, the graph beside Pipeline. Seen by him on live data: the light look, the first screen, a real logo (and its crash, fixed). Never run live: "Nothing" and "More", the wider search.
+
+### Earlier status (Nov 24, 04:00)
 
 58 checks pass (3 new in `tests/logo.test.ts`); lint and build are clean. Everything since 03:11 (the menu, the setting, Keep and Delete per claim, logos) is checked on sample data only; he has confirmed the light look and the first screen on his Mac (screenshot, 03:30). "Nothing" and "More" have never been run against the live model.
 

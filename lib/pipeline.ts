@@ -7,6 +7,7 @@
 import { classifyReply, draftMessage } from "./agents/outreach";
 import { findAccounts, findCompetitors, findPeople, type StepReport } from "./agents/discover";
 import { inferIcp } from "./agents/icp";
+import { whyNobody, widerQueries, type Search2 } from "./agents/widen";
 import { config } from "./config";
 import { QUERY_MEANING, type QueryName } from "./graph/cypher";
 import type { Rows } from "./graph";
@@ -137,25 +138,47 @@ export async function runPipeline(product: Product, founder: Founder) {
     s.touch();
     const accountPlan = icp.searchPlan.filter((q) => q.purpose === "accounts").slice(0, 5);
     const totals: StepReport = { proposed: 0, verified: 0, dropped: [], leads: [] };
-    await inBatches(accountPlan, 3, async (item) => {
-      s.log("builder", "step", `Searching: ${item.query}`);
-      try {
-        const r = await findAccounts(s, item.query, item.segment);
-        totals.proposed += r.proposed;
-        totals.verified += r.verified;
-        totals.dropped.push(...r.dropped);
-      } catch (e) {
-        s.log("builder", "error", `Could not read the results for "${item.query}": ${(e as Error).message}`);
+    // What happened in this step, so that a run that finds nobody can say why.
+    const seen: Search2 = { searches: 0, searchErrors: [], modelErrors: [], pages: 0, named: 0, proposed: 0, verified: 0 };
+    const searchFor = (plan: { query: string; segment: string }[], pages: number) =>
+      inBatches(plan, 3, async (item) => {
+        s.log("builder", "step", `Searching: ${item.query}`);
+        seen.searches += 1;
+        try {
+          const r = await findAccounts(s, item.query, item.segment, null, pages);
+          totals.proposed += r.proposed;
+          totals.verified += r.verified;
+          totals.dropped.push(...r.dropped);
+          seen.pages += r.pages || 0;
+          seen.named += r.named || 0;
+          if (r.searchError) seen.searchErrors.push(r.searchError);
+        } catch (e) {
+          seen.modelErrors.push((e as Error).message);
+          s.log("builder", "error", `Could not read the results for "${item.query}": ${(e as Error).message}`);
+        }
+      });
+    await searchFor(accountPlan, 5);
+    // Too few? Search again, wider: news of growth and job posts in each segment, more pages each.
+    // Not when the search itself is what failed: more of the same would only fail again.
+    if (s.state.leads.length < 3 && seen.searchErrors.length < seen.searches) {
+      const wider = widerQueries(icp, accountPlan.map((q) => q.query));
+      if (wider.length) {
+        s.log("planner", "say", `Only ${plural(s.state.leads.length, "account")} so far. Search wider: news of growth and job posts in each segment.`, { to: "builder" });
+        s.state.run.step = "Searching wider";
+        s.touch();
+        await searchFor(wider, 8);
       }
-    });
-    s.log("builder", "say", `Found ${plural(s.state.leads.length, "account")} across ${plural(accountPlan.length, "search")}. Please check my quotes.`, { to: "reviewer" });
+    }
+    seen.proposed = totals.proposed;
+    seen.verified = totals.verified;
+    s.log("builder", "say", `Found ${plural(s.state.leads.length, "account")} across ${plural(seen.searches, "search")}. Please check my quotes.`, { to: "reviewer" });
     reportLine(s, "Accounts", totals);
     if (s.state.leads.length > config.maxCompanies) {
       for (const lead of s.state.leads) rescore(s, lead);
       sortLeads(s);
       for (const extra of s.state.leads.splice(config.maxCompanies)) s.graph.removeNode(extra.id);
     }
-    if (s.state.leads.length === 0) throw new Error("No account survived the quote check. Try a more specific product description, or check the search key.");
+    if (s.state.leads.length === 0) throw new Error(whyNobody(seen));
 
     // 3. Why now: one more search per account for fresh signals.
     s.state.run.step = "Looking for buying signals";

@@ -99,16 +99,20 @@ export function Intake({ initial, founder, sample, onStarted }: { initial: Produ
           <button className="btn btn-main" onClick={start} disabled={busy}>
             {busy ? "Starting" : "Find my customers"}
           </button>
-          <button className="btn btn-plain" onClick={example}>
-            Use the Glyph example
-          </button>
+          {/* Without keys the app can only show its one sample product, so it offers to fill that in.
+              With keys it works for any product, and offers no example of its own. */}
+          {sample && (
+            <button className="btn btn-plain" onClick={example}>
+              Fill in the sample product
+            </button>
+          )}
           {!more && (
             <button className="btn btn-plain" onClick={() => setMore(true)}>
               Add pricing and customers
             </button>
           )}
         </div>
-        {sample && <p className="text-faint text-[13px] mt-4 mb-0">Running on sample data: no API keys are set, so the companies you will see are invented. Add keys to .env.local for live results.</p>}
+        {sample && <p className="text-faint text-[13px] mt-4 mb-0">Running on sample data: no API keys are set, so whatever you type, you will see the invented companies of the sample product. Add keys to .env.local to search for any product.</p>}
       </div>
     </div>
   );

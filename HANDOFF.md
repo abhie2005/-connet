@@ -7,6 +7,22 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 04:15. Yoon Woo's Claude: any product, a failed search that says why, the graph on every section
+
+**Why.** Yoon Woo tried an invented product on live data (Dockline) and got "No account survived the quote check". 03:54: "why did this example fail", "get rid of glyph", "make it work for any company", and "I want the web to be shown at all times".
+
+**Done (on `main`).**
+- Why it failed could not be told from here: that message covered four different failures. Now a run that finds nobody says which one (the search, no pages, the model, no buyer named, or every quote dropped).
+- A search that finds fewer than three companies tries again, wider, before giving up.
+- The first screen has no Glyph example on live data. (The demo still sells Glyph: type it in, or keep the saved run.)
+- The graph stays beside Pipeline too.
+- The first round of the search is word for word as before, so the saved Glyph run still replays.
+- 60 checks pass. The wider search has not run against the live services.
+
+**Need.**
+- `[open]` Yoon Woo: pull, `npm run dev`, try Dockline again. If it fails, send the new message (and open the Agents bar for the red lines).
+- `[open]` Skylar: nothing changes in the demo script except that the Pipeline section now has the graph beside it.
+
 ## Nov 24, 04:00. Yoon Woo's Claude: logos in place of the white circles
 
 **Why.** Yoon Woo, 03:30: "can you get the public photos of the schools instead of white circles?"

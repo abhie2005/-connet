@@ -459,7 +459,7 @@ export function App() {
   const go = (t: Tab) => {
     picked.current = true;
     setTab(t);
-    setGraphOpen(t !== "pipeline");
+    // The graph stays where it is on every section (his choice, Nov 24): only Hide graph hides it.
   };
 
   const pathLead = ws?.leads.find((l) => l.id === pathFor) || null;
