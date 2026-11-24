@@ -127,7 +127,25 @@ He tried an invented product on live data (Dockline, dock scheduling for warehou
 
 **"I want the web to be shown at all times" (same message):** the graph no longer hides itself on Pipeline. "Hide graph" is still there for whoever wants the room.
 
-## Status (Nov 24, 04:15)
+## A garbled company, a cleaner list while searching, and a calendar (his request, Nov 24, 04:14)
+
+Dockline ran on live data after the 03:54 changes: nine companies, 14 of 14 quotes found. (Why the first try failed is still not known.) Three things from that run:
+
+- **"What is 7KH 5HJDQ???"** One "company" was `7KH 5HJDQ URXS 75 )XOƓOOPHQW`: "The Regan Group TR Fulfillment" from a PDF whose font was never decoded, every letter 29 places down. Its quote passed the word-for-word check because the page really says that. Now `lib/garbled.ts` cuts unreadable stretches out of a page before the model or anyone sees it (`readable`, called in `shownText`; real English is over a third vowels, shifted text has few and no small letters), and `garbledName` refuses such a name as a last check. Readable pages come through unchanged, so saved runs still replay. Tested on that very string.
+- **"Make this part on the right cleaner"** (the Leads list while a search runs, which was nine rows, six of them saying "No reason to write found yet"). Now: a line of five steps (Companies, Reasons to write, People, A way in, Drafts; done, now, to come: `Steps` in `LeadsTab.tsx`, read from `run.step`), then companies with a reason to write as rows (logo or initials, name, the reason), then the rest as name chips under "Found, no reason to write yet". The finished list is as it was.
+- **"Add a calendar function that adds meetings to a calendar once a response is given."** `lib/meetings.ts`, `components/Calendar.tsx`, `Workspace.meetings`:
+  - When a logged reply is positive and is about talking (`wantsMeeting`), the agent puts a 30-minute meeting on the calendar **as a proposal**. The day and time are read from the reply by plain rules (`whenFrom`: weekdays, tomorrow, "Dec 3", "1/12", "2pm", "10:30", noon). If the reply names both, that is the time; if not, it is a suggestion (the day named at 10:00, the Monday of "next week", or the next working day) and the page says so.
+  - **Only the rep books it** ("Book it", after changing the time if needed). Booking moves the lead to Meeting booked, by the rep, and is audited. A booked meeting can be moved or cancelled.
+  - Pipeline opens with **Calendar** when there is a meeting: two weeks at a glance, then each meeting. A booked one has **Add to Google Calendar** (Google's own "add event" page, filled in; he presses Save there) and **Calendar file** (.ics for Apple Calendar and Outlook).
+  - **Nobody is invited for him.** The link and the file carry no guest; the lead's address is in the notes, and the page says to invite them from his own calendar. Do not add guests or any Google sign-in without his say: an invitation is a message sent to a real person.
+  - Times are wall-clock times on his machine with no zone (`"2026-12-01T14:00"`), which both outputs read as local.
+  - The example reply in the dialog now says "Tuesday at 2pm", so the demo shows an exact time.
+
+## Status (Nov 24, 04:40)
+
+68 checks pass (8 new: `tests/garbled.test.ts`, `tests/meetings.test.ts`, one in the pipeline run); lint and build are clean. Checked on sample data: the list while searching, a reply logged, the meeting proposed, booked, the Google link's dates. **Not opened: Google Calendar itself with that link** (the sandbox cannot reach it); the link format is Google's long-standing one. Seen by him on live data so far: the light look, logos, Dockline finding nine companies.
+
+### Earlier status (Nov 24, 04:15)
 
 60 checks pass (2 new in `tests/widen.test.ts`); lint and build are clean. Since 03:11, checked on sample data only: the menu, the setting, Keep and Delete per claim, the graph beside Pipeline. Seen by him on live data: the light look, the first screen, a real logo (and its crash, fixed). Never run live: "Nothing" and "More", the wider search.
 

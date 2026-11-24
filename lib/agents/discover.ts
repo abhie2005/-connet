@@ -1,6 +1,7 @@
 // Steps 2 to 4: find accounts, their buying signals, the people to talk to, and competitors.
 // In every step the model only proposes. A proposal is kept when its quote is found, word for
 // word, in the page it cites (lib/verify.ts); otherwise it is dropped and counted.
+import { garbledName } from "../garbled";
 import { companyId, competitorId, canonicalName, personId, schoolId, slug } from "../ids";
 import { llm } from "../providers/llm";
 import { search, type FoundPage, type SearchHint } from "../providers/search";
@@ -104,7 +105,7 @@ const sameQuote = (a: Evidence, b: Evidence) => a.sourceId === b.sourceId && a.q
 
 function mergeAccount(s: Store, out: AccountOut, shown: Source[], segments: string[], fallbackSegment: string, t: Tally, onlyExisting: boolean): Lead | null {
   const name = (out.name || "").trim();
-  if (name.length < 2) return null;
+  if (name.length < 2 || garbledName(name)) return null;
   const id = companyId(name);
   let lead = s.state.leads.find((l) => l.id === id) || null;
   if (!lead && onlyExisting) return null;

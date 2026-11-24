@@ -3,6 +3,7 @@
 // can be checked against it later.
 import { remember } from "../cache";
 import { config, modes } from "../config";
+import { readable } from "../garbled";
 import { bestPassages } from "../passages";
 import { sampleSearch } from "../sample/search";
 import { hooks } from "./hooks";
@@ -37,8 +38,9 @@ export function plainText(markdown: string): string {
 
 /** What the model is shown for one result: the engine's excerpt, then the passages of the page that bear on the query. */
 export function shownText(snippet: string, rawPage: string, about: string): string {
-  const excerpt = plainText(snippet).trim();
-  const raw = plainText(rawPage);
+  // Stretches of a PDF whose font was not decoded are cut out here: see lib/garbled.ts.
+  const excerpt = readable(plainText(snippet)).trim();
+  const raw = readable(plainText(rawPage));
   if (!raw.trim()) return excerpt.slice(0, SHOWN_CHARS);
   // When the excerpt is simply part of the page, the page's own passages already cover it.
   const inPage = excerpt.length > 0 && squash(raw).includes(squash(excerpt).slice(0, 80));

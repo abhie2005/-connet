@@ -43,6 +43,7 @@ function fresh(): Workspace {
     modes: modes(),
     doNotContact: [],
     settings: { freedom: "balanced" },
+    meetings: [],
   };
 }
 

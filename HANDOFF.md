@@ -7,6 +7,20 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 04:40. Yoon Woo's Claude: a calendar, a cleaner list while searching, and no more garbled companies
+
+**Why.** Yoon Woo, 04:14, after Dockline worked on live data (nine companies): "what is 7KH 5HJDQ???", "make this part on the right cleaner", "add a calendar function that adds meetings to a calendar once a response is given".
+
+**Done (on `main`).**
+- **The garbled company** was "The Regan Group" from a PDF whose letters came back shifted into capitals and digits. Such text is now cut out of a page before it is read, and such a name is refused.
+- **While a search runs**, Leads shows five steps (Companies, Reasons to write, People, A way in, Drafts), then the companies that have a reason to write, then the rest as a row of names.
+- **Calendar, under Pipeline.** Log a reply that agrees to talk and the agent puts a 30-minute meeting on the calendar as a proposal, at the day and time the reply names (or a suggestion, marked as one). "Book it" books it and moves the lead to Meeting booked. Then "Add to Google Calendar" or "Calendar file". Nobody is invited for you: that stays a thing you do in your own calendar.
+- 68 checks pass. Checked on sample data. Google Calendar itself was not opened from here.
+
+**Need.**
+- `[open]` Yoon Woo: pull, `npm run clean`, `npm run dev`. Approve a draft, then Pipeline, Log a reply, Use an example reply, Book it, Add to Google Calendar: say whether Google opens with the right day and time.
+- `[open]` Skylar: `docs/DEMO.md` at 2:15 changed: the reply step now ends with the meeting being booked. Worth showing: it is the "dashboard" part of the rubric doing something.
+
 ## Nov 24, 04:15. Yoon Woo's Claude: any product, a failed search that says why, the graph on every section
 
 **Why.** Yoon Woo tried an invented product on live data (Dockline) and got "No account survived the quote check". 03:54: "why did this example fail", "get rid of glyph", "make it work for any company", and "I want the web to be shown at all times".

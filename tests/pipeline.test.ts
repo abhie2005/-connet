@@ -99,6 +99,24 @@ test("a full run on sample data", async (t) => {
     assert.deepEqual(referrals.sort(), ["Northlight Charter Network", "Paperwise Publishing"]);
   });
 
+  await t.test("a reply that agrees to talk puts a meeting on the calendar, and only the rep books it", () => {
+    const m = s.state.messages[0];
+    const l = s.state.leads.find((x) => x.id === m.leadId)!;
+    assert.equal(s.state.meetings.length, 1);
+    const meeting = s.state.meetings[0];
+    assert.equal(meeting.leadId, l.id);
+    assert.equal(meeting.status, "proposed");
+    assert.equal(meeting.exact, false, "the reply said next week, no time");
+    assert.equal(l.stage, "replied", "a proposal does not move the lead");
+    p.decideMeeting(meeting.id, "book", "2026-12-01T14:00");
+    assert.equal(meeting.status, "booked");
+    assert.equal(meeting.start, "2026-12-01T14:00");
+    assert.equal(l.stage, "meeting");
+    assert.equal(l.stageBy, "rep");
+    assert.ok(s.state.audit.some((a) => a.action === "Booked a meeting" && a.actor === "rep"));
+    assert.throws(() => p.decideMeeting(meeting.id, "book", "next tuesday"), /Pick a day/);
+  });
+
   await t.test("an unsubscribe reply closes the lead and blocks the domain", async () => {
     const m = s.state.messages[1];
     p.decideMessage(m.id, "approve");

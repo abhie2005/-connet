@@ -17,7 +17,8 @@ import { topUpWallet } from "./providers/billing";
 import { scoreLead, strongestSignal } from "./score";
 import { emptyStats, store, type Store } from "./store";
 import { without } from "./marks";
-import { COSTS, FREEDOMS, STAGE_NAMES, type Evidence, type Founder, type Freedom, type Lead, type Product, type Stage, type WarmPath } from "./types";
+import { fromStamp, wantsMeeting, whenFrom } from "./meetings";
+import { COSTS, FREEDOMS, STAGE_NAMES, type Evidence, type Founder, type Freedom, type Lead, type Meeting, type Product, type Stage, type WarmPath } from "./types";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : /(s|ch|sh|x)$/.test(word) ? "es" : "s"}`;
 
@@ -499,9 +500,55 @@ export async function logReply(leadId: string, text: string) {
       s.log("planner", "say", `New way in: ${from.name} replied and used to work with ${to.name} (${target.company}) at ${row.hubName}. Ask ${from.name.split(" ")[0]} for an introduction before writing cold.`, { to: "rep" });
     }
   }
+  // They agreed to talk: put it on the calendar as a proposal. Only the rep books it.
+  if (result.intent === "positive" && wantsMeeting(text) && !(s.state.meetings || []).some((m) => m.leadId === lead.id && m.status !== "cancelled")) {
+    const contact = lead.contacts.find((c) => c.id === sent?.contactId) || lead.contacts[0] || null;
+    const when = whenFrom(text, new Date());
+    const meeting: Meeting = {
+      id: `mt${(s.state.meetings || []).length + 1}`,
+      leadId: lead.id,
+      contactId: contact?.id || null,
+      title: `${s.state.product?.name || "Intro"} intro: ${contact ? `${contact.name}, ` : ""}${lead.company}`,
+      start: when.start,
+      minutes: 30,
+      status: "proposed",
+      exact: when.exact,
+      note: [`With ${contact ? `${contact.name}, ${contact.title}, ` : ""}${lead.company}.`, contact?.email ? `Their address: ${contact.email}` : "", `Their reply: "${text.trim().slice(0, 400)}"`].filter(Boolean).join("\n"),
+      createdAt: new Date().toISOString(),
+    };
+    s.state.meetings = [...(s.state.meetings || []), meeting];
+    s.audit("agent", "Proposed a meeting", { agent: "planner", leadId: lead.id, note: `${sayWhen(when.start)}${when.exact ? "" : " (a suggestion: the reply named no exact time)"}` });
+    s.log("planner", "say", `${contact?.name || lead.company} agreed to talk. I put ${sayWhen(when.start)} on the calendar as a proposal${when.exact ? ", the time they named" : ": they named no exact time, so change it if needed"}. Confirm it under Pipeline.`, { to: "rep" });
+  }
   sortLeads(s);
   s.touch();
   return result;
+}
+
+const sayWhen = (start: string) => fromStamp(start).toLocaleString("en-US", { weekday: "long", month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+
+/** The rep books a proposed meeting (perhaps at another time), moves a booked one, or drops it. */
+export function decideMeeting(meetingId: string, action: "book" | "cancel", start?: string, minutes?: number) {
+  const s = store();
+  const meeting = (s.state.meetings || []).find((m) => m.id === meetingId);
+  if (!meeting) throw new Error("No such meeting");
+  const lead = leadOrThrow(s, meeting.leadId);
+  if (action === "cancel") {
+    meeting.status = "cancelled";
+    s.audit("rep", "Took a meeting off the calendar", { leadId: lead.id, note: sayWhen(meeting.start) });
+  } else {
+    if (start) {
+      if (Number.isNaN(fromStamp(start).getTime())) throw new Error("Pick a day and a time");
+      meeting.start = start.slice(0, 16);
+      meeting.exact = true;
+    }
+    if (minutes && minutes >= 10 && minutes <= 240) meeting.minutes = Math.round(minutes);
+    const moved = meeting.status === "booked";
+    meeting.status = "booked";
+    s.audit("rep", moved ? "Moved a meeting" : "Booked a meeting", { leadId: lead.id, note: `${sayWhen(meeting.start)}, ${meeting.minutes} min` });
+    if (lead.stage === "matched" || lead.stage === "contacted" || lead.stage === "replied") setStage(s, lead, "meeting", "rep", `Meeting booked for ${sayWhen(meeting.start)}`);
+  }
+  s.touch();
 }
 
 export function setDomain(leadId: string, domain: string) {

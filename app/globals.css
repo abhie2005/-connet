@@ -1276,3 +1276,232 @@ a.dex-site[href]:hover {
     animation-duration: 0.01s;
   }
 }
+
+/* ---- a search in progress ------------------------------------------------------------ */
+
+/* Where the search has got to: five steps in a row, joined by a line. */
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--color-faint);
+}
+
+.steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+}
+
+.steps li + li::before {
+  content: "";
+  width: 18px;
+  height: 1.5px;
+  border-radius: 1px;
+  background: var(--color-line-strong);
+  margin-right: 2px;
+}
+
+.steps-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-grid;
+  place-items: center;
+  font-size: 11.5px;
+  font-weight: 750;
+  background: var(--color-raise-2);
+  color: var(--color-soft);
+}
+
+.steps li.is-done {
+  color: var(--color-soft);
+}
+
+.steps li.is-done .steps-dot {
+  background: rgb(23 145 79 / 0.14);
+  color: var(--color-good);
+}
+
+.steps li.is-now {
+  color: var(--color-ink);
+}
+
+.steps li.is-now .steps-dot {
+  background: var(--color-signal);
+  color: #fff;
+  box-shadow: 0 0 0 4px var(--color-signal-pale);
+}
+
+.foundrow {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  padding: 10px 8px;
+  border-top: 1px solid var(--color-line);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.foundrow:hover {
+  background: var(--color-raise);
+}
+
+/* A company that is only a name so far. */
+.namechip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  border: 0;
+  border-radius: 8px;
+  padding: 5px 11px 5px 5px;
+  font-size: 13.5px;
+  font-weight: 650;
+  background: var(--color-raise);
+  color: var(--color-ink);
+  transition: background 0.15s;
+}
+
+.namechip:hover {
+  background: var(--color-raise-2);
+}
+
+.namechip .mono-face {
+  font-size: 9.5px !important;
+}
+
+.logo-face {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  overflow: hidden;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
+}
+
+.logo-face img {
+  width: 78%;
+  height: 78%;
+  object-fit: contain;
+}
+
+/* ---- the calendar -------------------------------------------------------------------- */
+
+.cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--color-line);
+  border: 1px solid var(--color-line);
+}
+
+.cal-day {
+  min-height: 64px;
+  padding: 6px 7px 7px;
+  background: var(--color-panel);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.cal-day.is-off {
+  background: var(--color-raise);
+}
+
+.cal-n {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 11.5px;
+  color: var(--color-faint);
+}
+
+.cal-n b {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--color-soft);
+}
+
+.cal-day.is-today .cal-n b {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 11px;
+  background: var(--color-ink);
+  color: var(--color-on-ink);
+}
+
+.cal-pill {
+  border-radius: 5px;
+  padding: 2px 6px;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.3;
+  background: var(--color-signal);
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-pill.is-proposed {
+  background: var(--color-flag);
+  color: var(--color-flag-ink);
+  box-shadow: inset 0 0 0 1px rgb(176 111 0 / 0.45);
+}
+
+.meet {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 13px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-line);
+  background: var(--color-panel);
+}
+
+.meet.is-proposed {
+  border-color: rgb(176 111 0 / 0.4);
+  background: linear-gradient(180deg, rgb(226 160 30 / 0.07), transparent 70%);
+}
+
+.meet-date {
+  flex: none;
+  width: 52px;
+  display: grid;
+  justify-items: center;
+  gap: 1px;
+  padding: 6px 0 7px;
+  border-radius: 10px;
+  background: var(--color-raise);
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--color-soft);
+  line-height: 1.15;
+}
+
+.meet-date b {
+  font-size: 21px;
+  font-weight: 800;
+  color: var(--color-ink);
+}
+
+.meet-when {
+  width: auto;
+  padding: 5px 9px;
+  font-size: 13.5px;
+}

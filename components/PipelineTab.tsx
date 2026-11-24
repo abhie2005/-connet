@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { ago } from "@/lib/client";
 import { STAGE_NAMES, type Lead, type Stage, type Workspace } from "@/lib/types";
 import type { Act } from "./BriefTab";
+import { Calendar } from "./Calendar";
 import { AGENTS, Empty, Icon, SectionTitle, Tier } from "./ui";
 
 const COLUMNS: { key: Stage; title: string; holds: Stage[] }[] = [
@@ -16,7 +17,7 @@ const COLUMNS: { key: Stage; title: string; holds: Stage[] }[] = [
 ];
 
 const ORDER: Stage[] = ["matched", "contacted", "replied", "meeting", "won"];
-const EXAMPLE = "Thanks for reaching out. This is timely for us. Could you do a call next week?";
+const EXAMPLE = "Thanks for reaching out. This is timely for us. Could you do a call on Tuesday at 2pm?";
 
 function Card({ lead, onReply, act }: { lead: Lead; onReply: () => void; act: Act }) {
   const contact = lead.contacts[0];
@@ -113,6 +114,7 @@ export function PipelineTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: 
 
   return (
     <div>
+      <Calendar ws={ws} act={act} busy={busy} />
       <div className="grid grid-cols-5 gap-2.5">
         {COLUMNS.map((col) => {
           const cards = leads.filter((l) => col.holds.includes(l.stage));
@@ -262,7 +264,7 @@ export function PipelineTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: 
           <Dialog.Overlay className="dialog-overlay" />
           <Dialog.Content className="modal sheet" aria-describedby={undefined}>
             <Dialog.Title className="text-[19px] font-extrabold m-0">Reply from {replyFor?.company}</Dialog.Title>
-            <p className="text-soft text-[14px] mt-1 mb-3">Paste what they wrote. The agent reads it, moves the account, and looks for people this reply can introduce you to.</p>
+            <p className="text-soft text-[14px] mt-1 mb-3">Paste what they wrote. The agent reads it, moves the account, puts a meeting on the calendar if they agree to talk, and looks for people this reply can introduce you to.</p>
             <textarea className="input" rows={5} value={text} onChange={(e) => setText(e.target.value)} placeholder="Their reply" autoFocus aria-label="Reply text" />
             <div className="flex items-center gap-2 mt-4">
               <button className="btn btn-main !py-2" onClick={submitReply} disabled={busy.has("reply") || text.trim().length < 2}>

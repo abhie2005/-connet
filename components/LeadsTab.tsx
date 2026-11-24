@@ -3,7 +3,10 @@
 // A row is a person, one line on why to write now, and one thing to do next. Everything else
 // about them is in their profile card, a click away.
 import { useState } from "react";
+import { cleanDomain } from "@/lib/logo";
+import { strongestSignal } from "@/lib/score";
 import { COSTS, type Contact, type Lead, type Workspace } from "@/lib/types";
+import { useLogo } from "./logos";
 import type { Act } from "./BriefTab";
 import { COST_NOTE, bestNext, ranked, viewOf, type LeadView } from "./leads";
 import { Empty, Icon, Monogram, Score, SourceLink } from "./ui";
@@ -183,6 +186,44 @@ function Row({ view, rank, h, force, quiet }: { view: LeadView; rank?: number; h
   );
 }
 
+// The order a search works in, and which of the server's steps belongs to each.
+const STEPS: { label: string; when: RegExp }[] = [
+  { label: "Companies", when: /product|accounts|wider/i },
+  { label: "Reasons to write", when: /signals/i },
+  { label: "People", when: /people/i },
+  { label: "A way in", when: /warm|competitors|graph/i },
+  { label: "Drafts", when: /draft/i },
+];
+
+/** Where the search has got to: done, doing, still to come. */
+function Steps({ step }: { step: string }) {
+  const at = Math.max(0, STEPS.findIndex((s) => s.when.test(step)));
+  return (
+    <ol className="steps" aria-label="Progress of the search">
+      {STEPS.map((s, i) => (
+        <li key={s.label} className={i < at ? "is-done" : i === at ? "is-now" : ""} aria-current={i === at ? "step" : undefined}>
+          <span className="steps-dot">{i < at ? <Icon name="check" size={12} /> : i + 1}</span>
+          {s.label}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** A company's face: its own logo when its website publishes one, else its initials. */
+function CompanyFace({ lead, size }: { lead: Lead; size: number }) {
+  const logo = useLogo(cleanDomain(lead.domain));
+  if (!logo) return <Monogram name={lead.company} size={size} square />;
+  return (
+    <span className="logo-face" style={{ width: size, height: size, borderRadius: Math.round(size * 0.24) }}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src={logo} alt="" />
+    </span>
+  );
+}
+
+const strongest = (l: Lead) => (strongestSignal(l.signals) || l.signals[0])?.summary || "";
+
 function Fold({ title, count, note, children }: { title: string; count: number; note: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
@@ -208,17 +249,48 @@ export function LeadsTab(h: Handlers) {
   // While a run is still collecting, nothing has been scored: show what was found so far, and
   // rank it only once the graph has been asked.
   const collecting = ws.run.status === "running" && ws.leads.every((l) => l.score.total === 0);
-  if (collecting)
+  if (collecting) {
+    // Companies with something to write about first, each on its own line. The rest are only
+    // names so far, so they are shown as names, not as a row each saying "nothing yet".
+    const withReason = ws.leads.filter((l) => l.signals.length > 0 && l.status !== "suppressed");
+    const bare = ws.leads.filter((l) => !withReason.includes(l));
     return (
       <div>
-        <h2 className="listhead">
-          Found so far <span className="count">{ws.leads.length}</span>
-        </h2>
-        {ws.leads.map((l) => (
-          <Row key={l.id} view={viewOf(l, ws)} h={h} quiet />
-        ))}
+        <Steps step={ws.run.step} />
+        {withReason.length > 0 && (
+          <>
+            <h2 className="listhead !mt-5">
+              With a reason to write <span className="count">{withReason.length}</span>
+            </h2>
+            {withReason.map((l) => (
+              <div key={l.id} className="foundrow" onClick={() => h.onOpen(l.id)} role="button" tabIndex={0} onKeyDown={(e) => e.key === "Enter" && h.onOpen(l.id)}>
+                <CompanyFace lead={l} size={38} />
+                <div className="min-w-0">
+                  <div className="font-bold leading-snug truncate">{l.company}</div>
+                  <div className="text-[14px] leading-snug text-soft line-clamp-2">{strongest(l)}</div>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+        {bare.length > 0 && (
+          <>
+            <h2 className="listhead !mt-5">
+              {withReason.length ? "Found, no reason to write yet" : "Found so far"} <span className="count">{bare.length}</span>
+            </h2>
+            <div className="flex flex-wrap gap-2 mt-1.5">
+              {bare.map((l) => (
+                <button key={l.id} className="namechip" onClick={() => h.onOpen(l.id)}>
+                  <CompanyFace lead={l} size={22} />
+                  <span className="truncate">{l.company}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     );
+  }
 
   const list = ranked(ws);
   const best = bestNext(ws);

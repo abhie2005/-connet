@@ -1,5 +1,5 @@
 // Everything the rep can do after a run, as one endpoint: { type, ... }.
-import { decideClaim, decideExpansion, decideMessage, draftLead, enrichLead, logReply, moveStage, setDomain, setFreedom, suppress, topUp } from "@/lib/pipeline";
+import { decideClaim, decideExpansion, decideMeeting, decideMessage, draftLead, enrichLead, logReply, moveStage, setDomain, setFreedom, suppress, topUp } from "@/lib/pipeline";
 import { store } from "@/lib/store";
 import { STAGES, type Freedom, type Stage } from "@/lib/types";
 
@@ -24,6 +24,9 @@ export async function POST(request: Request) {
         break;
       case "claim":
         decideClaim(str(body.messageId), Number(body.index), body.action as "delete" | "keep" | "unkeep");
+        break;
+      case "meeting":
+        decideMeeting(str(body.meetingId), body.action as "book" | "cancel", str(body.start) || undefined, Number(body.minutes) || undefined);
         break;
       case "settings":
         setFreedom(body.freedom as Freedom);

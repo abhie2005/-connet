@@ -306,6 +306,23 @@ export interface Founder {
   employers: string[];
 }
 
+/** A conversation with a lead. The agent proposes one when a reply agrees to talk; only the rep books it. */
+export interface Meeting {
+  id: string;
+  leadId: string;
+  contactId: string | null;
+  title: string;
+  /** Wall-clock time on the rep's machine, "YYYY-MM-DDTHH:MM". */
+  start: string;
+  minutes: number;
+  status: "proposed" | "booked" | "cancelled";
+  /** The reply named both a day and a time. If not, `start` is only a suggestion. */
+  exact: boolean;
+  /** What the reply said, and who to invite: goes into the calendar entry. */
+  note: string;
+  createdAt: string;
+}
+
 /** How much the writer may add that no checked fact backs.
     strict: nothing; what is left unbacked is taken out before the rep sees it.
     balanced: nothing on purpose; what slips through is marked for the rep.
@@ -341,6 +358,7 @@ export interface Workspace {
   modes: Modes;
   doNotContact: string[]; // domains
   settings: Settings;
+  meetings: Meeting[];
 }
 
 export const COSTS = {
