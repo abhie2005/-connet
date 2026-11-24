@@ -37,7 +37,7 @@ interface L extends SimulationLinkDatum<N> {
 
 /** One kind of thing picked out by pressing its name in the legend: it stays bright and named,
     and everything else steps back. */
-export type Spot = "company" | "person" | "signal" | "competitor" | "waiting";
+export type Spot = "company" | "person" | "signal" | "jobpost" | "competitor" | "waiting";
 
 export interface Highlight {
   nodes: Set<string>;
@@ -117,6 +117,7 @@ const KIND: Record<string, string> = {
   Company: "Company",
   Person: "Person",
   Signal: "Reason to write now",
+  JobPost: "Job post",
   Competitor: "Competitor",
   School: "School",
 };
@@ -132,6 +133,8 @@ function radius(node: GNode, lead: Lead | undefined, net: Net, ring: 0 | 1 | 2):
       return net === "you" && ring === 1 ? 7.5 : 6.5;
     case "Signal":
       return 6;
+    case "JobPost":
+      return 7;
     case "Competitor":
       return 10;
     default:
@@ -405,9 +408,11 @@ export function GraphView({
             ? n.node.label === "Person" && !n.node.props.isFounder
             : spot === "signal"
               ? n.node.label === "Signal"
-              : spot === "competitor"
-                ? n.node.label === "Competitor"
-                : live.current.waiting.has(n.id));
+              : spot === "jobpost"
+                ? n.node.label === "JobPost"
+                : spot === "competitor"
+                  ? n.node.label === "Competitor"
+                  : live.current.waiting.has(n.id));
       // A ring being pointed at: it lights up, the people standing on it stay bright, the rest steps back.
       const hotRing = you ? live.current.ring : null;
       const offRing = (n: N | undefined) => hotRing != null && !!n && !n.node.props.isFounder && !(n.node.label === "Person" && n.ring === hotRing);
@@ -562,6 +567,23 @@ export function GraphView({
           ctx.lineWidth = 1.5;
           ctx.strokeStyle = WHITE;
           ctx.stroke();
+        } else if (label === "JobPost") {
+          const w = r * 1.15, hh = r * 1.45;
+          ctx.roundRect(n.x - w, n.y - hh, w * 2, hh * 2, 2.5);
+          ctx.fillStyle = "#CBC8F6";
+          ctx.fill();
+          ctx.lineWidth = 1.4;
+          ctx.strokeStyle = ACCENT;
+          ctx.stroke();
+          // Two short lines, so it reads as a posting at a glance.
+          ctx.beginPath();
+          ctx.moveTo(n.x - w * 0.45, n.y - hh * 0.3);
+          ctx.lineTo(n.x + w * 0.45, n.y - hh * 0.3);
+          ctx.moveTo(n.x - w * 0.45, n.y + hh * 0.25);
+          ctx.lineTo(n.x + w * 0.45, n.y + hh * 0.25);
+          ctx.lineWidth = 1.1;
+          ctx.strokeStyle = ACCENT;
+          ctx.stroke();
         } else if (label === "School") {
           const s = r * 0.9;
           ctx.roundRect(n.x - s, n.y - s, s * 2, s * 2, 4);
@@ -647,7 +669,7 @@ export function GraphView({
         // With a spotlight on, what is picked out is named (people and reasons to write too) and
         // the rest is not, so the picture goes quiet around it.
         const picked = !!spot && inSpot(n);
-        const named = spot ? picked : hotRing != null && label === "Person" && n.ring === hotRing ? true : label !== "Signal" && (label !== "Person" || founder || (hl && hl.nodes.has(n.id)) || hover === n.id || moving.has(n.id) || (you && n.ring !== 0));
+        const named = spot ? picked : hotRing != null && label === "Person" && n.ring === hotRing ? true : label !== "Signal" && label !== "JobPost" && (label !== "Person" || founder || (hl && hl.nodes.has(n.id)) || hover === n.id || moving.has(n.id) || (you && n.ring !== 0));
         if (named && age > 0.5) {
           // Which names win when two would overlap: whoever the net is about, then whatever is
           // being pointed at, then the best lead, then leads by score, then the rest; competitors last.
@@ -668,7 +690,7 @@ export function GraphView({
       const free = (b: { x0: number; y0: number; x1: number; y1: number }, self: string) => !taken.some((o) => o.of !== self && b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
       // A name is not written across somebody else's disc either.
       for (const o of d.nodes) {
-        if (o.x == null || o.y == null || o.node.label === "Signal" || o.node.label === "Person") continue;
+        if (o.x == null || o.y == null || o.node.label === "Signal" || o.node.label === "JobPost" || o.node.label === "Person") continue;
         taken.push({ x0: o.x - o.r, x1: o.x + o.r, y0: o.y - o.r, y1: o.y + o.r, of: o.id });
       }
       // The edges of what can be seen, in the graph's own units: a name is kept inside them.
@@ -683,7 +705,7 @@ export function GraphView({
       labels.sort((a, b) => a.rank - b.rank);
       for (const { n, text, bold, rank } of labels) {
         const px = Math.max(10.5, Math.min(17, 11.5 / v.k));
-        const long = n.node.label === "Signal" ? 34 : 26;
+        const long = n.node.label === "Signal" || n.node.label === "JobPost" ? 34 : 26;
         const short = text.length > long ? text.slice(0, long - 1) + "…" : text;
         // People are labelled above their dot, everything else below, so the two do not collide.
         // In your net a person's name goes on the side away from their company, whose own name
@@ -904,7 +926,7 @@ export function GraphView({
       canvas.current!.style.cursor = "default";
       return setTip({ x: Math.min(e.clientX - box.left + 14, box.width - 250), y: e.clientY - box.top + 14, title: ring.title, sub: `${count} ${count === 1 ? "person" : "people"} ${ring.says}` });
     }
-    const opens = n && n.node.label !== "Product" && n.node.label !== "School" && !n.node.props.isFounder && !(n.node.label === "Company" && !live.current.leads.has(n.id));
+    const opens = n && n.node.label !== "Product" && n.node.label !== "School" && n.node.label !== "JobPost" && !n.node.props.isFounder && !(n.node.label === "Company" && !live.current.leads.has(n.id));
     canvas.current!.style.cursor = opens ? "pointer" : "default";
     if (!n) return setTip(null);
     const box = wrap.current!.getBoundingClientRect();

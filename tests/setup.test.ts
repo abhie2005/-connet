@@ -62,7 +62,7 @@ test("Flexprice setup: finds the region, then creates the customer, the features
   assert.equal(first.out.includes("fp-secret"), false);
   assert.match(fs.readFileSync(ENV, "utf8"), /FLEXPRICE_API_HOST=https:\/\/api\.cloud\.flexprice\.io\/v1/);
   assert.equal(made.customers, 1);
-  assert.deepEqual(made.features.map((f) => (f.meter as { event_name: string }).event_name), ["discovery.run", "lead.enriched", "outreach.drafted", "outreach.sent", "graph.query"]);
+  assert.deepEqual(made.features.map((f) => (f.meter as { event_name: string }).event_name), ["discovery.run", "lead.enriched", "outreach.drafted", "radar.scan", "outreach.sent", "graph.query"]);
   assert.deepEqual((made.features[0].meter as { aggregation: unknown }).aggregation, { type: "SUM", field: "credits" });
   assert.equal(made.wallets.length, 1);
   assert.equal(made.wallets[0].customer_id, "cust_1");
@@ -70,7 +70,7 @@ test("Flexprice setup: finds the region, then creates the customer, the features
   const second = await quiet(setupFlexprice); // running it again must not make anything twice
   assert.equal(second.result, true, second.out);
   assert.equal(made.customers, 1);
-  assert.equal(made.features.length, 5);
+  assert.equal(made.features.length, 6);
   assert.equal(made.wallets.length, 1);
   fs.rmSync(ENV, { force: true });
 });

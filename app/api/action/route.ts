@@ -1,5 +1,5 @@
 // Everything the rep can do after a run, as one endpoint: { type, ... }.
-import { decideClaim, decideExpansion, decideMeeting, decideMessage, setAddress, draftLead, enrichLead, logReply, moveStage, setDomain, setFreedom, suppress, topUp } from "@/lib/pipeline";
+import { decideClaim, decideExpansion, decideMeeting, decideMessage, setAddress, draftLead, enrichLead, logReply, moveStage, scanJobs, setDomain, setFreedom, suppress, topUp } from "@/lib/pipeline";
 import { store } from "@/lib/store";
 import { STAGES, type Freedom, type Stage } from "@/lib/types";
 
@@ -50,6 +50,8 @@ export async function POST(request: Request) {
       case "topup":
         await topUp(Math.max(1, Math.min(100, Number(body.credits) || 20)));
         break;
+      case "scan":
+        return Response.json({ ok: true, result: await scanJobs() });
       case "suppress":
         suppress(str(body.leadId));
         break;

@@ -227,7 +227,7 @@ function NetSwitch({ net, onChange, product, canYou, within }: { net: Net; onCha
 }
 
 /** What the shapes on the graph mean. Only the few that need saying: the rest is named on the graph. */
-function Legend({ net, waiting, competitors, spot, onSpot }: { net: Net; waiting: boolean; competitors: boolean; spot: Spot | null; onSpot: (s: Spot | null) => void }) {
+function Legend({ net, waiting, competitors, jobposts, spot, onSpot }: { net: Net; waiting: boolean; competitors: boolean; jobposts: boolean; spot: Spot | null; onSpot: (s: Spot | null) => void }) {
   type Item = { key: string; label: string; mark: React.ReactNode; spot?: Spot; hint?: string };
   // Your net needs no key of its own: each ring says what it means on the graph.
   const items: Item[] =
@@ -237,6 +237,7 @@ function Legend({ net, waiting, competitors, spot, onSpot }: { net: Net; waiting
           { key: "company", spot: "company", hint: "the companies that could buy", label: "Company", mark: <circle cx="9" cy="9" r="6" fill="#FFFFFF" stroke="#1B1640" strokeWidth="2.200" /> },
           { key: "person", spot: "person", hint: "the people found there", label: "Person", mark: <circle cx="9" cy="9" r="4.400" fill="#2E2863" stroke="#FFFFFF" strokeWidth="1.400" /> },
           { key: "signal", spot: "signal", hint: "the reasons to write now", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5A34D6" stroke="#FFFFFF" strokeWidth="1.200" /> },
+          ...(jobposts ? [{ key: "jobpost", spot: "jobpost" as Spot, hint: "the job postings behind them", label: "Job post", mark: <><rect x="4.400" y="2.600" width="9.200" height="12.800" rx="2" fill="#CBC8F6" stroke="#5A34D6" strokeWidth="1.300" /><path d="M6.800 7.400h4.400M6.800 10.600h4.400" stroke="#5A34D6" strokeWidth="1.100" /></> }] : []),
           ...(competitors ? [{ key: "competitor", spot: "competitor" as Spot, hint: "what they could buy instead", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#CBC8F6" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.600" /> }] : []),
         ];
   if (waiting) items.push({ key: "waiting", spot: "waiting", hint: "who has a draft waiting for you", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="3 2.600" /> });
@@ -647,7 +648,7 @@ export function App() {
               Hide graph
             </button>
           </div>
-          <Legend net={net} waiting={waiting.size > 0} competitors={ws.graph.nodes.some((n) => n.label === "Competitor")} spot={shownSpot} onSpot={setSpot} />
+          <Legend net={net} waiting={waiting.size > 0} competitors={ws.graph.nodes.some((n) => n.label === "Competitor")} jobposts={ws.graph.nodes.some((n) => n.label === "JobPost")} spot={shownSpot} onSpot={setSpot} />
           <div className="relative flex-1 min-h-0">
             <div className="dots absolute inset-0 pointer-events-none" />
             <div className="absolute inset-0">
@@ -673,7 +674,7 @@ export function App() {
           {/* Keyed by section, so each one opens at its top and not where the last one was left. */}
           <div key={tab} className="scroll flex-1 min-h-0 px-7 py-6">
             {tab === "target" && <BriefTab ws={ws} act={act} busy={busy} />}
-            {tab === "leads" && <LeadsTab ws={ws} act={act} busy={busy} onOpen={open} onDraft={draft} onReview={() => go("approve")} />}
+            {tab === "leads" && <LeadsTab ws={ws} act={act} busy={busy} onOpen={open} onDraft={draft} onReview={() => go("approve")} onScan={() => void act({ type: "scan" }, "scan")} />}
             {tab === "approve" && <ApprovalsTab ws={ws} act={act} busy={busy} />}
             {tab === "pipeline" && <PipelineTab ws={ws} act={act} busy={busy} onOpen={(id) => open(id)} />}
           </div>

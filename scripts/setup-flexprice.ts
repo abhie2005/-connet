@@ -17,6 +17,7 @@ const FEATURES: { event: string; name: string; sum: boolean }[] = [
   { event: "discovery.run", name: "Discovery run", sum: true },
   { event: "lead.enriched", name: "Lead enriched", sum: true },
   { event: "outreach.drafted", name: "Message drafted", sum: true },
+  { event: "radar.scan", name: "Hiring Radar scan", sum: true },
   { event: "outreach.sent", name: "Message sent", sum: false },
   { event: "graph.query", name: "Graph query", sum: false },
 ];
