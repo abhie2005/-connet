@@ -39,6 +39,10 @@ export const config = {
   },
   bandHost: (env("BAND_API_HOST") || "https://app.band.ai/api/v1").replace(/\/+$/, ""),
 
+  // Lets an outside agent (Teamily) work the deal rooms through /api/mcp. Unset: that endpoint
+  // is off, which is what you want, because reaching it needs a public URL.
+  mcpToken: env("CONNET_MCP_TOKEN"),
+
   // TACT_SAMPLE=1 forces sample data everywhere (the safe demo, no network at all).
   forceSample: env("TACT_SAMPLE") === "1",
   startCredits: Number(env("TACT_START_CREDITS") || 30),

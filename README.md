@@ -51,6 +51,7 @@ Every key is optional. A missing key switches that one part to sample data, and 
 | `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD` | Neo4j as the graph database; reasoning queries run there in Cypher | console.neo4j.io (Aura free) |
 | `FLEXPRICE_API_KEY` | Usage events sent to Flexprice; the credit gate reads the Flexprice wallet | flexprice.io |
 | `BAND_CHAT_ID`, `BAND_API_KEY_*` | The agents' conversation mirrored into a Band room | band.ai |
+| `CONNET_MCP_TOKEN` | `/api/mcp`: lets an outside agent (Teamily) read and work the deal rooms | any long random string of your own |
 
 **Never commit `.env.local`.** It is in `.gitignore`.
 
@@ -120,6 +121,28 @@ Finding the lead and writing the email is half the work. The other half is the f
 - **When they reply.** The room hears the reply and what to do next. On a reply with interest, the owner's task becomes booking the meeting that is already on the Calendar, and an **Invite client** button appears.
 - **Inviting the client.** A rep press only, never the agent's, never before a reply with interest, and it records who pressed it, like every other approval here.
 - **Where it shows.** A **Deal room** fold on the profile card, and a **Deal room** chip on the Pipeline card. Opening a room, and a reply arriving in one, are also said in the agents' feed, which carries them to the Band room when Band keys are set.
+
+### Working a deal room from Teamily
+
+Teamily is an AI-native messenger, and its agents can call MCP tools. Rather than this app pushing copies of every message into it, the room is offered to it: point a Teamily agent at `/api/mcp` and the deal room can be read and worked from inside a Teamily chat.
+
+| Tool | What it does |
+|---|---|
+| `list_deal_rooms` | The rooms that are open: company, tier, score, stage, how many tasks nobody has done |
+| `get_deal_room` | One room in full: who is in it, the brief, everything said, who owns what |
+| `post_to_deal_room` | Say something in a room. It is marked **Said from outside this app** |
+| `complete_task` | Tick a task off, or put it back |
+
+**Approving a draft is not a tool, and neither is inviting the client.** Reading what was written is fine; deciding to send it, and deciding to put the client in the room, stay presses in this app's own screen. There is a test that says so.
+
+Turn it on with `CONNET_MCP_TOKEN` in `.env.local`, any long random string. Without it the endpoint answers 404, which is what you want, because reaching it from Teamily needs a public URL:
+
+```bash
+ngrok http 3000
+# then in Teamily, add the MCP server:
+#   URL:    https://<your-ngrok-subdomain>.ngrok-free.app/api/mcp
+#   Header: Authorization: Bearer <CONNET_MCP_TOKEN>
+```
 
 ## The screen
 

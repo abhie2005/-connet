@@ -198,6 +198,15 @@ Analytics are computed from the audit trail on the page: stage-to-stage conversi
 - **The gate.** `inviteClient` throws unless `positiveReply` is set, and records `invitedBy: "rep"` with an audit entry. Nothing in the agent's path calls it.
 - **Band.** Opening a room and a reply arriving in one are said in the agents' feed through `store.log(..., "say", ...)`, which already mirrors to Band when keys are set, so a deal room can be followed from Band Desktop with the rest of the hand-offs. No new provider, and no Band means no difference.
 
+### The deal rooms over MCP (`app/api/mcp/route.ts`)
+
+JSON-RPC 2.0 over HTTP, protocol `2025-06-18`, hand-rolled: `initialize`, `ping`, `tools/list`, `tools/call`, and a 202 for notifications. No SDK, no new dependency.
+
+- **Four tools.** `list_deal_rooms`, `get_deal_room`, `post_to_deal_room`, `complete_task`, reading through `lib/dealroom.ts` like the app's own screen does.
+- **What is deliberately absent.** No tool approves a draft, records a send, or invites the client. Those are the two human gates in this app, and nothing reachable over a public URL can reach them. `tests/mcp.test.ts` asserts the tool list and that a call to `invite_client` is an error.
+- **Shut by default.** No `CONNET_MCP_TOKEN`, no endpoint: it answers 404, since a public URL (ngrok) is what makes it reachable at all. With a token set, every call must carry it as `Authorization: Bearer` or `x-api-key`.
+- **Marked.** Anything said through it is stored with `from: "outside"`, shown as **Said from outside this app**, and written to the audit trail, so a line in a room always says where it came from.
+
 ## 7. Metering and the credit gate
 
 `store.spend()` writes every metered action to a local ledger and sends it to Flexprice (`POST /events` with `event_name`, `external_customer_id`, `event_id`, `properties`).

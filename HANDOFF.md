@@ -25,11 +25,20 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 - Docs: a Deal Room section in `README.md` and in `docs/ARCHITECTURE.md` section 6.
 
 **Not done, on purpose.**
-- **Teamily is not built.** teamily.ai publishes no developer API, and I was given no docs, endpoint or key, so there was nothing to build against and I did not invent one. Band already does this job.
+- **Nothing is pushed into Teamily.** Teamily does have Agent APIs (REST, MCP and an OpenAI-compatible mode, opened in their web-v2.0.0), but the console that carries the key and the endpoint shapes is behind a login at `teamily.ai/developers`, so I had no paths to write against and did not invent any. Instead the room is offered to Teamily - see below.
 - **No Settings editor for the team.** The four roles are the default on a fresh workspace (`DEFAULT_TEAM` in `lib/types.ts`) and `settings.team` is read and honoured wherever it is set, so an editor is a form over a field that already works - it was the cheapest thing to drop against the clock.
 - **`docs/DEMO.md` is untouched.** The script already runs 3:05 and needs a cut, so adding a row would make it worse. See below.
 
+**Teamily, the other way round (`/api/mcp`).** Rather than this app pushing copies of every message into Teamily, the deal room is offered to Teamily's agent as MCP tools: `list_deal_rooms`, `get_deal_room`, `post_to_deal_room`, `complete_task`. A Teamily agent pointed at the endpoint can read a room and work it without anybody leaving that chat.
+
+- JSON-RPC 2.0 over HTTP, protocol `2025-06-18`, hand-rolled in `app/api/mcp/route.ts`. No SDK, no new dependency.
+- **Approving a draft is not a tool, and neither is inviting the client.** Those are the two human gates and nothing reachable over a public URL can reach them. `tests/mcp.test.ts` asserts the whole tool list and that `invite_client` comes back an error.
+- Shut unless `CONNET_MCP_TOKEN` is set, because reaching it needs `ngrok http 3000`. Unset it answers 404, which is what a live run should have until the moment it is wanted.
+- Anything said through it is stored `from: "outside"`, shown as **Said from outside this app**, and written to the audit trail.
+- `tests/mcp.test.ts`, 8 checks. **113 checks pass in total**, lint and build clean.
+
 **Need.**
+- `[open]` Yoon Woo: if you want an actual Teamily group to appear (this app pushing into Teamily, not Teamily pulling from us), I need the REST base URL, the auth header name and the exact paths from `teamily.ai/developers` - it is behind your login. Put any key in `.env.local`, never in chat or in this file.
 - `[open]` Yoon Woo: review the branch. It touches `lib/pipeline.ts` in two places (the approve branch of `decideMessage`, and the end of `logReply`), both wrapped in try/catch. Nothing touches the approval gate itself, `lib/name.ts`, or the quote check. No existing test changed. It has never been run against the live services.
 - `[open]` Skylar: the Deal Room needs no row of its own. At **2:20**, after "Approve and send", add to what you already say: "and the team gets a room with the deal already in it - the brief, and a task each." At **2:30**, when the reply is read, the room's tasks update and **Invite client** appears; the line is "the client is not in that room until I put them there." That is about ten seconds across two rows you already have, instead of fifteen on a new one.
 

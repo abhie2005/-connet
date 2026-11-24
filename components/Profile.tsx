@@ -141,7 +141,7 @@ function DealRoomPanel({ room, lead, ws, act, busy }: { room: DealRoom; lead: Le
         {room.messages.map((m) => (
           <div key={m.id} className="box p-3">
             <div className="text-faint text-[12px] mb-1.5">
-              {m.kind === "brief" ? "The brief" : m.kind === "reply" ? "Their reply" : "Note"}
+              {m.from === "outside" ? "Said from outside this app" : m.kind === "brief" ? "The brief" : m.kind === "reply" ? "Their reply" : "Note"}
             </div>
             <div className="text-[14px] leading-relaxed whitespace-pre-line">{m.text}</div>
           </div>

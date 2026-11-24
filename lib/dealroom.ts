@@ -101,11 +101,11 @@ export function openDealRoom(leadId: string): DealRoom | null {
  * Add a line to a room. Returns null when there is no room for that lead yet. `announce` also
  * says it in the agents' feed, which is what carries it into the Band room when Band is set up.
  */
-export function postToDealRoom(leadId: string, text: string, kind: "reply" | "note" = "note", announce = false): DealRoom | null {
+export function postToDealRoom(leadId: string, text: string, kind: "reply" | "note" = "note", announce = false, from = "agent"): DealRoom | null {
   const s = store();
   const room = roomFor(s, leadId);
   if (!room) return null;
-  room.messages.push({ id: nextId("dm", room.messages), at: new Date().toISOString(), from: "agent", kind, text });
+  room.messages.push({ id: nextId("dm", room.messages), at: new Date().toISOString(), from, kind, text });
   if (announce) {
     const lead = s.state.leads.find((l) => l.id === leadId);
     s.log("planner", "say", `Deal room${lead ? `, ${lead.company}` : ""}: ${text}`, { to: "rep" });
@@ -167,4 +167,42 @@ export function inviteClient(leadId: string) {
   postToDealRoom(leadId, "A rep invited the client into this room. Everything said from here is said in front of them.", "note");
   s.audit("rep", "Invited the client into the deal room", { leadId, note: lead ? lead.company : "" });
   s.touch();
+}
+
+/** The rooms, flattened for something reading them from outside (the MCP tools). */
+export function listDealRooms() {
+  const s = store();
+  return rooms(s).map((room) => {
+    const lead = s.state.leads.find((l) => l.id === room.leadId);
+    return {
+      leadId: room.leadId,
+      company: lead?.company || room.leadId,
+      tier: lead?.score.tier || null,
+      score: lead?.score.total ?? null,
+      stage: lead?.stage || null,
+      openTasks: room.tasks.filter((t) => !t.done).length,
+      clientInvited: room.clientInvited,
+      positiveReply: room.positiveReply,
+      openedAt: room.openedAt,
+    };
+  });
+}
+
+/** One room in full: the brief, every line said in it, and who owns what. */
+export function getDealRoom(leadId: string) {
+  const s = store();
+  const room = roomFor(s, leadId);
+  if (!room) return null;
+  const lead = s.state.leads.find((l) => l.id === room.leadId);
+  const who = (id: string) => room.members.find((m) => m.id === id)?.role || id;
+  return {
+    leadId: room.leadId,
+    company: lead?.company || room.leadId,
+    members: room.members.map((m) => ({ id: m.id, role: m.role, name: m.name })),
+    messages: room.messages.map((m) => ({ at: m.at, from: m.from === "agent" ? "agent" : who(m.from), kind: m.kind, text: m.text })),
+    tasks: room.tasks.map((t) => ({ id: t.id, owner: who(t.memberId), text: t.text, done: t.done })),
+    positiveReply: room.positiveReply,
+    clientInvited: room.clientInvited,
+    meetingId: room.meetingId,
+  };
 }
