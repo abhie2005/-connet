@@ -11,7 +11,7 @@
    violet at / and grey here, and the key below reads the same palette so the two cannot disagree. */
 import { useMemo, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { GraphView, type Spot } from "@/components/GraphView";
+import { GraphView, type Flow, type Spot } from "@/components/GraphView";
 import { graphMarks } from "@/components/graph-marks";
 import { DashboardParticles } from "./dashboard-particles";
 import { bestNext } from "@/components/leads";
@@ -40,9 +40,8 @@ function Nets({ net, onChange, product, canYou, within }: { net: Net; onChange: 
   );
 }
 
-export function DashboardGraph({ ws, appHref, theme, picked, onPick }: { ws: Workspace; appHref: string; theme: "light" | "dark"; picked: string | null; onPick: (id: string | null) => void }) {
+export function DashboardGraph({ ws, appHref, theme, picked, onPick, net, onNet, flows }: { ws: Workspace; appHref: string; theme: "light" | "dark"; picked: string | null; onPick: (id: string | null) => void; net: Net; onNet: (n: Net) => void; flows: Flow[] }) {
   const C = theme === "dark" ? SLATE_DARK : SLATE;
-  const [net, setNet] = useState<Net>("product");
   const [spot, setSpot] = useState<Spot | null>(null);
 
   const reach = useMemo(() => reachOf(ws.graph), [ws]);
@@ -76,7 +75,7 @@ export function DashboardGraph({ ws, appHref, theme, picked, onPick }: { ws: Wor
           <h2>The net</h2>
           <p className="gd-graph-note">Every company, person and reason to write the agents found, and how they connect. Drag to move it, scroll to come closer, double-click to put it back.</p>
         </div>
-        <Nets net={net} onChange={setNet} product={ws.product?.name || "The product"} canYou={canYou} within={within} />
+        <Nets net={net} onChange={onNet} product={ws.product?.name || "The product"} canYou={canYou} within={within} />
       </header>
 
       <div className="gd-key" aria-label="What the shapes on the graph mean. Point at one to pick it out." onMouseLeave={() => setSpot(null)}>
@@ -114,7 +113,7 @@ export function DashboardGraph({ ws, appHref, theme, picked, onPick }: { ws: Wor
           reach={reach}
           highlight={null}
           spot={shown}
-          flows={[]}
+          flows={flows}
           waiting={waiting}
           best={best?.lead.id || null}
           palette={C}

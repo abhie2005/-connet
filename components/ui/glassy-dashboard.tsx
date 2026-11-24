@@ -19,6 +19,8 @@ import { ApprovalsTab } from "@/components/ApprovalsTab";
 import { PipelineTab } from "@/components/PipelineTab";
 import { Profile } from "@/components/Profile";
 import { bestNext, ranked, viewOf } from "@/components/leads";
+import { useFlows } from "@/components/flows";
+import type { Net } from "@/lib/graph/nets";
 import type { Lead } from "@/lib/types";
 import { derive, type Derived, type LaneItem } from "@/lib/dashboard";
 import { DashboardGraph } from "./dashboard-graph";
@@ -697,6 +699,9 @@ export function GlassyDashboard({
   const [picked, setPicked] = useState<string | null>(null);
   /** The profile card the app opens on a lead, opened from here the same way. */
   const [card, setCard] = useState<{ lead: string; focus: string | null } | null>(null);
+  /** Two nets over one graph, as in the app. The flows are routed along whichever is showing. */
+  const [net, setNet] = useState<Net>("product");
+  const { flows, begin, asked } = useFlows(ws, net);
   const root = useRef<HTMLDivElement>(null);
   const scrollArea = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
@@ -715,7 +720,17 @@ export function GlassyDashboard({
 
   const d = useMemo(() => derive(ws, windowOf[period]), [ws, period]);
   const open = useCallback((leadId: string, focus: string | null = null) => setCard({ lead: leadId, focus }), []);
-  const drafting = useCallback((lead: Lead, force?: boolean) => act({ type: "draft", leadId: lead.id, force: force || lead.status === "held" }, `d:${lead.id}`).then(() => undefined), [act]);
+  const drafting = useCallback(
+    async (lead: Lead, force?: boolean) => {
+      asked(lead.id);
+      const began = performance.now();
+      const stop = begin(lead, "draft");
+      const ok = await act({ type: "draft", leadId: lead.id, force: force || lead.status === "held" }, `d:${lead.id}`);
+      // Even an instant answer gets a moment of dots, so the click is seen to do something.
+      stop?.(ok ? Math.max(performance.now(), began + 1600) : performance.now());
+    },
+    [act, begin, asked],
+  );
   const source = ws ? dataLabel(ws) : null;
   const running = ws?.run.status === "running";
 
@@ -893,31 +908,35 @@ export function GlassyDashboard({
                 </div>
               ) : (
                 <div className="gd-content" ref={content} key={view} data-view={view}>
-                  {/* The four sections are the app's own components, not a reading of them: what is
-                      approved or moved here is approved or moved for real, through the same endpoint. */}
-                  {view === "target" && ws && (
-                    <>
-                      {/* The net leads, here as on Leads: it is the first thing the product shows. */}
-                      <div className="gd-net-block">
-                        <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} />
+                  {/* The graph is pinned beside the work on every section, as it is in the app: it
+                      is the picture the product is about, and scrolling the work should not lose it.
+                      The four sections are the app's own components, not a reading of them — what is
+                      approved or moved here is approved or moved for real. */}
+                  {ws && (
+                    <div className="gd-split">
+                      <div className="gd-split-net">
+                        <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} net={net} onNet={setNet} flows={flows} />
                       </div>
-                      <CommandView d={d} open={selectView} />
-                      <div className="gd-app-tab"><BriefTab ws={ws} act={act} busy={busy} /></div>
-                      <SpendView d={d} download={downloadLedger} />
-                      <SignalsView d={d} />
-                    </>
-                  )}
-                  {view === "leads" && ws && (
-                    <>
-                      <div className="gd-net-block">
-                        <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} />
-                        <DashboardLeads ws={ws} picked={picked} onOpen={open} />
+                      <div className="gd-split-work">
+                        {view === "target" && (
+                          <>
+                            <CommandView d={d} open={selectView} />
+                            <div className="gd-app-tab"><BriefTab ws={ws} act={act} busy={busy} /></div>
+                            <SpendView d={d} download={downloadLedger} />
+                            <SignalsView d={d} />
+                          </>
+                        )}
+                        {view === "leads" && (
+                          <>
+                            <DashboardLeads ws={ws} picked={picked} onOpen={open} />
+                            <BoardView d={d} inspect={(item, lane) => setModal({ item, lane })} />
+                          </>
+                        )}
+                        {view === "approve" && <div className="gd-app-tab"><ApprovalsTab ws={ws} act={act} busy={busy} /></div>}
+                        {view === "pipeline" && <div className="gd-app-tab"><PipelineTab ws={ws} act={act} busy={busy} onOpen={(id) => open(id)} /></div>}
                       </div>
-                      <BoardView d={d} inspect={(item, lane) => setModal({ item, lane })} />
-                    </>
+                    </div>
                   )}
-                  {view === "approve" && ws && <div className="gd-app-tab"><ApprovalsTab ws={ws} act={act} busy={busy} /></div>}
-                  {view === "pipeline" && ws && <div className="gd-app-tab"><PipelineTab ws={ws} act={act} busy={busy} onOpen={(id) => open(id)} /></div>}
                 </div>
               )}
             </div>

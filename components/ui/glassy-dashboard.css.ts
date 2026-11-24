@@ -408,7 +408,20 @@ export const dashboardStyles = `
    than half-reading against the glass. The frame around them is still this page's. */
 .gd-app-tab { padding: 16px 18px; border-radius: 20px; border: 1px solid var(--gd-rim); background: rgb(255 255 255 / 90%); color: #1B1640; box-shadow: inset 0 1px 1px var(--gd-edge-light), 0 6px 18px rgb(var(--gd-dark-shadow) / 9%); }
 
+
+/* The graph on the left, the work on the right, as the app lays it out. The graph column is
+   stuck to the top of the scroller, so reading down the work never loses the picture it is
+   about. On a narrow screen the two stack and the graph scrolls away with everything else —
+   there is no room to spend on keeping it. */
+.gd-split { display: grid; grid-template-columns: minmax(0, 40fr) minmax(0, 60fr); gap: 14px; align-items: start; }
+.gd-split-net { position: sticky; inset-block-start: 0; z-index: 2; }
+.gd-split-work { display: grid; gap: 14px; min-inline-size: 0; }
+.gd-split .gd-canvas { block-size: clamp(260px, 42vh, 420px); }
+.gd-split .gd-net-block { margin-block-end: 0; }
+
 @media (max-width: 1060px) {
+  .gd-split { grid-template-columns: minmax(0, 1fr); }
+  .gd-split-net { position: static; }
   .gd-surround { inline-size: calc(100% - 74px); }
   .gd-stage-scroll { padding-inline: 29px; }
   .gd-command-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
