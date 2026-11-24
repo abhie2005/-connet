@@ -7,6 +7,27 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 12:20. Abhishek's Claude: Hiring Radar, on a branch and in a pull request
+
+**Where it is.** `feature/hiring-radar`, pushed to a fork (`abhie2005/-connet`) and opened as a pull request against `yoonwoo-lee/tact-gtm`. **Not on `main`.** I have read access to this repo, so I could not follow the handoff rule's "add an entry on `main` and push it" — this entry arrives when the PR is merged. Yoon Woo: nothing of mine is on `main` until you merge it.
+
+**Why.** Job postings are public buying signals. Connet finds companies and then looks for a reason to write; the Radar works the other way round and starts from the posting, so a lead arrives with its "why now" already attached. It also answers the brief's own graph example, "linking new job postings to buying cycles", which nothing in the repo covered yet.
+
+**Done (on the branch).**
+- `lib/agents/radar.ts`: reads 3 to 6 roles off the plan (the personas, plus any trigger that names a role), searches the job boards with a new `purpose: "jobs"`, and keeps a posting only when its quote is on the page it cites and that page names the company. What it cannot prove it drops and counts, like everything else.
+- Each kept posting becomes a `hiring` Signal on an existing or new lead, so people, warm paths, scoring and drafts carry on unchanged. `buildFacts` already hands the writer a signal's quote, so an email can open with "Saw you're hiring your first Head of Revenue Operations".
+- Graph: `Company -[:POSTED]-> JobPost -[:NEEDS]-> Product`, in the embedded graph and the Neo4j mirror, plus a `jobSignals` Cypher query (target accounts with a posting in the last 30 days, newest first) named as the brief names it.
+- Scoring: a first hire is worth 6 more than a backfill, three roles on one team inside 30 days 5 more, both inside the existing 24-point cap, each with its reason printed next to it. Whoever a posting reports to now outranks a plain persona match for who to write to.
+- Watch mode: **Scan for new job posts** above the leads runs only the Radar, adds only what is not already there, costs 3 credits as a new `radar.scan` Flexprice event (added to `scripts/setup-flexprice.ts`), and is refused when the credits will not cover it.
+- UI: a **Hiring** badge on each lead the Radar found (the role, a first hire said as one, how long ago, the quote on hover, linking to the posting), and **Job post** on the graph legend.
+- Sample data: four invented postings so `npm run demo` shows it offline. Three are on one team at one company, so the team bonus can be seen; the Cedarline quote is not on its page on purpose, so the check can be seen dropping one.
+- `tests/radar.test.ts`, 10 checks. **87 checks pass in total**, lint and build clean.
+- Docs: a Hiring Radar section in `README.md`, the node, edges, query, scoring rules and meter event in `docs/ARCHITECTURE.md`, and a 15-second moment in `docs/DEMO.md`.
+
+**Need.**
+- `[open]` Yoon Woo: review the PR and decide whether it goes in. Nothing of mine touches the approval gate, `lib/name.ts`, or the `Tact`/`TACT_*` names. One existing assertion in `tests/pipeline.test.ts` moved from 1 dropped quote to 2, because a full run now reads the postings too and drops the Cedarline one; the dropped-company count is unchanged and the test says why. It has never been run against the live services.
+- `[open]` Skylar: the new 15-second moment is the 1:20 row in `docs/DEMO.md`, straight after Leads. Press **Scan for new job posts**, let the new company appear with its Hiring badge, point at the badge so the quote shows, then at the credits ticking down. The line to say is in the table. With it in, the script runs **3:05** — to get back under three minutes, cut the 2:50 analytics scroll and say that line over the Pipeline board instead.
+
 ## Nov 24, 06:25. Yoon Woo's Claude: field-level confidence, 0.00 to 1.00
 
 **Why.** Yoon Woo, 05:50, quoting the brief: "Field-level confidence scores (0.00-1.00) reflecting inference certainty".
