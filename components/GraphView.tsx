@@ -59,6 +59,8 @@ const GLIDE = 0.085;
 // draft waiting), and the violet accent is what is live (a reason to write, you).
 /** A logo drawn inside a shape that is already on the canvas: fitted in, clipped to the shape. */
 function stamp(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, r: number, square: boolean) {
+  // A node grows from nothing when it first appears: until there is room, there is no logo.
+  if (!(r > 2) || !img.naturalWidth || !img.naturalHeight) return;
   ctx.save();
   ctx.beginPath();
   if (square) ctx.roundRect(x - r, y - r, r * 2, r * 2, 3);
