@@ -82,3 +82,24 @@ export function without(subject: string, body: string, claims: string[], plainSu
   const left = strip(subject, claims);
   return { subject: left.split(/\s+/).filter(Boolean).length >= 3 ? left : plainSubject, body: strip(body, claims) };
 }
+
+const stem = (w: string) => w.replace(/(ing|ers|er|ed|es|s)$/, "");
+const FILLER = new Set(["a", "an", "the", "for", "at", "to", "and", "or", "of", "on", "in", "with", "your", "you", "our", "my", "re", "about", "from", "by", "quick", "question", "idea", "intro", "introduction", "note", "hello", "hi", "team", "new", "how", "what", "why", "is", "it", "that", "this", "can", "could", "help", "helps"]);
+
+/** A subject line that only names the product, what it does, and who it is for states nothing
+    that needs a source: every word of it is the product's own words, the recipient's name, or
+    filler. "Dock scheduling for Acme Logistics" is one. "Congratulations on the Series B" is not. */
+export function topicOnly(subject: string, ownWords: string): boolean {
+  const own = new Set(words(ownWords).map(stem));
+  const said = words(subject);
+  return said.length > 0 && said.every((w) => /^\d/.test(w) ? false : FILLER.has(w) || own.has(stem(w)));
+}
+
+/** The message with its greeting put right: the person it is going to by first name, or "Hi
+    there," when nobody has been found. A writer with no name to use sometimes borrows one. */
+export function greet(body: string, firstName: string | null): string {
+  const line = firstName ? `Hi ${firstName},` : "Hi there,";
+  const m = body.match(/^\s*(hi|hello|hey|dear|good (?:morning|afternoon))\b[^\n]{0,60}\n/i);
+  if (!m) return body;
+  return line + "\n" + body.slice(m[0].length);
+}

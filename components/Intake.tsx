@@ -6,7 +6,7 @@ import { GLYPH_FOUNDER, GLYPH_PRODUCT } from "@/lib/sample/data";
 import type { Founder, Product } from "@/lib/types";
 import { Icon, Logo } from "./ui";
 
-export function Intake({ initial, founder, sample, onStarted }: { initial: Product | null; founder: Founder; sample: boolean; onStarted: () => void }) {
+export function Intake({ initial, founder, sample, onStarted, onBack }: { initial: Product | null; founder: Founder; sample: boolean; onStarted: () => void; onBack?: () => void }) {
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
   const [url, setUrl] = useState(initial?.url || "");
@@ -109,6 +109,12 @@ export function Intake({ initial, founder, sample, onStarted }: { initial: Produ
           {!more && (
             <button className="btn btn-plain" onClick={() => setMore(true)}>
               Add pricing and customers
+            </button>
+          )}
+          <span className="flex-1" />
+          {onBack && (
+            <button className="btn btn-plain" onClick={onBack} title="Leave this and go back to the search you have">
+              Back
             </button>
           )}
         </div>

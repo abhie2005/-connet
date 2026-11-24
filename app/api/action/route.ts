@@ -23,7 +23,7 @@ export async function POST(request: Request) {
         decideMessage(str(body.messageId), body.action as "approve" | "reject" | "edit", { subject: body.subject as string | undefined, body: body.body as string | undefined });
         break;
       case "claim":
-        decideClaim(str(body.messageId), Number(body.index), body.action as "delete" | "keep" | "unkeep");
+        decideClaim(str(body.messageId), body.index === "all" ? "all" : Number(body.index), body.action as "delete" | "keep" | "unkeep");
         break;
       case "meeting":
         decideMeeting(str(body.meetingId), body.action as "book" | "cancel", str(body.start) || undefined, Number(body.minutes) || undefined);

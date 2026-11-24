@@ -44,41 +44,50 @@ export function Feed({ activity, running, visible = true }: { activity: Activity
 
   const flags = activity.filter((a) => a.kind === "flag").length;
   const last = activity[activity.length - 1];
+  // Open, the names of the agents are switches: press one to read only what it said.
+  const [only, setOnly] = useState<Activity["agent"] | "stopped" | null>(null);
+  const shown = only === "stopped" ? activity.filter((a) => a.kind === "flag" || a.kind === "error") : only ? activity.filter((a) => a.agent === only) : activity;
+  const toggle = () => setOpen(!open);
   return (
     <div className="frost rounded-2xl flex flex-col min-h-0 overflow-hidden" style={{ maxHeight: open ? "100%" : 48 }}>
-      <button className="flex items-center gap-2.5 px-4 h-12 flex-none border-0 bg-transparent text-left w-full" onClick={() => setOpen(!open)} aria-expanded={open}>
-        <span className={`lamp ${running ? "busy" : ""}`} />
-        <span className="font-bold text-[14px] flex-none">Agents</span>
-        {open || !last ? (
-          <span className="flex items-center gap-1.5">
+      <div className="flex items-center gap-2.5 px-4 h-12 flex-none">
+        <button className={`flex items-center gap-2.5 border-0 bg-transparent p-0 h-12 text-left min-w-0 ${open ? "flex-none" : "flex-1"}`} onClick={toggle} aria-expanded={open}>
+          <span className={`lamp ${running ? "busy" : ""}`} />
+          <span className="font-bold text-[14px] flex-none">Agents</span>
+          {!open && last && (
+            <span className="flex items-center gap-2 min-w-0 text-[13.5px] text-soft">
+              <span className="flex-none">
+                <AgentMark agent={last.agent} />
+              </span>
+              <span className="truncate">
+                <span className="font-bold text-ink">{AGENTS[last.agent].name}</span> {last.text}
+              </span>
+            </span>
+          )}
+        </button>
+        {open && (
+          <span className="flex items-center gap-1.5 min-w-0 overflow-hidden">
             {(["planner", "builder", "reviewer", "security"] as const).map((k) => (
-              <span key={k} className="chip chip-line" title={AGENTS[k].does}>
+              <button key={k} className="chip chip-line chip-btn" aria-pressed={only === k} title={`${AGENTS[k].does} Press to read only what it said.`} onClick={() => setOnly(only === k ? null : k)}>
                 <AgentMark agent={k} />
                 {AGENTS[k].name}
-              </span>
+              </button>
             ))}
           </span>
-        ) : (
-          <span className="flex items-center gap-2 min-w-0 text-[13.5px] text-soft">
-            <span className="flex-none">
-              <AgentMark agent={last.agent} />
-            </span>
-            <span className="truncate">
-              <span className="font-bold text-ink">{AGENTS[last.agent].name}</span> {last.text}
-            </span>
-          </span>
         )}
-        <span className="flex-1" />
+        {open && <span className="flex-1" />}
         {open && flags > 0 && (
-          <span className="chip chip-flag flex-none" title="Things the reviewer or security agent stopped">
+          <button className="chip chip-flag chip-btn flex-none" aria-pressed={only === "stopped"} title="Things the reviewer or security agent stopped. Press to read only those." onClick={() => setOnly(only === "stopped" ? null : "stopped")}>
             <Icon name="flag" size={13} />
             {flags} stopped
-          </span>
+          </button>
         )}
-        <span style={{ transform: open ? "none" : "rotate(180deg)", transition: "transform .2s" }}>
-          <Icon name="down" />
-        </span>
-      </button>
+        <button className="border-0 bg-transparent p-1 flex-none grid place-items-center" onClick={toggle} aria-label={open ? "Close the agents' conversation" : "Open the agents' conversation"}>
+          <span style={{ transform: open ? "none" : "rotate(180deg)", transition: "transform .2s" }}>
+            <Icon name="down" />
+          </span>
+        </button>
+      </div>
       {open && (
         <div
           ref={box}
@@ -88,7 +97,7 @@ export function Feed({ activity, running, visible = true }: { activity: Activity
             stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
           }}
         >
-          {activity.length === 0 ? <div className="px-4 py-3 text-soft text-sm">The agents will talk here once a run starts.</div> : activity.map((a) => <Line key={a.seq} a={a} />)}
+          {activity.length === 0 ? <div className="px-4 py-3 text-soft text-sm">The agents will talk here once a run starts.</div> : shown.length === 0 ? <div className="px-4 py-3 text-soft text-sm">Nothing from this one yet.</div> : shown.map((a) => <Line key={a.seq} a={a} />)}
         </div>
       )}
     </div>

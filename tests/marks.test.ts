@@ -1,7 +1,7 @@
 // Marking a draft: which sentences make a claim nothing backs, and deleting exactly those.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { located, markUp, pieces, says, strip, without } from "../lib/marks";
+import { greet, located, markUp, pieces, says, strip, topicOnly, without } from "../lib/marks";
 
 const body = `Hi Patricia,
 
@@ -58,4 +58,26 @@ test("one claim can be taken out and the others left in", () => {
   assert.ok(!cut.body.includes("type on screens"));
   assert.ok(cut.body.includes("$12.5M"), "the claim that was not named stays");
   assert.ok(without("A note for Windward School", body, [raised], "x").subject === "A note for Windward School");
+});
+
+test("a subject that only names the product and who it is for is not a claim", () => {
+  const own = "Dockline: Dockline is scheduling software for warehouse loading docks. Carriers book a dock appointment online. Nissin International Transport U.S.A.";
+  assert.equal(topicOnly("Dock scheduling for Nissin International Transport U.S.A.", own), true);
+  assert.equal(topicOnly("Dockline for Nissin International Transport U.S.A.", own), true);
+  assert.equal(topicOnly("Congratulations on the new Detroit branch", own), false);
+  assert.equal(topicOnly("Cut detention fees by 40%", own), false, "a figure always needs a source");
+});
+
+test("the plain subject that replaces a deleted one reads like the claim it replaced", () => {
+  // Which is why a deleted claim is remembered as deleted (Claim.removed) and not looked for again.
+  const claim = "Dock scheduling for Nissin International Transport U.S.A.";
+  const next = without(claim, "Hi Shinichiro,\n\nYoon Woo", [claim], "Dockline for Nissin International Transport U.S.A.");
+  assert.equal(next.subject, "Dockline for Nissin International Transport U.S.A.");
+  assert.equal(located(next.subject, next.body, claim), true);
+});
+
+test("the greeting is the person it goes to, or nobody", () => {
+  assert.equal(greet("Hi Mike,\n\nManaging trucks by phone is slow.", null), "Hi there,\n\nManaging trucks by phone is slow.");
+  assert.equal(greet("Hello Mike Smith,\n\nBody", "Shinichiro"), "Hi Shinichiro,\n\nBody");
+  assert.equal(greet("Managing trucks by phone is slow.\n\nYoon", null), "Managing trucks by phone is slow.\n\nYoon", "a message with no greeting is left alone");
 });

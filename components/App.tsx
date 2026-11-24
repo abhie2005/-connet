@@ -490,6 +490,7 @@ export function App() {
           initial={ws.product}
           founder={ws.founder}
           sample={ws.modes.llm === "sample"}
+          onBack={ws.product ? () => setIntake(false) : undefined}
           onStarted={() => {
             picked.current = false;
             hadLeads.current = false;

@@ -7,6 +7,23 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 05:00. Yoon Woo's Claude: Delete that deletes, and every button pressed
+
+**Why.** Yoon Woo, 04:26 to 04:31, with screenshots from his Mac: Delete on a claim "didn't actually delete", Pipeline cards overlapping, a draft to the garbled company. "Make sure every button works please."
+
+**Done (on `main`).**
+- **Delete was going round in a loop when the claim was the subject line**: the plain subject it put in read enough like the claim to be marked again. Fixed, and a subject that only names the product and the company is no longer flagged at all.
+- A draft to nobody starts "Hi there," (one said "Hi Mike").
+- With no address, the button says **Approve**, and **Find their address** is next to it.
+- **Pipeline** columns no longer run into each other at a laptop-sized window; empty columns are narrow.
+- The garbled company from the earlier run is removed from saved data when the app starts.
+- The agents' names in the open Agents bar are filters now. The first screen has **Back**.
+- Every button in the app was pressed by script, each with a check: 60 of 60 on sample data, at a 1190 x 773 window. 71 checks pass.
+
+**Need.**
+- `[open]` Yoon Woo: pull, `npm run clean`, `npm run dev`. The garbled company and its draft should be gone on start.
+- `[open]` Skylar: record at the window size the demo will be shown at; Pipeline scrolls sideways when three or more columns have cards in a small window.
+
 ## Nov 24, 04:40. Yoon Woo's Claude: a calendar, a cleaner list while searching, and no more garbled companies
 
 **Why.** Yoon Woo, 04:14, after Dockline worked on live data (nine companies): "what is 7KH 5HJDQ???", "make this part on the right cleaner", "add a calendar function that adds meetings to a calendar once a response is given".

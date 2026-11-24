@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { config, modes } from "./config";
+import { garbledName } from "./garbled";
 import { Graph } from "./graph";
 import { bandPost } from "./providers/band";
 import { lastError as billingError, readWallet, trackUsage } from "./providers/billing";
@@ -67,6 +68,7 @@ export class Store {
         this.graph.memory.load(saved.graph || { nodes: [], edges: [] });
         this.graph.resync();
         this.seq = this.state.activity.reduce((m, a) => Math.max(m, a.seq), 0);
+        this.dropGarbled();
       }
     } catch (e) {
       console.warn("[tact] could not read the saved workspace:", e);
@@ -77,6 +79,22 @@ export class Store {
       this.state.run.stats.replayed = (this.state.run.stats.replayed || 0) + 1;
     };
     void this.refreshWallet();
+  }
+
+  /** A saved workspace can hold a "company" read off a page that was not readable (lib/garbled.ts),
+      from before such pages were cut out. It is taken out here, with everything hung on it. */
+  private dropGarbled() {
+    const bad = this.state.leads.filter((l) => garbledName(l.company));
+    if (bad.length === 0) return;
+    for (const lead of bad) {
+      for (const id of [lead.id, ...lead.contacts.map((c) => c.id), ...lead.signals.map((x) => x.id)]) this.graph.removeNode(id);
+      this.log("system", "step", `Took out "${lead.company}": it was read off a page whose text could not be read, so it is not a real company name.`);
+    }
+    const ids = new Set(bad.map((l) => l.id));
+    this.state.leads = this.state.leads.filter((l) => !ids.has(l.id));
+    this.state.messages = this.state.messages.filter((m) => !ids.has(m.leadId));
+    this.state.meetings = (this.state.meetings || []).filter((m) => !ids.has(m.leadId));
+    this.touch();
   }
 
   /** Call after any change, so the page picks it up and it is saved. */

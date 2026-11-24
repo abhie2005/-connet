@@ -14,9 +14,9 @@ import type { Rows } from "./graph";
 import { companyId, schoolId } from "./ids";
 import { enrichDomain, guessEmail } from "./providers/enrich";
 import { topUpWallet } from "./providers/billing";
-import { scoreLead, strongestSignal } from "./score";
+import { bestContact, scoreLead, strongestSignal } from "./score";
 import { emptyStats, store, type Store } from "./store";
-import { without } from "./marks";
+import { greet, located, without } from "./marks";
 import { fromStamp, wantsMeeting, whenFrom } from "./meetings";
 import { COSTS, FREEDOMS, STAGE_NAMES, type Evidence, type Founder, type Freedom, type Lead, type Meeting, type Product, type Stage, type WarmPath } from "./types";
 
@@ -358,7 +358,16 @@ export async function enrichLead(leadId: string, by: "agent" | "rep" = "rep") {
   }
   lead.enriched = true;
   for (const m of s.state.messages.filter((x) => x.leadId === lead.id && x.status === "draft")) {
-    const c = lead.contacts.find((x) => x.id === m.contactId);
+    let c = lead.contacts.find((x) => x.id === m.contactId);
+    if (!c && !m.contactId) {
+      // The draft was written to nobody in particular, and now there is somebody: address it to them.
+      c = bestContact(lead, s.state.icp) || undefined;
+      if (c) {
+        m.contactId = c.id;
+        m.to = `${c.name}, ${c.title}`;
+        m.body = greet(m.body, c.name.split(" ")[0]);
+      }
+    }
     if (c?.email) m.toEmail = c.email;
   }
   rescore(s, lead);
@@ -408,14 +417,28 @@ export function decideMessage(messageId: string, action: "approve" | "reject" | 
 }
 
 /** The rep deals with one unbacked claim: delete its sentence, keep it, or take the keep back. */
-export function decideClaim(messageId: string, index: number, action: "delete" | "keep" | "unkeep") {
+export function decideClaim(messageId: string, index: number | "all", action: "delete" | "keep" | "unkeep") {
   const s = store();
   const message = s.state.messages.find((m) => m.id === messageId);
   if (!message) throw new Error("No such message");
   if (message.status !== "draft") throw new Error("Only a draft can be changed");
+  const lead = leadOrThrow(s, message.leadId);
+  if (index === "all") {
+    // Every claim still marked in the message, in one go.
+    if (action !== "delete") throw new Error("Only delete works on all of them at once");
+    const open = message.claims.filter((c) => !c.supported && !c.kept && !c.removed && located(message.subject, message.body, c.text));
+    if (open.length === 0) throw new Error("Nothing is marked in this message");
+    const next = without(message.subject, message.body, open.map((c) => c.text), `${s.state.product?.name || "A note"} for ${lead.company}`);
+    message.subject = next.subject;
+    message.body = next.body;
+    message.editedByRep = true;
+    for (const c of open) c.removed = true;
+    s.audit("rep", "Deleted every unbacked sentence", { leadId: lead.id, messageId, note: plural(open.length, "sentence") });
+    s.touch();
+    return;
+  }
   const claim = message.claims[index];
   if (!claim || claim.supported) throw new Error("No such claim");
-  const lead = leadOrThrow(s, message.leadId);
   const quote = claim.text.length > 90 ? `${claim.text.slice(0, 87)}...` : claim.text;
   if (action === "delete") {
     const next = without(message.subject, message.body, [claim.text], `${s.state.product?.name || "A note"} for ${lead.company}`);
@@ -423,6 +446,7 @@ export function decideClaim(messageId: string, index: number, action: "delete" |
     message.body = next.body;
     message.editedByRep = true;
     claim.kept = false;
+    claim.removed = true;
     s.audit("rep", "Deleted an unbacked sentence", { leadId: lead.id, messageId, note: quote });
   } else {
     claim.kept = action === "keep";

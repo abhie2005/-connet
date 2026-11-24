@@ -4,7 +4,7 @@
 import { llm } from "../providers/llm";
 import { bestContact, strongestSignal } from "../score";
 import type { Store } from "../store";
-import { located, without } from "../marks";
+import { greet, located, says, topicOnly, without } from "../marks";
 import type { Claim, Contact, Fact, Freedom, Lead, Message, Product } from "../types";
 import type { ReplyIn, ReplyOut, ReviewIn, ReviewOut, WriteIn, WriteOut } from "./shapes";
 
@@ -148,7 +148,7 @@ export function takeOut(subject: string, body: string, claims: Claim[], plainSub
   return { ...next, claims: claims.filter((c) => !cut.includes(c)), taken: cut.map((c) => c.text) };
 }
 
-async function review(s: Store, draft: WriteOut, facts: Fact[]): Promise<{ claims: Claim[]; pass: boolean; notes: string[]; numbers: boolean }> {
+async function review(s: Store, draft: WriteOut, facts: Fact[], company: string): Promise<{ claims: Claim[]; pass: boolean; notes: string[]; numbers: boolean }> {
   const input: ReviewIn = { subject: draft.subject, body: draft.body, claims: draft.claims || [], facts };
   s.state.run.stats.llmCalls += 1;
   const out = await llm().json<ReviewOut>({ task: "review_outreach", system: REVIEWER, user: reviewPrompt(input), input, temperature: 0 });
@@ -158,13 +158,25 @@ async function review(s: Store, draft: WriteOut, facts: Fact[]): Promise<{ claim
     const supported = !!c.supported && fact != null;
     return { text: String(c.text || ""), fact, supported, note: supported ? "" : String(c.note || "Not supported by a fact") };
   });
+  // A subject that only names the product, what it does and who it is for is not a claim, though
+  // a strict reviewer often lists it as one. Anything else said in a subject still has to be backed.
+  const subject = String(draft.subject || "");
+  const ownWords = facts.filter((f) => f.kind === "product" || f.kind === "contact").map((f) => f.text).join(" ") + " " + company;
+  let waved = 0;
+  for (let i = claims.length - 1; i >= 0; i--) {
+    const c = claims[i];
+    if (!c.supported && says(subject, c.text) && !located("", String(draft.body || ""), c.text) && topicOnly(subject, ownWords)) {
+      claims.splice(i, 1);
+      waved += 1;
+    }
+  }
   const notes = [...(out.notes || []).map(String)];
   const stray = strayNumbers(`${draft.subject}\n${draft.body}`, facts);
   for (const token of stray) {
     notes.push(`The number "${token}" is not in the facts. Remove it.`);
     claims.push({ text: `Uses the number ${token}`, fact: null, supported: false, note: "Number not found in any fact" });
   }
-  const pass = out.verdict === "pass" && claims.every((c) => c.supported);
+  const pass = (out.verdict === "pass" || waved > 0) && claims.every((c) => c.supported);
   if (!pass && notes.length === 0) for (const c of claims.filter((x) => !x.supported)) notes.push(`Unsupported: "${c.text}". Remove it.`);
   return { claims, pass, notes, numbers: stray.length > 0 };
 }
@@ -195,7 +207,7 @@ export async function draftMessage(s: Store, lead: Lead): Promise<Message> {
   let draft = await llm().json<WriteOut>({ task: "write_outreach", system: writer(freedom), user: writePrompt(base), input: base, temperature: 0.5 });
   s.log("builder", "say", `Draft for ${lead.company} is ready. Please check every claim against the facts.`, { to: "reviewer" });
 
-  let result = await review(s, draft, facts);
+  let result = await review(s, draft, facts, lead.company);
   let rounds = 1;
   const history: string[] = [];
   // At the open setting the writer's own sentences are expected, so they do not send the draft
@@ -206,7 +218,7 @@ export async function draftMessage(s: Store, lead: Lead): Promise<Message> {
     const again: WriteIn = { ...base, notes: result.notes };
     s.state.run.stats.llmCalls += 1;
     draft = await llm().json<WriteOut>({ task: "write_outreach", system: writer(freedom), user: writePrompt(again), input: again, temperature: 0.3 });
-    result = await review(s, draft, facts);
+    result = await review(s, draft, facts, lead.company);
     rounds = 2;
   }
   // At the strict setting nothing unbacked reaches the rep: what can be found in the message is
@@ -245,7 +257,8 @@ export async function draftMessage(s: Store, lead: Lead): Promise<Message> {
     variant,
     angle: base.angle,
     subject: String(draft.subject || "").trim(),
-    body: sec.body.trim(),
+    // The greeting is the person it goes to, or nobody: never a name borrowed from a fact.
+    body: greet(sec.body.trim(), contact ? contact.name.split(" ")[0] : null),
     linkedinNote: String(draft.linkedin_note || "").trim().slice(0, 300),
     facts,
     claims: result.claims,

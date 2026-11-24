@@ -158,10 +158,25 @@ test("a full run on sample data", async (t) => {
     assert.ok(m.body.includes(keep));
     assert.ok(!m.body.includes(drop));
     assert.equal(m.editedByRep, true);
+    assert.equal(m.claims[at + 1].removed, true, "a deleted claim is remembered as deleted");
     p.decideClaim(m.id, at, "unkeep");
     assert.equal(m.claims[at].kept, false);
+
+    // The case from Nov 24: the unbacked claim is the subject line. Deleting it puts a plain
+    // subject in its place, and that must be the end of it, however alike the two read.
+    const subject = `Dock scheduling for ${l.company}`;
+    m.subject = subject;
+    m.claims.push({ text: subject, fact: null, supported: false, note: "" });
+    p.decideClaim(m.id, m.claims.length - 1, "delete");
+    assert.equal(m.subject, `${s.state.product!.name} for ${l.company}`);
+    assert.equal(m.claims[m.claims.length - 1].removed, true);
+    // And every claim still marked, in one go.
+    p.decideClaim(m.id, "all", "delete");
+    assert.ok(!m.body.includes(keep));
+    assert.equal(m.claims[at].removed, true);
+    assert.throws(() => p.decideClaim(m.id, "all", "delete"), /Nothing is marked/);
     assert.throws(() => p.decideClaim(m.id, 0, "delete"), /No such claim/, "a backed claim is not the rep's to delete this way");
-    assert.equal(s.state.audit.filter((a) => /unbacked sentence|nothing backs/.test(a.action)).length, 2);
+    assert.equal(s.state.audit.filter((a) => /unbacked sentence|nothing backs/.test(a.action)).length, 4);
   });
 
   await t.test("the setting: at 'more' the writer adds a sentence of its own and it reaches the rep marked", async () => {

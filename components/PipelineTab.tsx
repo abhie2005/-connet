@@ -23,7 +23,7 @@ function Card({ lead, onReply, act }: { lead: Lead; onReply: () => void; act: Ac
   const contact = lead.contacts[0];
   return (
     <div
-      className="rounded-xl bg-panel border border-line p-3 cursor-grab active:cursor-grabbing arrive"
+      className="boardcard arrive"
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("text/lead", lead.id);
@@ -33,7 +33,7 @@ function Card({ lead, onReply, act }: { lead: Lead; onReply: () => void; act: Ac
       <div className="flex items-start gap-2">
         <Tier tier={lead.score.tier} />
         <div className="min-w-0 flex-1">
-          <div className="font-bold text-[14px] leading-snug">{lead.company}</div>
+          <div className="font-bold text-[14px] leading-snug boardname">{lead.company}</div>
           {contact && <div className="text-faint text-[12.5px] leading-snug truncate">{contact.name}</div>}
         </div>
       </div>
@@ -115,13 +115,15 @@ export function PipelineTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: 
   return (
     <div>
       <Calendar ws={ws} act={act} busy={busy} />
-      <div className="grid grid-cols-5 gap-2.5">
+      {/* A column with cards in it gets room for them; an empty one steps back to a narrow rail.
+          If there are still too many to fit beside the graph, the board scrolls sideways. */}
+      <div className="board" style={{ gridTemplateColumns: COLUMNS.map((col) => (leads.some((l) => col.holds.includes(l.stage)) ? "minmax(160px, 1.5fr)" : "minmax(80px, 0.6fr)")).join(" ") }}>
         {COLUMNS.map((col) => {
           const cards = leads.filter((l) => col.holds.includes(l.stage));
           return (
             <div
               key={col.key}
-              className={`rounded-2xl p-2 min-h-[220px] transition-colors ${over === col.key ? "bg-raise-2" : "bg-raise"}`}
+              className={`boardcol ${cards.length ? "" : "is-empty"} ${over === col.key ? "bg-raise-2" : "bg-raise"}`}
               onDragOver={(e) => {
                 e.preventDefault();
                 setOver(col.key);
@@ -134,11 +136,11 @@ export function PipelineTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: 
                 if (id) act({ type: "stage", leadId: id, stage: col.key });
               }}
             >
-              <div className="flex items-center gap-1.5 px-1.5 py-1 mb-1">
-                <span className="font-bold text-[13.5px]">{col.title}</span>
-                <span className="count">{cards.length}</span>
+              <div className="boardhead">
+                <span className="font-bold leading-snug min-w-0">{col.title}</span>
+                <span className="count flex-none">{cards.length}</span>
               </div>
-              <div className="grid gap-2">
+              <div className="grid gap-2 grid-cols-[minmax(0,1fr)]">
                 {cards.map((l) => (
                   <Card key={l.id} lead={l} act={act} onReply={() => setReplyFor(l)} />
                 ))}

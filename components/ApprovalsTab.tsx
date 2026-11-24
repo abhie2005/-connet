@@ -4,8 +4,8 @@
 // and the security agent did to it before it got this far.
 import { useState } from "react";
 import { ago } from "@/lib/client";
-import { markUp, says, without, type Marked } from "@/lib/marks";
-import type { Evidence, Message, Workspace } from "@/lib/types";
+import { markUp, says, type Marked } from "@/lib/marks";
+import { COSTS, type Evidence, type Message, type Workspace } from "@/lib/types";
 import type { Act } from "./BriefTab";
 import { Empty, Icon, SectionTitle, SourceLink } from "./ui";
 
@@ -46,8 +46,9 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
   // What the reviewer could not back, found again in the message as it stands now.
   // A claim the rep chose to keep is no longer marked; it is listed as kept, never as backed.
   const all = m.claims.map((c, index) => ({ ...c, index }));
-  const unbacked = all.filter((c) => !c.supported && !c.kept);
-  const kept = all.filter((c) => !c.supported && c.kept);
+  const unbacked = all.filter((c) => !c.supported && !c.kept && !c.removed);
+  const removed = all.filter((c) => !c.supported && c.removed);
+  const kept = all.filter((c) => !c.supported && c.kept && !c.removed);
   const backed = all.filter((c) => c.supported);
   const wrong = unbacked.map((c) => c.text);
   const inSubject = markUp(m.subject, wrong);
@@ -55,7 +56,8 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
   const marked = [...inSubject, ...inBody].filter((x) => x.mark === "del");
   const found = (text: string) => marked.some((x) => says(x.text, text));
   const present = unbacked.filter((c) => found(c.text));
-  const gone = unbacked.filter((c) => !found(c.text) && m.editedByRep);
+  // Deleted with the button, or taken out by hand in Edit.
+  const gone = [...removed, ...unbacked.filter((c) => !found(c.text) && m.editedByRep)];
   const loose = unbacked.filter((c) => !found(c.text) && !m.editedByRep);
   const added = inBody.some((x) => x.mark === "add");
   const earlier = m.review.verdict === "revised" ? m.review.notes : [];
@@ -66,12 +68,10 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
     if (await act({ type: "message", messageId: m.id, action: "edit", subject, body }, `m:${m.id}`)) setEditing(false);
   };
   /** Take out every sentence still marked in red. A subject that was nothing but the claim becomes a plain one. */
-  const removeAll = async () => {
-    const next = without(m.subject, m.body, wrong, `${ws.product?.name || "A note"} for ${lead?.company || m.to.split(",")[0]}`);
-    setSubject(next.subject);
-    setBody(next.body);
-    await act({ type: "message", messageId: m.id, action: "edit", subject: next.subject, body: next.body }, `m:${m.id}`);
-  };
+  const removeAll = () => act({ type: "claim", messageId: m.id, index: "all", action: "delete" }, `m:${m.id}`);
+  // A claim that is the subject line itself: deleting it cannot leave the message without a subject.
+  const isSubject = (text: string) => inSubject.some((x) => x.mark === "del" && says(x.text, text)) && !inBody.some((x) => x.mark === "del" && says(x.text, text));
+  const plain = `${ws.product?.name || "A note"} for ${lead?.company || m.to.split(",")[0]}`;
   /** One claim at a time: delete its sentence, keep it as it is, or take a keep back. */
   const claim = (index: number, action: "delete" | "keep" | "unkeep") => act({ type: "claim", messageId: m.id, index, action }, `m:${m.id}`);
 
@@ -132,8 +132,8 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
                           Keep
                         </button>
                         {present.includes(c) && (
-                          <button className="claim-btn is-del" disabled={working} onClick={() => claim(c.index, "delete")} title="Take this sentence out of the message.">
-                            Delete
+                          <button className="claim-btn is-del" disabled={working} onClick={() => claim(c.index, "delete")} title={isSubject(c.text) ? `This is the subject line. Deleting it puts a plain subject in its place: "${plain}".` : "Take this sentence out of the message."}>
+                            {isSubject(c.text) ? "Use a plain subject" : "Delete"}
                           </button>
                         )}
                       </div>
@@ -245,10 +245,16 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
           </>
         ) : (
           <>
-            <button className="btn btn-main !py-2" disabled={working} onClick={() => act({ type: "message", messageId: m.id, action: "approve" }, `m:${m.id}`)}>
+            <button className="btn btn-main !py-2" disabled={working} title={m.toEmail ? undefined : "There is no address yet, so this records your approval and sends nothing."} onClick={() => act({ type: "message", messageId: m.id, action: "approve" }, `m:${m.id}`)}>
               <Icon name="check" />
-              Approve and send
+              {m.toEmail ? "Approve and send" : "Approve"}
             </button>
+            {!m.toEmail && lead && (
+              <button className="btn" disabled={working || busy.has(`e:${lead.id}`)} title={lead.domain ? `Looks up the people and addresses at ${lead.domain}. Costs ${COSTS["lead.enriched"]} credits.` : "No website is known for this company yet. Open its profile to add one."} onClick={() => act({ type: "enrich", leadId: lead.id }, `e:${lead.id}`)}>
+                <Icon name="search" />
+                {busy.has(`e:${lead.id}`) ? "Looking" : "Find their address"}
+              </button>
+            )}
             <button
               className="btn btn-quiet"
               onClick={() => {

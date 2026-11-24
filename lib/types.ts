@@ -206,6 +206,9 @@ export interface Claim {
   note: string;
   /** The rep chose to keep it although nothing backs it. Never set by an agent. */
   kept?: boolean;
+  /** The rep deleted its sentence. It is not looked for in the message again: the plain subject
+      that replaces a deleted subject can be worded much like the claim it replaced. */
+  removed?: boolean;
 }
 
 export interface Message {

@@ -141,7 +141,24 @@ Dockline ran on live data after the 03:54 changes: nine companies, 14 of 14 quot
   - Times are wall-clock times on his machine with no zone (`"2026-12-01T14:00"`), which both outputs read as local.
   - The example reply in the dialog now says "Tuesday at 2pm", so the demo shows an exact time.
 
-## Status (Nov 24, 04:40)
+## "Make sure every button works" (his request, Nov 24, 04:26 to 04:31)
+
+Four screenshots from the Dockline run on his Mac, and what each one was:
+- **"Clicked on delete but it didn't actually delete" / "doesn't let me delete this one."** The unbacked claim was the subject line ("Dock scheduling for Nissin…"). Delete put the plain subject in its place ("Dockline for Nissin…"), and the plain subject read enough like the claim to be marked as it again: a loop. Three fixes: a deleted claim is remembered as deleted (`Claim.removed`) and never looked for again; the button on a subject claim says **Use a plain subject**, which is what it does; and a subject that only names the product, what it does and who it is for is no longer a claim at all (`topicOnly` in `lib/marks.ts`, applied in `review`, with no change to the reviewer's prompt, so saved answers still replay).
+- **"Hi Mike," on a draft addressed to nobody.** The writer borrowed a name. The greeting is now set by code after writing (`greet`): the first name of the person it goes to, or "Hi there,".
+- **"Approve and send" with "no address yet".** The button reads **Approve** when there is no address (its tooltip says nothing is sent), and beside it is **Find their address** (the same lookup as in the profile card, 2 credits). When that lookup finds people for a draft that was addressed to nobody, the draft is re-addressed to the best of them.
+- **Pipeline cards running into the next column** (the graph is beside Pipeline now, and his window is 1190 points wide, not the 1512 used for checking until then). The board is its own grid (`.board`): a column with cards gets at least 160 px, an empty one is a narrow rail, and if they still do not fit the board scrolls sideways. **Check layouts at 1190 x 773 from now on.**
+- **A draft written to the garbled company** from the earlier run. A saved workspace is cleaned when the app starts (`dropGarbled` in `lib/store.ts`): such a company goes, with its drafts and graph nodes, and the Agents bar says so.
+
+Then every button was pressed by script on sample data at his window size, each with a check that it did its job: 60 of 60 (the menu and its setting, the top bar, both nets, hide and show graph, the Agents bar, Leads, the profile card, every button on an approval card, Pipeline with the calendar and a drag, Target), plus clicks on a company and a competitor on the graph. Two things found by doing it and fixed:
+- **The agents' names in the open Agents bar looked like buttons and only closed the bar.** They are switches now: press one to read only what that agent said; "N stopped" shows only what was stopped.
+- **"New search" had no way back.** The first screen has **Back** when there is already a search.
+
+## Status (Nov 24, 05:00)
+
+71 checks pass (3 new in `tests/marks.test.ts`, more in the pipeline run); lint and build are clean. Every button pressed on sample data. On live data he has seen: the light look, logos, Dockline (nine companies), drafts and approvals. Not yet run live: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link.
+
+### Earlier status (Nov 24, 04:40)
 
 68 checks pass (8 new: `tests/garbled.test.ts`, `tests/meetings.test.ts`, one in the pipeline run); lint and build are clean. Checked on sample data: the list while searching, a reply logged, the meeting proposed, booked, the Google link's dates. **Not opened: Google Calendar itself with that link** (the sandbox cannot reach it); the link format is Google's long-standing one. Seen by him on live data so far: the light look, logos, Dockline finding nine companies.
 
