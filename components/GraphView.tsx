@@ -12,6 +12,7 @@ import { forceCollide, forceLink, forceManyBody, forceRadial, forceSimulation, f
 import { useEffect, useRef, useState } from "react";
 import { FOUNDER, howYouKnow, netOf, ringOf, type Net, type Reach } from "@/lib/graph/nets";
 import type { GEdge, GNode, Lead } from "@/lib/types";
+import { VIOLET, type GraphPalette } from "./graph-palette";
 
 interface N extends SimulationNodeDatum {
   id: string;
@@ -79,12 +80,6 @@ function stamp(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, 
   ctx.restore();
 }
 
-const INK = "#1B1640";
-const ink = (a: number) => `rgba(27,22,64,${a})`;
-const WHITE = "#FFFFFF";
-const white = (a: number) => `rgba(255,255,255,${a})`;
-const ACCENT = "#5A34D6";
-const accent = (a: number) => `rgba(90,52,214,${a})`;
 
 const DOT_SPEED = 185; // graph units a second
 const DOT_GAP = 115; // milliseconds between dots
@@ -163,6 +158,7 @@ export function GraphView({
   waiting,
   best,
   onPick,
+  palette = VIOLET,
 }: {
   nodes: GNode[];
   edges: GEdge[];
@@ -181,6 +177,8 @@ export function GraphView({
   /** The lead to contact first. */
   best: string | null;
   onPick: (nodeId: string) => void;
+  /** What to draw it in. The app keeps the violet; the dashboard passes its greys. */
+  palette?: GraphPalette;
 }) {
   const spotNow = spot ?? null;
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -188,7 +186,7 @@ export function GraphView({
   const sim = useRef<Simulation<N, L> | null>(null);
   const data = useRef<{ nodes: N[]; links: L[]; byId: Map<string, N> }>({ nodes: [], links: [], byId: new Map() });
   const view = useRef({ k: 1, x: 0, y: 0, w: 0, h: 0 });
-  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best, net, reach, turned: 0, shownNet: net, spot: spotNow as Spot | null, ring: null as 0 | 1 | 2 | null });
+  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best, net, reach, turned: 0, shownNet: net, spot: spotNow as Spot | null, ring: null as 0 | 1 | 2 | null, palette });
   const [tip, setTip] = useState<{ x: number; y: number; title: string; sub: string } | null>(null);
 
   // The page gets a fresh copy of the graph on every poll. Only a real change (a new node or
@@ -206,6 +204,7 @@ export function GraphView({
     live.current.net = net;
     live.current.reach = reach;
     live.current.leads = new Map(leads.map((l) => [l.id, l]));
+    live.current.palette = palette;
     latest.current = { nodes, edges };
   });
 
@@ -338,6 +337,7 @@ export function GraphView({
     };
 
     const draw = () => {
+      const C = live.current.palette;
       const d = data.current;
       const v = view.current;
       const dpr = el.width / Math.max(1, v.w);
@@ -445,16 +445,16 @@ export function GraphView({
             ctx.setLineDash([]);
             ctx.beginPath();
             ctx.arc(0, 0, ring.at, 0, Math.PI * 2);
-            ctx.strokeStyle = white(0.22);
+            ctx.strokeStyle = C.paperA(0.22);
             ctx.lineWidth = 26;
             ctx.stroke();
-            ctx.shadowColor = white(0.95);
+            ctx.shadowColor = C.paperA(0.95);
             ctx.shadowBlur = 16;
           }
           ctx.beginPath();
           ctx.arc(0, 0, ring.at, 0, Math.PI * 2);
           ctx.lineWidth = (hot ? 2.4 : 1) / Math.sqrt(v.k);
-          ctx.strokeStyle = hot ? "#FFFFFF" : ring.ring === 1 ? white(0.8) : ring.ring === 2 ? ink(0.3) : ink(0.17);
+          ctx.strokeStyle = hot ? C.paper : ring.ring === 1 ? C.paperA(0.8) : ring.ring === 2 ? C.inkA(0.3) : C.inkA(0.17);
           ctx.stroke();
           ctx.shadowBlur = 0;
           ctx.setLineDash([2, 7]);
@@ -469,7 +469,7 @@ export function GraphView({
         const ease = 1 - Math.pow(1 - t, 3);
         ctx.beginPath();
         ctx.arc(0, 0, 24 + ease * 330, 0, Math.PI * 2);
-        ctx.strokeStyle = white(0.85 * (1 - t));
+        ctx.strokeStyle = C.paperA(0.85 * (1 - t));
         ctx.lineWidth = 1.6 / Math.sqrt(v.k);
         ctx.stroke();
       }
@@ -489,40 +489,40 @@ export function GraphView({
         if (lit) {
           // The way in: a soft halo under the line, then a bright dashed line that runs along it.
           ctx.globalAlpha = 1;
-          ctx.strokeStyle = white(0.4);
+          ctx.strokeStyle = C.paperA(0.4);
           ctx.lineWidth = 9 / Math.sqrt(v.k);
           ctx.stroke();
-          ctx.strokeStyle = "#FFFFFF";
+          ctx.strokeStyle = C.paper;
           ctx.lineWidth = 2.6 / Math.sqrt(v.k);
           ctx.setLineDash([9, 7]);
           ctx.lineDashOffset = -dash;
-          ctx.shadowColor = white(0.95);
+          ctx.shadowColor = C.paperA(0.95);
           ctx.shadowBlur = 14;
         } else if (yours) {
-          ctx.strokeStyle = white(0.96);
+          ctx.strokeStyle = C.paperA(0.96);
           ctx.lineWidth = 1.7 / Math.sqrt(v.k);
           ctx.setLineDash([6, 5]);
           ctx.lineDashOffset = 0;
-          ctx.shadowColor = white(0.8);
+          ctx.shadowColor = C.paperA(0.8);
           ctx.shadowBlur = 7;
         } else if (type === "REPLIED_TO") {
-          ctx.strokeStyle = ACCENT;
+          ctx.strokeStyle = C.accent;
           ctx.lineWidth = 2.2;
         } else if (type === "CONTACTED_VIA") {
-          ctx.strokeStyle = accent(0.8);
+          ctx.strokeStyle = C.accentA(0.8);
           ctx.lineWidth = 1.5;
           ctx.setLineDash([4, 5]);
           ctx.lineDashOffset = 0;
         } else if (type === "STUDIED_AT" || type === "PREVIOUSLY_EMPLOYED_AT") {
-          ctx.strokeStyle = ink(0.42);
+          ctx.strokeStyle = C.inkA(0.42);
           ctx.lineWidth = 1.2;
           ctx.setLineDash([2, 5]);
           ctx.lineDashOffset = 0;
         } else if (type === "USES" || type === "COMPETES_WITH") {
-          ctx.strokeStyle = ink(0.22);
+          ctx.strokeStyle = C.inkA(0.22);
           ctx.lineWidth = 1.2;
         } else {
-          ctx.strokeStyle = type === "MATCHED_TO" ? ink(0.32) : ink(0.26);
+          ctx.strokeStyle = type === "MATCHED_TO" ? C.inkA(0.32) : C.inkA(0.26);
           ctx.lineWidth = type === "MATCHED_TO" ? 1.4 : 1.1;
         }
         ctx.globalAlpha = hl && !lit ? 0.3 : spot && !(inSpot(a) && inSpot(b)) ? 0.22 : far(a) || far(b) ? 0.5 : 1;
@@ -548,8 +548,8 @@ export function GraphView({
         if (spot && inSpot(n) && label !== "Product" && !(founder && you)) {
           // Picked out in the legend: a soft light behind it.
           const glow = ctx.createRadialGradient(n.x, n.y, r * 0.6, n.x, n.y, r * 2.4 + 6);
-          glow.addColorStop(0, white(0.75));
-          glow.addColorStop(1, white(0));
+          glow.addColorStop(0, C.paperA(0.75));
+          glow.addColorStop(1, C.paperA(0));
           ctx.beginPath();
           ctx.arc(n.x, n.y, r * 2.4 + 6, 0, Math.PI * 2);
           ctx.fillStyle = glow;
@@ -562,18 +562,18 @@ export function GraphView({
           ctx.lineTo(n.x, n.y + r * 1.25);
           ctx.lineTo(n.x - r * 1.25, n.y);
           ctx.closePath();
-          ctx.fillStyle = ACCENT;
+          ctx.fillStyle = C.accent;
           ctx.fill();
           ctx.lineWidth = 1.5;
-          ctx.strokeStyle = WHITE;
+          ctx.strokeStyle = C.paper;
           ctx.stroke();
         } else if (label === "JobPost") {
           const w = r * 1.15, hh = r * 1.45;
           ctx.roundRect(n.x - w, n.y - hh, w * 2, hh * 2, 2.5);
-          ctx.fillStyle = "#CBC8F6";
+          ctx.fillStyle = C.pale;
           ctx.fill();
           ctx.lineWidth = 1.4;
-          ctx.strokeStyle = ACCENT;
+          ctx.strokeStyle = C.accent;
           ctx.stroke();
           // Two short lines, so it reads as a posting at a glance.
           ctx.beginPath();
@@ -582,15 +582,15 @@ export function GraphView({
           ctx.moveTo(n.x - w * 0.45, n.y + hh * 0.25);
           ctx.lineTo(n.x + w * 0.45, n.y + hh * 0.25);
           ctx.lineWidth = 1.1;
-          ctx.strokeStyle = ACCENT;
+          ctx.strokeStyle = C.accent;
           ctx.stroke();
         } else if (label === "School") {
           const s = r * 0.9;
           ctx.roundRect(n.x - s, n.y - s, s * 2, s * 2, 4);
-          ctx.fillStyle = WHITE;
+          ctx.fillStyle = C.paper;
           ctx.fill();
           ctx.lineWidth = you && reach.get(n.id)?.dist === 1 ? 2.2 : 1.6;
-          ctx.strokeStyle = you && reach.get(n.id)?.dist === 1 ? INK : ink(0.55);
+          ctx.strokeStyle = you && reach.get(n.id)?.dist === 1 ? C.ink : C.inkA(0.55);
           ctx.stroke();
           const mark = logoFor(logoDomainOf(n.node));
           if (mark) stamp(ctx, mark, n.x, n.y, s - 1.5, true);
@@ -600,24 +600,24 @@ export function GraphView({
             // Whoever the net is about is the one bright thing: a disc with light around it.
             // The product's is white. The founder's is the accent.
             const halo = ctx.createRadialGradient(n.x, n.y, r * 0.7, n.x, n.y, r * 2.6);
-            halo.addColorStop(0, founder ? accent(0.34) : white(0.7));
-            halo.addColorStop(1, founder ? accent(0) : white(0));
+            halo.addColorStop(0, founder ? C.accentA(0.34) : C.paperA(0.7));
+            halo.addColorStop(1, founder ? C.accentA(0) : C.paperA(0));
             ctx.beginPath();
             ctx.arc(n.x, n.y, r * 2.6, 0, Math.PI * 2);
             ctx.fillStyle = halo;
             ctx.fill();
             ctx.beginPath();
             ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-            ctx.fillStyle = founder ? ACCENT : "#FFFFFF";
+            ctx.fillStyle = founder ? C.accent : C.paper;
             ctx.fill();
           } else if (label === "Company") {
             // A company is a white disc with a ring round it.
             const tier = lead?.score.tier;
-            ctx.fillStyle = WHITE;
+            ctx.fillStyle = C.paper;
             ctx.fill();
             ctx.lineWidth = !lead ? 1.4 : tier === "A" ? 2.8 : tier === "B" ? 2 : 1.6;
             // The darker the ring, the better the match.
-            ctx.strokeStyle = !lead ? (you && reach.get(n.id)?.dist === 1 ? INK : ink(0.42)) : tier === "A" ? INK : tier === "B" ? ink(0.6) : ink(0.36);
+            ctx.strokeStyle = !lead ? (you && reach.get(n.id)?.dist === 1 ? C.ink : C.inkA(0.42)) : tier === "A" ? C.ink : tier === "B" ? C.inkA(0.6) : C.inkA(0.36);
             if (off) ctx.setLineDash([3, 3]);
             ctx.stroke();
             ctx.setLineDash([]);
@@ -625,22 +625,22 @@ export function GraphView({
             const mark = logoFor(logoDomainOf(n.node));
             if (mark) stamp(ctx, mark, n.x, n.y, r - ctx.lineWidth / 2 - 0.5, false);
           } else if (label === "Competitor") {
-            ctx.fillStyle = "#CBC8F6";
+            ctx.fillStyle = C.pale;
             ctx.fill();
             ctx.lineWidth = 1.6;
-            ctx.strokeStyle = ink(0.5);
+            ctx.strokeStyle = C.inkA(0.5);
             ctx.stroke();
           } else {
             if (founder) {
-              ctx.shadowColor = accent(0.7);
+              ctx.shadowColor = C.accentA(0.7);
               ctx.shadowBlur = 12;
             }
             // Your net: the nearer the ring, the darker the person.
-            ctx.fillStyle = founder ? ACCENT : you && n.ring === 1 ? INK : you && n.ring === 0 ? "#7D79B3" : "#2E2863";
+            ctx.fillStyle = founder ? C.accent : you && n.ring === 1 ? C.ink : you && n.ring === 0 ? C.far : C.person;
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.lineWidth = 2;
-            ctx.strokeStyle = WHITE;
+            ctx.strokeStyle = C.paper;
             ctx.stroke();
           }
         }
@@ -651,7 +651,7 @@ export function GraphView({
           ctx.arc(n.x, n.y, r + 5.5, 0, Math.PI * 2);
           ctx.setLineDash([3.5, 3.5]);
           ctx.lineDashOffset = -dash * 0.22;
-          ctx.strokeStyle = "#FFFFFF";
+          ctx.strokeStyle = C.paper;
           ctx.lineWidth = 2;
           ctx.stroke();
           ctx.setLineDash([]);
@@ -661,7 +661,7 @@ export function GraphView({
           ctx.globalAlpha = 1;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r + 5, 0, Math.PI * 2);
-          ctx.strokeStyle = ink(0.85);
+          ctx.strokeStyle = C.inkA(0.85);
           ctx.lineWidth = 2;
           ctx.stroke();
         }
@@ -726,7 +726,7 @@ export function GraphView({
         }
         taken.push(boxAt(y));
         ctx.globalAlpha = dim(n.id) ? 0.3 : far(n) ? 0.7 : 1;
-        pill(short, cx, y, px, bold ? 700 : 550, bold ? INK : "#3F3A6B", "rgba(255,255,255,.88)");
+        pill(short, cx, y, px, bold ? 700 : 550, bold ? C.ink : C.label, C.paperA(0.88));
       }
       ctx.globalAlpha = 1;
 
@@ -756,7 +756,7 @@ export function GraphView({
           ctx.font = `600 ${px}px ${font}`;
           const halfCap = (ctx.measureText(ring.means).width + 12) / 2 + 2;
           const capX = edgeR - edgeL > halfCap * 2 ? Math.min(edgeR - halfCap, Math.max(edgeL + halfCap, Math.cos(at) * ring.at)) : Math.cos(at) * ring.at;
-          pill(ring.means, capX, Math.sin(at) * ring.at, px, 600, ring.ring === 1 ? INK : ring.ring === 2 ? "#3F3A6B" : "#6B6794", "rgba(255,255,255,.94)");
+          pill(ring.means, capX, Math.sin(at) * ring.at, px, 600, ring.ring === 1 ? C.ink : ring.ring === 2 ? C.label : C.caption, C.paperA(0.94));
         }
         ctx.globalAlpha = 1;
       }
@@ -770,7 +770,7 @@ export function GraphView({
         const w = ctx.measureText(text).width + 14;
         const y = top.y - top.r - px * 1.25;
         ctx.globalAlpha = dim(top.id) ? 0.3 : 1;
-        ctx.fillStyle = INK;
+        ctx.fillStyle = C.ink;
         ctx.beginPath();
         ctx.roundRect(top.x - w / 2, y - px * 0.82, w, px * 1.64, 5);
         ctx.fill();
@@ -780,7 +780,7 @@ export function GraphView({
         ctx.lineTo(top.x, y + px * 0.8 + 4.5);
         ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = "#FFFFFF";
+        ctx.fillStyle = C.paper;
         ctx.fillText(text, top.x, y + 0.5);
         ctx.globalAlpha = 1;
       }
@@ -803,8 +803,8 @@ export function GraphView({
         if (total < 1) continue;
         const send = f.tone === "send";
         // A draft on its way is white. One the rep has approved goes in ink: it is written down.
-        const core = send ? INK : "#FFFFFF";
-        const glow = send ? ink(0.45) : white(0.95);
+        const core = send ? C.ink : C.paper;
+        const glow = send ? C.inkA(0.45) : C.paperA(0.95);
         const travel = (total / DOT_SPEED) * 1000;
         const until = Math.min(now, f.end ?? now);
         const last = Math.floor((until - f.start) / DOT_GAP);
@@ -816,7 +816,7 @@ export function GraphView({
           ctx.beginPath();
           ctx.moveTo(pts[0].x!, pts[0].y!);
           for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x!, pts[i].y!);
-          ctx.strokeStyle = send ? ink(0.14) : white(0.34);
+          ctx.strokeStyle = send ? C.inkA(0.14) : C.paperA(0.34);
           ctx.lineWidth = 7 / Math.sqrt(v.k);
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
@@ -861,7 +861,7 @@ export function GraphView({
           const beat = (landed % 900) / 900;
           ctx.beginPath();
           ctx.arc(target.x!, target.y!, target.r + 4 + beat * 15, 0, Math.PI * 2);
-          ctx.strokeStyle = send ? ink(0.7 * (1 - beat)) : white(0.95 * (1 - beat));
+          ctx.strokeStyle = send ? C.inkA(0.7 * (1 - beat)) : C.paperA(0.95 * (1 - beat));
           ctx.lineWidth = 1.8;
           ctx.stroke();
         }

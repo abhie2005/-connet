@@ -142,8 +142,8 @@ export const dashboardStyles = `
 .gd-period button[aria-pressed="false"]:hover { background: var(--gd-inner); }
 
 .gd-primary, .gd-secondary { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-block-size: 40px; padding: 7px 12px; font-size: 11.5px; font-weight: 790; line-height: 1.2; border-radius: 999px; border: 1px solid transparent; }
-.gd-primary { background: var(--gd-primary); color: var(--gd-primary-ink); }
-.gd-secondary { background: var(--gd-raised); border-color: var(--gd-rim); color: var(--gd-ink); }
+.gd-app .gd-primary { background: var(--gd-primary); color: var(--gd-primary-ink); }
+.gd-app .gd-secondary { background: var(--gd-raised); border-color: var(--gd-rim); color: var(--gd-ink); }
 .gd-primary:hover { filter: brightness(1.3); }
 .gd-secondary:hover { background: var(--gd-surface); }
 .gd-primary svg, .gd-secondary svg { width: 14px; height: 14px; }
@@ -328,6 +328,62 @@ export const dashboardStyles = `
 .gd-work-facts dt { font-size: 11px; color: var(--gd-muted); }
 .gd-work-facts dd { margin: 4px 0 0; font-weight: 790; overflow: hidden; text-overflow: ellipsis; }
 
+
+/* The graph, the key beside it, and the work underneath — the app's own parts, in this page's
+   clothes. The canvas draws itself in the palette components/graph-palette.ts hands it, so all
+   these rules dress is what sits around it. */
+.gd-graph-panel { display: flex; flex-direction: column; gap: 11px; }
+.gd-graph-head { margin-block-end: 0; align-items: center; }
+.gd-graph-note { color: var(--gd-muted); font-size: 11.5px; font-weight: 650; margin-block-start: 2px; max-inline-size: 52ch; }
+.gd-nets { display: inline-flex; padding: 3px; gap: 2px; border-radius: 999px; border: 1px solid var(--gd-rim); background: var(--gd-rail); }
+.gd-nets button { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border-radius: 999px; border: 0; background: transparent; color: var(--gd-muted); font: inherit; font-size: 11.5px; font-weight: 780; cursor: pointer; }
+.gd-nets button[aria-pressed="true"] { background: var(--gd-primary); color: var(--gd-primary-ink); }
+.gd-nets button:disabled { opacity: .45; cursor: not-allowed; }
+.gd-nets-count { padding: 1px 6px; border-radius: 999px; background: var(--gd-track); color: var(--gd-ink); font-size: 10.5px; }
+.gd-nets button[aria-pressed="true"] .gd-nets-count { background: rgb(255 255 255 / 22%); color: var(--gd-primary-ink); }
+
+.gd-key { display: flex; flex-wrap: wrap; gap: 4px 14px; padding: 9px 11px; border-radius: 14px; border: 1px solid var(--gd-rim); background: var(--gd-inner); }
+.gd-key-item { display: inline-flex; align-items: center; gap: 7px; padding: 3px 5px; border: 0; background: transparent; color: var(--gd-ink); font: inherit; font-size: 11.5px; font-weight: 700; border-radius: 8px; }
+.gd-key-btn { cursor: pointer; }
+.gd-key-btn:hover, .gd-key-btn[aria-pressed="true"] { background: var(--gd-raised); }
+/* Pointing at one name dims the others, so the eye is sent to the shape being described. */
+.gd-key:hover .gd-key-item { opacity: .45; }
+.gd-key:hover .gd-key-item:hover, .gd-key .gd-key-btn[aria-pressed="true"] { opacity: 1; }
+.gd-key svg { flex: none; }
+
+.gd-canvas { position: relative; min-block-size: 0; block-size: clamp(300px, 46vh, 460px); border-radius: 16px; border: 1px solid var(--gd-rim); background: var(--gd-inner); overflow: hidden; }
+.gd-graph-foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px; color: var(--gd-muted); font-size: 11.5px; font-weight: 650; }
+
+.gd-net-block { display: grid; gap: 14px; margin-block-end: 14px; }
+.gd-leads { display: grid; gap: 14px; }
+.gd-pick { border-color: var(--gd-ink); box-shadow: inset 0 1px 1px var(--gd-edge-light), 0 8px 22px rgb(var(--gd-dark-shadow) / 12%); }
+.gd-pick-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.gd-flag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 999px; background: var(--gd-primary); color: var(--gd-primary-ink); font-size: 10.5px; font-weight: 800; letter-spacing: .01em; }
+.gd-pick-who { display: flex; align-items: center; gap: 11px; margin-block: 12px 10px; }
+.gd-face { display: grid; place-items: center; inline-size: 44px; block-size: 44px; flex: none; border-radius: 999px; background: var(--gd-primary); color: var(--gd-primary-ink); font-size: 13px; font-weight: 820; }
+.gd-who { display: grid; min-inline-size: 0; }
+.gd-who strong { font-size: 17px; font-weight: 820; letter-spacing: -.02em; }
+.gd-who small { color: var(--gd-muted); font-size: 11.5px; font-weight: 650; }
+.gd-score { display: inline-flex; align-items: baseline; gap: 1px; flex: none; }
+.gd-score strong { font-size: 22px; font-weight: 840; letter-spacing: -.03em; }
+.gd-score small { color: var(--gd-muted); font-size: 11px; font-weight: 700; }
+.gd-score[data-tier="C"] strong { color: var(--gd-muted); }
+.gd-reason { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; margin-block-start: 7px; font-size: 12.5px; font-weight: 620; line-height: 1.45; }
+.gd-reason-k { display: inline-flex; align-items: center; gap: 6px; inline-size: 74px; flex: none; color: var(--gd-muted); font-weight: 760; }
+.gd-reason-k svg { inline-size: 14px; block-size: 14px; }
+.gd-reason b { font-weight: 820; }
+.gd-pick-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-block-start: 15px; }
+
+.gd-rest-list { display: grid; gap: 2px; }
+.gd-rest-list li { display: grid; grid-template-columns: 22px auto minmax(9rem, auto) minmax(0, 1fr) auto auto; align-items: center; gap: 11px; padding: 10px 8px; border-radius: 12px; border-block-start: 1px solid var(--gd-line); }
+.gd-rest-list li:first-child { border-block-start: 0; }
+.gd-rest-list .gd-face { inline-size: 34px; block-size: 34px; font-size: 11px; }
+.gd-rank { color: var(--gd-muted); font-size: 11.5px; font-weight: 760; text-align: center; }
+.gd-rest-why { color: var(--gd-muted); font-size: 11.5px; font-weight: 620; line-height: 1.4; }
+.gd-rest-do { min-block-size: 32px; padding: 5px 12px; }
+/* The row the graph was clicked on, named down here. */
+.gd-leads .is-picked { background: var(--gd-raised); box-shadow: 0 0 0 2px var(--gd-focus); }
+
 @media (max-width: 1060px) {
   .gd-surround { inline-size: calc(100% - 74px); }
   .gd-stage-scroll { padding-inline: 29px; }
@@ -338,6 +394,13 @@ export const dashboardStyles = `
   .gd-lanes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
+  .gd-rest-list li { grid-template-columns: 20px auto minmax(0, 1fr) auto; grid-template-areas: "rank face who score" "why why why do"; }
+  .gd-rest-list .gd-rank { grid-area: rank; }
+  .gd-rest-list .gd-face { grid-area: face; }
+  .gd-rest-list .gd-who { grid-area: who; }
+  .gd-rest-list .gd-score { grid-area: score; justify-self: end; }
+  .gd-rest-why { grid-area: why; }
+  .gd-rest-do { grid-area: do; justify-self: start; }
   .gd-surround { padding-top: 11px; padding-bottom: calc(73px + env(safe-area-inset-bottom)); inline-size: calc(100% - 24px); }
   .gd-top { grid-template-columns: minmax(0, 1fr) auto; padding: 7px 9px; gap: 6px 12px; border-radius: 21px; }
   .gd-ask { grid-area: 2 / 1 / 3 / -1; min-block-size: 41px; }

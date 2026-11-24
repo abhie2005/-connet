@@ -12,6 +12,8 @@ import { ArrowDownToLine, ArrowRight, ArrowUpRight, BarChart3, Bell, BriefcaseBu
 import { useGSAP } from "@gsap/react";
 import { gsap } from "gsap";
 import { derive, type Derived, type LaneItem } from "@/lib/dashboard";
+import { DashboardGraph } from "./dashboard-graph";
+import { DashboardLeads } from "./dashboard-leads";
 import type { Workspace } from "@/lib/types";
 import { dashboardStyles } from "./glassy-dashboard.css";
 
@@ -660,6 +662,8 @@ export function GlassyDashboard({
   const [theme, setTheme] = useState(initialTheme);
   const [modal, setModal] = useState<Modal>(null);
   const [readNotices, setReadNotices] = useState(false);
+  /** The lead last clicked on the graph, named again in the list under it. */
+  const [picked, setPicked] = useState<string | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const scrollArea = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
@@ -827,7 +831,17 @@ export function GlassyDashboard({
                 </div>
               ) : (
                 <div className="gd-content" ref={content} key={view} data-view={view}>
-                  {view === "command" && <CommandView d={d} open={selectView} />}
+                  {view === "command" && (
+                    <>
+                      {ws && (
+                        <div className="gd-net-block">
+                          <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} />
+                          <DashboardLeads ws={ws} appHref={appHref} picked={picked} />
+                        </div>
+                      )}
+                      <CommandView d={d} open={selectView} />
+                    </>
+                  )}
                   {view === "spend" && <SpendView d={d} download={downloadLedger} />}
                   {view === "signals" && <SignalsView d={d} />}
                   {view === "board" && <BoardView d={d} inspect={(item, lane) => setModal({ item, lane })} />}
