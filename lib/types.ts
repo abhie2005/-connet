@@ -316,6 +316,8 @@ export interface Modes {
   graph: "neo4j" | "embedded";
   billing: "flexprice" | "local";
   band: boolean;
+  /** Deal rooms mirrored into a Teamily conversation, one per deal. */
+  teamily: boolean;
   send: "simulate";
 }
 

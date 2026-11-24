@@ -7,6 +7,7 @@
 // only offered after they reply with interest.
 import { nextId } from "./ids";
 import { store, type Store } from "./store";
+import { teamilyPost } from "./providers/teamily";
 import { DEFAULT_TEAM, type DealRoom, type DealRoomTask, type Lead, type TeamMember } from "./types";
 
 export const team = (s: Store): TeamMember[] => {
@@ -15,6 +16,8 @@ export const team = (s: Store): TeamMember[] => {
 };
 
 const rooms = (s: Store): DealRoom[] => (s.state.dealRooms ||= []);
+
+const lead = (s: Store, leadId: string) => s.state.leads.find((l) => l.id === leadId)?.company || "They";
 
 export const roomFor = (s: Store, leadId: string): DealRoom | null => rooms(s).find((r) => r.leadId === leadId) || null;
 
@@ -66,6 +69,11 @@ function openingTasks(s: Store, lead: Lead, members: TeamMember[]): DealRoomTask
     .map(([member, text], i) => ({ id: `tk${i + 1}`, memberId: member.id, text, done: false, doneAt: null }));
 }
 
+/** Say it in Teamily too, when Teamily is set up. Never waited on, never allowed to throw. */
+function mirror(leadId: string, text: string, once: string) {
+  void teamilyPost(leadId, text, once).catch(() => {});
+}
+
 /**
  * Open the room for a lead. Opening one twice does nothing: the room that is already there is
  * returned unchanged. Called after an approval, and it must never be the reason a send fails.
@@ -93,6 +101,9 @@ export function openDealRoom(leadId: string): DealRoom | null {
   rooms(s).push(room);
   s.audit("agent", "Opened a deal room", { agent: "planner", leadId, note: `${members.length} people, ${room.tasks.length} tasks` });
   s.log("planner", "say", `Deal room open for ${lead.company}: the brief is in it and ${room.tasks.length} people have something to do.`, { to: "rep" });
+  // And in Teamily, when it is set up: one conversation per deal, opened with the same brief.
+  const owes = room.tasks.map((t) => `- ${room.members.find((m) => m.id === t.memberId)?.role || "Somebody"}: ${t.text}`).join("\n");
+  mirror(leadId, `Deal room open: ${lead.company}\n\n${room.messages[0].text}\n\nWho owes what:\n${owes}`, `open-${room.id}`);
   s.touch();
   return room;
 }
@@ -133,6 +144,7 @@ export function noteReplyInDealRoom(leadId: string, reply: { intent: string; sum
     if (task && !task.done) task.text = meeting ? "Book the meeting that is on the calendar" : "Book the meeting";
     if (meeting) postToDealRoom(leadId, `The meeting is on the calendar, waiting for a rep to book it.`, "note");
   }
+  mirror(leadId, `${lead(s, leadId)} replied. ${reply.summary}${reply.next_step ? ` Next: ${reply.next_step}` : ""}${positive ? " The meeting is on the calendar, waiting for a rep to book it." : ""}`, `reply-${room.id}-${room.messages.length}`);
   s.touch();
   return room;
 }

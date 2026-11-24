@@ -51,6 +51,7 @@ Every key is optional. A missing key switches that one part to sample data, and 
 | `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD` | Neo4j as the graph database; reasoning queries run there in Cypher | console.neo4j.io (Aura free) |
 | `FLEXPRICE_API_KEY` | Usage events sent to Flexprice; the credit gate reads the Flexprice wallet | flexprice.io |
 | `BAND_CHAT_ID`, `BAND_API_KEY_*` | The agents' conversation mirrored into a Band room | band.ai |
+| `TEAMILY_AGENT_TOKEN`, `TEAMILY_AGENT_ID` | Each deal room mirrored into its own Teamily conversation | teamily.ai: your agent &rarr; Agent API &rarr; RESTful API for servers |
 | `CONNET_MCP_TOKEN` | `/api/mcp`: lets an outside agent (Teamily) read and work the deal rooms | any long random string of your own |
 
 **Never commit `.env.local`.** It is in `.gitignore`.
@@ -120,6 +121,7 @@ Finding the lead and writing the email is half the work. The other half is the f
 - **The tasks.** Sales owns the deal and books the meeting, Marketing prepares a case study for the lead's segment, Finance prepares pricing for a company that size. The CEO is only given a task on a tier A lead. A rep ticks them off.
 - **When they reply.** The room hears the reply and what to do next. On a reply with interest, the owner's task becomes booking the meeting that is already on the Calendar, and an **Invite client** button appears.
 - **Inviting the client.** A rep press only, never the agent's, never before a reply with interest, and it records who pressed it, like every other approval here.
+- **In Teamily.** With `TEAMILY_AGENT_TOKEN` and `TEAMILY_AGENT_ID` set, opening a room also starts a Teamily conversation for that deal, with the brief and who owes what in it, and the reply lands in the same thread. Teamily gives each `user` its own conversation and memory, so **one deal is one conversation** - nobody makes a chat by hand. The call is idempotent, never waited on, and never able to fail a send: with no key, everything stays in this app and the connections panel says so.
 - **Where it shows.** A **Deal room** fold on the profile card, and a **Deal room** chip on the Pipeline card. Opening a room, and a reply arriving in one, are also said in the agents' feed, which carries them to the Band room when Band keys are set.
 
 ### Working a deal room from another AI client (MCP)
