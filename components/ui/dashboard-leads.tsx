@@ -2,9 +2,8 @@
 /* Who to write to, under the graph: the best one first, then the rest in order.
 
    This is the app's own ranking — components/leads.ts decides it, so the order here and the order
-   at / cannot disagree. Nothing on this page acts: every button is a way into the app, which is
-   where a draft is read, approved or rejected. A dashboard that could send mail would be a second
-   place to get that wrong. */
+   at / cannot disagree. The buttons open the app's own profile card, which is where a draft is
+   written, read, approved or rejected; this list decides nothing for itself. */
 import { useEffect, useRef, type CSSProperties } from "react";
 import { ArrowRight, Sparkles, Zap } from "lucide-react";
 import { initials } from "@/components/ui";
@@ -34,13 +33,13 @@ function WayIn({ view }: { view: LeadView }) {
   );
 }
 
-/** What the app would do next for this lead, said as a link rather than a button. */
-function Next({ view, appHref }: { view: LeadView; appHref: string }) {
+/** What the app would do next for this lead. The card it opens is where it is actually done. */
+function Next({ view, onOpen }: { view: LeadView; onOpen: (id: string) => void }) {
   const label = view.draft ? "Review the draft" : view.sent ? "See what was sent" : "Write a draft";
   return (
-    <a className="gd-primary" href={appHref}>
+    <button type="button" className="gd-primary" onClick={() => onOpen(view.lead.id)}>
       {label} <ArrowRight aria-hidden="true" />
-    </a>
+    </button>
   );
 }
 
@@ -57,7 +56,7 @@ function Who({ view }: { view: LeadView }) {
   );
 }
 
-export function DashboardLeads({ ws, appHref, picked }: { ws: Workspace; appHref: string; picked: string | null }) {
+export function DashboardLeads({ ws, picked, onOpen }: { ws: Workspace; picked: string | null; onOpen: (leadId: string, focus?: string | null) => void }) {
   const order = ranked(ws);
   const best = order.find((v) => !v.sent) || order[0] || null;
   const rest = order.filter((v) => v !== best);
@@ -85,8 +84,8 @@ export function DashboardLeads({ ws, appHref, picked }: { ws: Workspace; appHref
         </p>
         <WayIn view={best} />
         <div className="gd-pick-actions">
-          <Next view={best} appHref={appHref} />
-          <a className="gd-secondary" href={appHref}>View profile</a>
+          <Next view={best} onOpen={onOpen} />
+          <button type="button" className="gd-secondary" onClick={() => onOpen(best.lead.id)}>View profile</button>
         </div>
       </section>
 
@@ -103,7 +102,7 @@ export function DashboardLeads({ ws, appHref, picked }: { ws: Workspace; appHref
                 <Who view={view} />
                 <span className="gd-rest-why">{view.signal?.summary || view.lead.whyNow || "No reason to write found yet"}</span>
                 <Score total={view.lead.score.total} tier={view.lead.score.tier} />
-                <a className="gd-secondary gd-rest-do" href={appHref}>{view.draft ? "Review" : view.sent ? "Sent" : "Draft"}</a>
+                <button type="button" className="gd-secondary gd-rest-do" onClick={() => onOpen(view.lead.id)}>{view.draft ? "Review" : view.sent ? "Sent" : "Draft"}</button>
               </li>
             ))}
           </ol>

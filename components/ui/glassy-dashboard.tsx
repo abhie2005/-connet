@@ -14,6 +14,12 @@ import { gsap } from "gsap";
 import { useActions, useWorkspace } from "@/lib/client";
 import { Connections, CreditsPanel, dataLabel } from "@/components/panels";
 import { Intake } from "@/components/Intake";
+import { BriefTab } from "@/components/BriefTab";
+import { ApprovalsTab } from "@/components/ApprovalsTab";
+import { PipelineTab } from "@/components/PipelineTab";
+import { Profile } from "@/components/Profile";
+import { bestNext, ranked, viewOf } from "@/components/leads";
+import type { Lead } from "@/lib/types";
 import { derive, type Derived, type LaneItem } from "@/lib/dashboard";
 import { DashboardGraph } from "./dashboard-graph";
 import { DashboardLeads } from "./dashboard-leads";
@@ -349,7 +355,10 @@ function ActivityPanel({ d }: { d: Derived }) {
   );
 }
 
-type View = "command" | "spend" | "signals" | "board";
+/* The page carries the app's four sections, under the app's own names and in the app's order:
+   who to aim at, who was found, what to approve, what happened next. A dashboard whose nav said
+   something different from the product it reports on would be a second vocabulary to learn. */
+type View = "target" | "leads" | "approve" | "pipeline";
 
 function CommandView({ d, open }: { d: Derived; open: (v: View) => void }) {
   return (
@@ -362,10 +371,10 @@ function CommandView({ d, open }: { d: Derived; open: (v: View) => void }) {
           <span>{d.waiting} waiting for your approval · nothing is sent until you approve it</span>
         </div>
         <div className="gd-balance-actions">
-          <button type="button" className="gd-primary" onClick={() => open("board")}>
-            The board <ArrowUpRight aria-hidden="true" />
+          <button type="button" className="gd-primary" onClick={() => open("leads")}>
+            The leads <ArrowUpRight aria-hidden="true" />
           </button>
-          <button type="button" className="gd-secondary" onClick={() => open("signals")}>
+          <button type="button" className="gd-secondary" onClick={() => open("leads")}>
             Why now <ArrowRight aria-hidden="true" />
           </button>
         </div>
@@ -401,7 +410,7 @@ function CommandView({ d, open }: { d: Derived; open: (v: View) => void }) {
               <strong>{d.waiting} to review</strong>
               <small>{d.sent} approved and recorded as sent</small>
             </div>
-            <button type="button" className="gd-icon-button" aria-label="Open the board" onClick={() => open("board")}>
+            <button type="button" className="gd-icon-button" aria-label="Open the drafts waiting" onClick={() => open("approve")}>
               <ArrowUpRight aria-hidden="true" />
             </button>
           </div>
@@ -523,17 +532,17 @@ function BoardView({ d, inspect }: { d: Derived; inspect: (item: LaneItem, lane:
 }
 
 const views = [
-  { id: "command", label: "Command Center", short: "Command", icon: LayoutDashboard, description: "What was found, what it cost, and what is waiting for you.", prompt: "What needs my approval?" },
-  { id: "spend", label: "Spend", short: "Spend", icon: TrendingUp, description: "Credits by day, split between finding accounts and writing to them.", prompt: "What has this run cost?" },
-  { id: "signals", label: "Signals", short: "Signals", icon: BarChart3, description: "Accounts by segment, and the reasons they look like they are buying.", prompt: "Why now, for each account?" },
-  { id: "board", label: "The board", short: "Board", icon: BriefcaseBusiness, description: "Every account, in the lane that explains what is holding it.", prompt: "Which accounts are held?" },
+  { id: "target", label: "Target", short: "Target", icon: LayoutDashboard, description: "Who should buy it, what the run cost, and what it found.", prompt: "Who should buy this?" },
+  { id: "leads", label: "Leads", short: "Leads", icon: BriefcaseBusiness, description: "Who was found, best first, and how they all connect.", prompt: "Who should I write to first?" },
+  { id: "approve", label: "Approve", short: "Approve", icon: ListChecks, description: "Drafts waiting for you. Nothing is sent until you approve it.", prompt: "What needs my approval?" },
+  { id: "pipeline", label: "Pipeline", short: "Pipeline", icon: TrendingUp, description: "What happened after sending.", prompt: "What happened after sending?" },
 ] as const;
 
 const routeOrder: View[] = views.map((v) => v.id);
 const routeFromHash = (): View => {
-  if (typeof location === "undefined") return "command";
+  if (typeof location === "undefined") return "target";
   const id = location.hash.slice(1);
-  return routeOrder.find((v) => v === id) ?? "command";
+  return routeOrder.find((v) => v === id) ?? "target";
 };
 
 function saveCsv(filename: string, rows: (string | number)[][]) {
@@ -686,6 +695,8 @@ export function GlassyDashboard({
   const [readNotices, setReadNotices] = useState(false);
   /** The lead last clicked on the graph, named again in the list under it. */
   const [picked, setPicked] = useState<string | null>(null);
+  /** The profile card the app opens on a lead, opened from here the same way. */
+  const [card, setCard] = useState<{ lead: string; focus: string | null } | null>(null);
   const root = useRef<HTMLDivElement>(null);
   const scrollArea = useRef<HTMLDivElement>(null);
   const content = useRef<HTMLDivElement>(null);
@@ -703,6 +714,8 @@ export function GlassyDashboard({
   }, []);
 
   const d = useMemo(() => derive(ws, windowOf[period]), [ws, period]);
+  const open = useCallback((leadId: string, focus: string | null = null) => setCard({ lead: leadId, focus }), []);
+  const drafting = useCallback((lead: Lead, force?: boolean) => act({ type: "draft", leadId: lead.id, force: force || lead.status === "held" }, `d:${lead.id}`).then(() => undefined), [act]);
   const source = ws ? dataLabel(ws) : null;
   const running = ws?.run.status === "running";
 
@@ -856,14 +869,14 @@ export function GlassyDashboard({
                   <p>{current.description}</p>
                 </div>
                 <div className="gd-view-actions">
-                  {(view === "command" || view === "spend") && (
+                  {view === "target" && (
                     <div className="gd-period" role="group" aria-label="How far back">
                       {periods.map((p) => (
                         <button type="button" key={p} aria-pressed={p === period} onClick={() => setPeriod(p)}>{p}</button>
                       ))}
                     </div>
                   )}
-                  {view === "spend" && (
+                  {view === "target" && (
                     <button type="button" className="gd-primary gd-export" onClick={downloadLedger}>
                       <ArrowDownToLine aria-hidden="true" />Export ledger
                     </button>
@@ -878,26 +891,61 @@ export function GlassyDashboard({
                 </div>
               ) : (
                 <div className="gd-content" ref={content} key={view} data-view={view}>
-                  {view === "command" && (
+                  {/* The four sections are the app's own components, not a reading of them: what is
+                      approved or moved here is approved or moved for real, through the same endpoint. */}
+                  {view === "target" && ws && (
                     <>
-                      {ws && (
-                        <div className="gd-net-block">
-                          <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} />
-                          <DashboardLeads ws={ws} appHref={appHref} picked={picked} />
-                        </div>
-                      )}
                       <CommandView d={d} open={selectView} />
+                      <div className="gd-app-tab"><BriefTab ws={ws} act={act} busy={busy} /></div>
+                      <SpendView d={d} download={downloadLedger} />
+                      <SignalsView d={d} />
                     </>
                   )}
-                  {view === "spend" && <SpendView d={d} download={downloadLedger} />}
-                  {view === "signals" && <SignalsView d={d} />}
-                  {view === "board" && <BoardView d={d} inspect={(item, lane) => setModal({ item, lane })} />}
+                  {view === "leads" && ws && (
+                    <>
+                      <div className="gd-net-block">
+                        <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} />
+                        <DashboardLeads ws={ws} picked={picked} onOpen={open} />
+                      </div>
+                      <BoardView d={d} inspect={(item, lane) => setModal({ item, lane })} />
+                    </>
+                  )}
+                  {view === "approve" && ws && <div className="gd-app-tab"><ApprovalsTab ws={ws} act={act} busy={busy} /></div>}
+                  {view === "pipeline" && ws && <div className="gd-app-tab"><PipelineTab ws={ws} act={act} busy={busy} onOpen={(id) => open(id)} /></div>}
                 </div>
               )}
             </div>
           </main>
           <Dock active={active} select={selectView} />
         </div>
+        {ws && (() => {
+          const order = [...ranked(ws).map((v) => v.lead), ...ws.leads.filter((l) => l.status === "held"), ...ws.leads.filter((l) => l.status === "suppressed")];
+          const lead = card ? order.find((l) => l.id === card.lead) || null : null;
+          const at = lead ? order.indexOf(lead) : 0;
+          return (
+            <Profile
+              view={lead ? viewOf(lead, ws) : null}
+              focus={card?.focus || null}
+              index={at}
+              total={order.length}
+              isBest={!!lead && bestNext(ws)?.lead.id === lead.id}
+              ws={ws}
+              act={act}
+              busy={busy}
+              onClose={() => setCard(null)}
+              onStep={(by) => {
+                if (order.length < 2) return;
+                setCard({ lead: order[(at + by + order.length) % order.length].id, focus: null });
+              }}
+              onShowPath={() => setCard(null)}
+              onDraft={drafting}
+              onReview={() => {
+                setCard(null);
+                selectView("approve");
+              }}
+            />
+          );
+        })()}
         {toast && <p className="gd-toast" role="status">{toast}</p>}
         <footer className="gd-footer">
           <span>Every figure on this page is read from the workspace.</span>
@@ -915,7 +963,7 @@ export function GlassyDashboard({
         <Dialog title="Waiting for your approval" close={close}>
           <div className="gd-quick-list">
             {(d.lanes.find((l) => l.key === "waiting")?.items || []).map((item) => (
-              <button type="button" key={item.id} onClick={() => { close(); selectView("board"); }}>
+              <button type="button" key={item.id} onClick={() => { close(); selectView("approve"); }}>
                 <Bell aria-hidden="true" />
                 <div>
                   <strong>{item.name}</strong>

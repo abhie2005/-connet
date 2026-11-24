@@ -75,9 +75,9 @@ export const dashboardStyles = `
   color-scheme: dark;
 }
 .gd-app *, .gd-app *::before, .gd-app *::after { box-sizing: border-box; }
-.gd-app :where(button, input, select) { color: inherit; font: inherit; }
+:where(.gd-app) :where(button, input, select) { color: inherit; font: inherit; }
 .gd-app :where(button, a, input, select):focus-visible { outline: 2px solid var(--gd-focus); outline-offset: 3px; }
-.gd-app a { color: inherit; text-decoration: none; }
+:where(.gd-app) a { color: inherit; text-decoration: none; }
 .gd-app button { cursor: pointer; }
 .gd-app :where(h1, h2, h3, p, figure) { margin: 0; }
 .gd-app svg { flex: none; }
@@ -401,6 +401,12 @@ export const dashboardStyles = `
 .gd-pop { position: absolute; inset-inline-end: 0; inset-block-start: calc(100% + 10px); z-index: 40; max-inline-size: calc(100vw - 32px); padding: 15px; border-radius: 18px; border: 1px solid var(--gd-rim); background: var(--gd-raised); color: #1b1b1f; backdrop-filter: blur(var(--gd-panel-frost)); box-shadow: 0 16px 40px rgb(var(--gd-dark-shadow) / 22%); }
 .gd-new:disabled { opacity: .5; cursor: not-allowed; }
 .gd-toast { position: fixed; inset-block-end: calc(84px + env(safe-area-inset-bottom)); inset-inline: 0; z-index: 60; inline-size: fit-content; max-inline-size: calc(100% - 32px); margin-inline: auto; padding: 10px 16px; border-radius: 999px; background: var(--gd-primary); color: var(--gd-primary-ink); font-size: 12px; font-weight: 740; box-shadow: 0 10px 30px rgb(var(--gd-dark-shadow) / 26%); }
+
+
+/* The app's own sections, mounted inside this page. They are dressed by app/globals.css, which
+   expects to be standing on white — so they are given white to stand on, in both themes, rather
+   than half-reading against the glass. The frame around them is still this page's. */
+.gd-app-tab { padding: 16px 18px; border-radius: 20px; border: 1px solid var(--gd-rim); background: rgb(255 255 255 / 90%); color: #1B1640; box-shadow: inset 0 1px 1px var(--gd-edge-light), 0 6px 18px rgb(var(--gd-dark-shadow) / 9%); }
 
 @media (max-width: 1060px) {
   .gd-surround { inline-size: calc(100% - 74px); }
