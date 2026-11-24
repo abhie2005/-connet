@@ -109,6 +109,18 @@ A job posting is a buying signal with a date on it. When a company posts "hiring
 
 A scan is at most six searches, deduped by URL and capped at ten pages for a single extract call, to stay inside the Tavily and Gemini quotas.
 
+## Deal Room
+
+Finding the lead and writing the email is half the work. The other half is the four people inside your own company who have to do something about it.
+
+- **When it opens.** The moment a rep approves the first email to a company and it is recorded as sent. One room per lead: approving again opens nothing new, and a room that fails to open is never the reason a send goes unrecorded. `lib/dealroom.ts`.
+- **Who is in it.** The team from Settings: CEO, Sales Director, Marketing Director and Finance Director to start with, names and roles editable. The client is **not** in it.
+- **The brief.** One post from the agent, and every line of it is a fact that was checked somewhere else in this app: the company and what it does, who was written to, the strongest signal with its source, the score and the parts that earned it, the warm way in, and the subject and first line of the email that went out. It writes no new claims.
+- **The tasks.** Sales owns the deal and books the meeting, Marketing prepares a case study for the lead's segment, Finance prepares pricing for a company that size. The CEO is only given a task on a tier A lead. A rep ticks them off.
+- **When they reply.** The room hears the reply and what to do next. On a reply with interest, the owner's task becomes booking the meeting that is already on the Calendar, and an **Invite client** button appears.
+- **Inviting the client.** A rep press only, never the agent's, never before a reply with interest, and it records who pressed it, like every other approval here.
+- **Where it shows.** A **Deal room** fold on the profile card, and a **Deal room** chip on the Pipeline card. Opening a room, and a reply arriving in one, are also said in the agents' feed, which carries them to the Band room when Band keys are set.
+
 ## The screen
 
 The screen is built so that the next thing to do is never a guess.
@@ -156,6 +168,7 @@ The screen is built so that the next thing to do is never a guess.
 | `lib/cache.ts` | Saved answers from live services, for replay |
 | `lib/passages.ts` | Picks the paragraphs of a long page that bear on the question |
 | `lib/sample/` | The invented sample market |
+| `lib/dealroom.ts` | The Deal Room: the brief, the tasks, and the rep-only invite |
 | `lib/store.ts` | The workspace, the activity feed, the audit trail, credits |
 | `app/api/` | `state` (polled by the page), `run`, `action` |
 | `components/` | The page: the graph (`GraphView`), the leads list (`LeadsTab`), the profile card (`Profile`), approvals, pipeline, the agents' feed |

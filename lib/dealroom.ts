@@ -97,12 +97,19 @@ export function openDealRoom(leadId: string): DealRoom | null {
   return room;
 }
 
-/** Add a line to a room. Returns null when there is no room for that lead yet. */
-export function postToDealRoom(leadId: string, text: string, kind: "reply" | "note" = "note"): DealRoom | null {
+/**
+ * Add a line to a room. Returns null when there is no room for that lead yet. `announce` also
+ * says it in the agents' feed, which is what carries it into the Band room when Band is set up.
+ */
+export function postToDealRoom(leadId: string, text: string, kind: "reply" | "note" = "note", announce = false): DealRoom | null {
   const s = store();
   const room = roomFor(s, leadId);
   if (!room) return null;
   room.messages.push({ id: nextId("dm", room.messages), at: new Date().toISOString(), from: "agent", kind, text });
+  if (announce) {
+    const lead = s.state.leads.find((l) => l.id === leadId);
+    s.log("planner", "say", `Deal room${lead ? `, ${lead.company}` : ""}: ${text}`, { to: "rep" });
+  }
   s.touch();
   return room;
 }
@@ -116,7 +123,7 @@ export function noteReplyInDealRoom(leadId: string, reply: { intent: string; sum
   const room = roomFor(s, leadId);
   if (!room) return null;
   const positive = reply.intent === "positive";
-  postToDealRoom(leadId, [`They replied. ${reply.summary}`, reply.next_step ? `Next: ${reply.next_step}` : ""].filter(Boolean).join(" "), "reply");
+  postToDealRoom(leadId, [`They replied. ${reply.summary}`, reply.next_step ? `Next: ${reply.next_step}` : ""].filter(Boolean).join(" "), "reply", true);
   if (positive) {
     room.positiveReply = true;
     const meeting = (s.state.meetings || []).find((m) => m.leadId === leadId && m.status !== "cancelled") || null;

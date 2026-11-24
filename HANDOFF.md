@@ -7,6 +7,32 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 15:05. Abhishek's Claude: Deal Room, on a branch
+
+**Where it is.** `feature/deal-room`, branched off `upstream/main` (which already has the Hiring Radar merge, PR #2). **Not pushed, not on `main`.** Same as last time: read access only, so this entry arrives when the branch does.
+
+**Why.** Connet stopped at the email. The moment one is sent, four people inside the company have to do something about it, and today they learn about the deal by being told. Approving an email now opens an internal room with the deal already written up in it.
+
+**Done (on the branch).**
+- `lib/dealroom.ts`: `openDealRoom`, `postToDealRoom`, `noteReplyInDealRoom`, `completeTask`, `inviteClient`. `DealRoom` lives on the workspace as `dealRooms` and is saved with it; older saved workspaces read it as `|| []`.
+- Opens from `decideMessage(id, "approve")`, the one place a message counts as sent. One room per lead: a second approval opens nothing. The call is wrapped, so a room that cannot be built is logged and **the send is still recorded** - nothing about the 2:20 demo moment can break because of this.
+- The brief makes no new claims: the strongest signal whose quote our code found plus its source, the score and the parts that earned it, the warm path, and the subject and first line of the email that went out. No model call writes it.
+- Tasks by role, matched on what the role says, so an edited team still gets the right ones: Sales owns the deal, Marketing a case study for the segment, Finance pricing for that size. CEO only on tier A.
+- `logReply` tells the room last, after the meeting is proposed, so the room links the meeting on the Calendar. A positive reply rewords the owner's task to booking it and unlocks **Invite client** - rep press only, refused before a positive reply, recorded in the audit trail like every other approval. The client is never added by the agent.
+- Band, instead of Teamily: opening a room and a reply arriving are said in the agents' feed, which already mirrors to Band when keys are set. No new provider, no new key.
+- UI: a **Deal room** fold on the profile card (members, the feed, tasks with checkboxes, the invite) and a **Deal room** chip on the Pipeline card.
+- `tests/dealroom.test.ts`, 11 checks. **105 checks pass in total**, lint and build clean.
+- Docs: a Deal Room section in `README.md` and in `docs/ARCHITECTURE.md` section 6.
+
+**Not done, on purpose.**
+- **Teamily is not built.** teamily.ai publishes no developer API, and I was given no docs, endpoint or key, so there was nothing to build against and I did not invent one. Band already does this job.
+- **No Settings editor for the team.** The four roles are the default on a fresh workspace (`DEFAULT_TEAM` in `lib/types.ts`) and `settings.team` is read and honoured wherever it is set, so an editor is a form over a field that already works - it was the cheapest thing to drop against the clock.
+- **`docs/DEMO.md` is untouched.** The script already runs 3:05 and needs a cut, so adding a row would make it worse. See below.
+
+**Need.**
+- `[open]` Yoon Woo: review the branch. It touches `lib/pipeline.ts` in two places (the approve branch of `decideMessage`, and the end of `logReply`), both wrapped in try/catch. Nothing touches the approval gate itself, `lib/name.ts`, or the quote check. No existing test changed. It has never been run against the live services.
+- `[open]` Skylar: the Deal Room needs no row of its own. At **2:20**, after "Approve and send", add to what you already say: "and the team gets a room with the deal already in it - the brief, and a task each." At **2:30**, when the reply is read, the room's tasks update and **Invite client** appears; the line is "the client is not in that room until I put them there." That is about ten seconds across two rows you already have, instead of fifteen on a new one.
+
 ## Nov 24, 12:20. Abhishek's Claude: Hiring Radar, on a branch and in a pull request
 
 **Where it is.** `feature/hiring-radar`, pushed to a fork (`abhie2005/-connet`) and opened as a pull request against `yoonwoo-lee/tact-gtm`. **Not on `main`.** I have read access to this repo, so I could not follow the handoff rule's "add an entry on `main` and push it" — this entry arrives when the PR is merged. Yoon Woo: nothing of mine is on `main` until you merge it.
