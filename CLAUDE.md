@@ -71,6 +71,13 @@ After the first live run he said the screen was "all complex and hard", that eve
 - **"What is the enrich button?"** It was jargon. It is "Find emails" now, next to "no address yet".
 - **The agents' feed is one line** (the latest thing said) until it is clicked open. Skylar opens it for the video.
 
+**Simpler again (Nov 24, 02:31: "make the UI more simple please. Still too much going on", "it'll just make the judges get overwhelmed"; he sent the profile card on live data).** These replace what is said above where they differ. The rule from here on: a screen opens on the few things that decide what to do, and everything else is one click away, folded. Before adding anything to a screen, put something else behind a fold.
+
+- **Profile card:** one column, 700 wide. The top is the entry's small graph, its name, one line, and the match number. Then three sections: who to write to (name, title, address, LinkedIn; "Find emails" beside "no address yet"), why now (the strongest reason and its quote), a warm way in if there is one. Folded underneath: "Other people here", "Why it scored N" (the bars), "More proof". Cut from it: the two-pane layout, the type chips, "Target buyer", the "people in this role care about" line, the source chip on a person, the second action button, the credit prices.
+- **Leads rows:** a person, one line on why now, the "Way in" tag if there is one, the match number, one button. Cut: the date, the source chip, the address chip, "Find emails", "Uses X". The best card lost its "Reach at" line. "Written to" is folded like On hold and Left out.
+- **Above the graph:** the switch, "Hide graph", and one plain line of marks (Company, Person, Reason to write, Competitor, Draft waiting for you), with no box and no counts. Your net has no key: the rings say what they mean. Cut: the caption beside the switch, the line of node and edge counts under the graph, "Selling Glyph" in the header, the "N stopped" chip on the closed agents bar.
+- **Approve:** a draft is "To", the subject, the message, one line ("A second agent checked it: 3 claims, each backed by a source", or in amber what it stopped), and Approve, Edit, Reject. "Show proof" opens the claims with their sources, the security note and the LinkedIn note. Cut: the two columns, the variant chip, the tier badge, the box explaining the rule (the line at the top says "Nothing is sent until you approve it").
+
 What he has said about interfaces, from a week of Glyph feedback. Follow these without being asked:
 
 - No lag and no shaking. Nothing resizes while it animates. No text that scrambles or types itself letter by letter into place.
@@ -80,7 +87,11 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 - Don't show how long the model took (he had "answered in N s" removed from Glyph's cards).
 - He found strong pink too much in Glyph. If a color comes back, keep it soft.
 
-## Status (Nov 24, 02:30)
+## Status (Nov 24, 02:40)
+
+**The simpler screens are checked on sample data only** (1512 wide): leads, the profile card with each fold opened, an approval card, both nets, a Draft click. He has not seen them yet. 46 checks pass.
+
+## Status before that (Nov 24, 02:30)
 
 **The two nets are checked on sample data only**, at 1512 and 1280 wide: the switch both ways, a search watched from each, a Draft clicked in your net, "Show on graph", the hover notes. He has not seen them yet.
 

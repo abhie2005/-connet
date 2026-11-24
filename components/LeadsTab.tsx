@@ -1,8 +1,8 @@
 "use client";
 // Leads: the one to contact first, set apart at the top, then the rest in order.
-// Each row is a person, the reason to write now, and one thing to do next.
+// A row is a person, one line on why to write now, and one thing to do next. Everything else
+// about them is in their profile card, a click away.
 import { useState } from "react";
-import { shortDate } from "@/lib/client";
 import { COSTS, type Contact, type Lead, type Workspace } from "@/lib/types";
 import type { Act } from "./BriefTab";
 import { COST_NOTE, bestNext, ranked, viewOf, type LeadView } from "./leads";
@@ -80,39 +80,8 @@ function Next({ view, h, main, force }: { view: LeadView; h: Handlers; main?: bo
   );
 }
 
-/** Where to reach them. With no address yet, the button that looks one up sits right beside the gap. */
-function Reach({ view, h }: { view: LeadView; h: Handlers }) {
-  const { lead, contact } = view;
-  const finding = h.busy.has(`e:${lead.id}`);
-  const canLook = !contact?.email && !!lead.domain && !lead.enriched && h.ws.run.status !== "running";
-  return (
-    <span className="inline-flex items-center gap-1.5 flex-wrap" onClick={(e) => e.stopPropagation()}>
-      {contact ? <EmailChip c={contact} /> : <span className="chip chip-line">nobody named yet</span>}
-      {canLook && (
-        <button className="btn btn-quiet !py-0.5 !px-2.5 !text-[12.5px]" disabled={finding} onClick={() => h.act({ type: "enrich", leadId: lead.id }, `e:${lead.id}`)} title={COST_NOTE.emails(COSTS["lead.enriched"])}>
-          {finding ? "Looking" : "Find emails"}
-        </button>
-      )}
-    </span>
-  );
-}
-
-function Why({ view, ws }: { view: LeadView; ws: Workspace }) {
-  const { signal } = view;
-  if (!signal) return <span className="text-faint">No reason to write found yet</span>;
-  return (
-    <>
-      {signal.summary}{" "}
-      <span className="whitespace-nowrap">
-        {signal.date && <span className="text-faint text-[13px]">{shortDate(signal.date)} </span>}
-        <SourceLink evidence={signal.evidence} sources={ws.sources} />
-      </span>
-    </>
-  );
-}
-
 function Best({ view, h }: { view: LeadView; h: Handlers }) {
-  const { lead, contact } = view;
+  const { lead, contact, signal } = view;
   const warm = lead.warmPaths[0];
   return (
     <div className="best arrive">
@@ -151,7 +120,13 @@ function Best({ view, h }: { view: LeadView; h: Handlers }) {
             Why now
           </span>
           <span className="reason-v">
-            <Why view={view} ws={h.ws} />
+            {signal ? (
+              <>
+                {signal.summary} <SourceLink evidence={signal.evidence} sources={h.ws.sources} />
+              </>
+            ) : (
+              <span className="text-faint">No reason to write found yet</span>
+            )}
           </span>
         </div>
         {warm && (
@@ -161,17 +136,6 @@ function Best({ view, h }: { view: LeadView; h: Handlers }) {
               Way in
             </span>
             <span className="reason-v">{warm.note}</span>
-          </div>
-        )}
-        {contact && (
-          <div className="reason">
-            <span className="reason-k">
-              <Icon name="mail" size={15} />
-              Reach at
-            </span>
-            <span className="reason-v">
-              <Reach view={view} h={h} />
-            </span>
           </div>
         )}
       </div>
@@ -188,7 +152,7 @@ function Best({ view, h }: { view: LeadView; h: Handlers }) {
 }
 
 function Row({ view, rank, h, force, quiet }: { view: LeadView; rank?: number; h: Handlers; force?: boolean; quiet?: boolean }) {
-  const { lead, contact } = view;
+  const { lead, contact, signal } = view;
   const warm = lead.warmPaths[0];
   const off = lead.status === "suppressed";
   return (
@@ -200,31 +164,15 @@ function Row({ view, rank, h, force, quiet }: { view: LeadView; rank?: number; h
           <span className="font-bold leading-snug truncate flex-none max-w-[55%]">{contact?.name || lead.company}</span>
           <span className="text-faint text-[13.5px] leading-snug truncate">{contact ? `${contact.title}, ${lead.company}` : lead.segment}</span>
         </div>
-        <div className="text-[14px] leading-snug mt-0.5 text-soft">
-          {off ? (
-            <>
-              <span className="font-semibold text-ink">Left out: </span>
-              {lead.negative?.signal || "Do not contact"} <SourceLink evidence={lead.negative?.evidence || null} sources={h.ws.sources} />
-            </>
-          ) : (
-            <Why view={view} ws={h.ws} />
-          )}
+        <div className="text-[14px] leading-snug mt-0.5 text-soft line-clamp-2">
+          {off ? `Left out: ${lead.negative?.signal || "do not contact"}` : signal ? signal.summary : <span className="text-faint">No reason to write found yet</span>}
         </div>
-        {!off && !quiet && (
-          <div className="flex gap-1.5 flex-wrap mt-1.5 items-center">
-            {warm && (
-              <span className="tag" title={warm.note}>
-                <Icon name="path" size={13} />
-                {warm.kind === "referral" ? `Intro via ${warm.via}` : `Way in: ${warm.via}`}
-              </span>
-            )}
-            <Reach view={view} h={h} />
-            {lead.usesCompetitor && <span className="chip chip-line">Uses {lead.usesCompetitor.name}</span>}
-          </div>
-        )}
-        {quiet && lead.usesCompetitor && (
+        {warm && !off && !quiet && (
           <div className="mt-1.5">
-            <span className="chip chip-line">Uses {lead.usesCompetitor.name}</span>
+            <span className="tag" title={warm.note}>
+              <Icon name="path" size={13} />
+              {warm.kind === "referral" ? `Intro via ${warm.via}` : `Way in: ${warm.via}`}
+            </span>
           </div>
         )}
       </div>
@@ -303,16 +251,12 @@ export function LeadsTab(h: Handlers) {
       )}
 
       {done.length > 0 && (
-        <>
-          <h2 className="listhead">
-            Written to <span className="count">{done.length}</span>
-          </h2>
+        <Fold title="Written to" count={done.length} note="Approved by you and recorded as sent.">
           {done.map((v) => (
             <Row key={v.lead.id} view={v} rank={list.indexOf(v) + 1} h={h} />
           ))}
-        </>
+        </Fold>
       )}
-
       {held.length > 0 && (
         <Fold title="On hold" count={held.length} note="They fit, but nothing says they are buying now, so no message was written.">
           {held.map((v) => (
@@ -333,7 +277,7 @@ export function LeadsTab(h: Handlers) {
           <Icon name="check" size={14} />
         </span>
         <span>
-          Every fact here was found word for word on the page it links to: {stats.claimsVerified} quotes on {stats.sources} pages.
+          Every fact here was found word for word on the page it came from: {stats.claimsVerified} quotes on {stats.sources} pages.
           {stats.claimsDropped > 0 && <span className="text-warn"> {stats.claimsDropped} that could not be found {stats.claimsDropped === 1 ? "was" : "were"} dropped.</span>}
         </span>
       </div>

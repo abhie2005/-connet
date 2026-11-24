@@ -69,7 +69,7 @@ export function Feed({ activity, running, visible = true }: { activity: Activity
           </span>
         )}
         <span className="flex-1" />
-        {flags > 0 && (
+        {open && flags > 0 && (
           <span className="chip chip-flag flex-none" title="Things the reviewer or security agent stopped">
             <Icon name="flag" size={13} />
             {flags} stopped

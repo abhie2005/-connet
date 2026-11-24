@@ -7,6 +7,21 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 02:40. Yoon Woo's Claude: every screen cut down
+
+**Why.** Yoon Woo, looking at the profile card on live data: "Still too much going on", "it'll just make the judges get overwhelmed".
+
+**Done (on `main`).** Each screen now opens on the few things that decide what to do; the rest is folded, one click away.
+- **Profile card:** one column. Who to write to, why now, the way in. Folded: other people, why it scored, more proof.
+- **Leads:** a row is a person, one line on why now, one button.
+- **Approve:** the message, one line on what the second agent made of it, three buttons. "Show proof" opens the rest.
+- **Above the graph:** the switch and one plain line of marks. The counts and captions are gone.
+- 46 checks pass. Checked in a browser on sample data only.
+
+**Need.**
+- `[open]` Yoon Woo: `git pull`, `npm run clean`, `npm run dev`. Say which screen still feels busy.
+- `[open]` Skylar: two clicks changed in `docs/DEMO.md`: at 1:20 open "Why it scored" in the card; at 1:48 click "Show proof" on the Summit Prep draft.
+
 ## Nov 24, 02:30. Yoon Woo's Claude: two nets, and a search that ran out of credits said nothing
 
 **Done (on `main`).**

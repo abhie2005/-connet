@@ -3,7 +3,7 @@
 // the work that says what to do next.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { APP_NAME, post, useWorkspace } from "@/lib/client";
-import { reach as reachOf, ringOf, type Net, type Reach } from "@/lib/graph/nets";
+import { reach as reachOf, ringOf, type Net } from "@/lib/graph/nets";
 import { COSTS, type Lead, type Workspace } from "@/lib/types";
 import { ApprovalsTab } from "./ApprovalsTab";
 import { BriefTab, type Act } from "./BriefTab";
@@ -170,72 +170,51 @@ function Connections({ ws }: { ws: Workspace }) {
 /** The switch between the two nets. The thumb takes the color of whoever the net is about:
     white for the product, the live blue for you. Both halves are the same width, so nothing
     resizes when it moves. */
-function NetSwitch({ net, onChange, product, canYou, within, bare }: { net: Net; onChange: (n: Net) => void; product: string; canYou: boolean; within: number; bare: boolean }) {
+function NetSwitch({ net, onChange, product, canYou, within }: { net: Net; onChange: (n: Net) => void; product: string; canYou: boolean; within: number }) {
   return (
-    <div className="flex items-center gap-3 flex-none min-w-0">
-      <div className="netswitch frost" data-net={net} role="group" aria-label="Which net to show">
-        <span className="thumb" />
-        <button aria-pressed={net === "product"} onClick={() => onChange("product")} title={`Who ${product} is connected to`}>
-          <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true" style={{ flex: "none" }}>
-            <circle cx="5.500" cy="5.500" r="5" fill="currentColor" />
-          </svg>
-          <span className="truncate">{product}&rsquo;s net</span>
-        </button>
-        <button aria-pressed={net === "you"} disabled={!canYou} onClick={() => onChange("you")} title={canYou ? "Who you are connected to" : "Add your name and schools under New search to see your own net"}>
-          <Icon name="person" size={15} />
-          Your net
-          {within > 0 && (
-            <span className="count" title={`${within} ${within === 1 ? "person" : "people"} within reach of you`}>
-              {within}
-            </span>
-          )}
-        </button>
-      </div>
-      <div className="text-[13px] text-faint leading-tight min-w-0 truncate">{net === "you" ? (bare ? "No schools or employers given yet. Add yours under New search." : "Who you can reach. Closer in is a closer tie.") : `Who ${product} is connected to.`}</div>
+    <div className="netswitch frost" data-net={net} role="group" aria-label="Which net to show">
+      <span className="thumb" />
+      <button aria-pressed={net === "product"} onClick={() => onChange("product")} title={`Who ${product} is connected to`}>
+        <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true" style={{ flex: "none" }}>
+          <circle cx="5.500" cy="5.500" r="5" fill="currentColor" />
+        </svg>
+        <span className="truncate">{product}&rsquo;s net</span>
+      </button>
+      <button aria-pressed={net === "you"} disabled={!canYou} onClick={() => onChange("you")} title={canYou ? "Who you can reach. Closer in is a closer tie." : "Add your name and schools under New search to see your own net"}>
+        <Icon name="person" size={15} />
+        Your net
+        {within > 0 && (
+          <span className="count" title={`${within} ${within === 1 ? "person" : "people"} within reach of you`}>
+            {within}
+          </span>
+        )}
+      </button>
     </div>
   );
 }
 
-/** What is drawn on the graph, in the shapes it is drawn in, with how many of each there are. */
-function Legend({ ws, net, reach, waiting }: { ws: Workspace; net: Net; reach: Map<string, Reach>; waiting: number }) {
-  const count = (label: string) => ws.graph.nodes.filter((n) => n.label === label && !n.props.isFounder && n.props.isTarget !== false).length;
-  type Item = { key: string; label: string; n?: number; mark: React.ReactNode };
-  const wait: Item[] = waiting ? [{ key: "waiting", label: "Draft waiting for you", n: waiting, mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#F2B45A" strokeWidth="1.800" strokeDasharray="3 2.600" /> }] : [];
-  let items: Item[];
-  if (net === "you") {
-    const people = ws.graph.nodes.filter((n) => n.label === "Person" && !n.props.isFounder);
-    const on = (ring: 0 | 1 | 2) => people.filter((n) => ringOf(reach.get(n.id)) === ring).length;
-    const yours = ws.graph.nodes.filter((n) => n.label !== "Person" && reach.get(n.id)?.dist === 1).length;
-    const written = ws.graph.edges.some((e) => e.type === "CONTACTED_VIA");
-    items = [
-      { key: "you", label: "You", mark: <circle cx="9" cy="9" r="6.500" fill="#5CC8FF" /> },
-      ...(yours ? [{ key: "hub", label: "Your school or past employer", n: yours, mark: <rect x="3.500" y="3.500" width="11" height="11" rx="2.500" fill="#0A0A0A" stroke="#E3F5FF" strokeWidth="1.600" /> }] : []),
-      { key: "r1", label: "Shares it with you", n: on(1), mark: <circle cx="9" cy="9" r="4.800" fill="#F2F2F2" /> },
-      { key: "r2", label: "One introduction away", n: on(2), mark: <circle cx="9" cy="9" r="4.200" fill="#C4C4C4" /> },
-      { key: "r0", label: "No way in yet", n: on(0), mark: <circle cx="9" cy="9" r="4.200" fill="#5E5E5E" /> },
-      { key: "company", label: "Where they work", n: ws.graph.nodes.filter((n) => n.label === "Company" && n.props.isTarget !== false && reach.has(n.id)).length, mark: <circle cx="9" cy="9" r="6" fill="#0A0A0A" stroke="#F2F2F2" strokeWidth="2.200" /> },
-      ...(written ? [{ key: "sent", label: "Written to", mark: <path d="M1.500 9h15" stroke="#5CC8FF" strokeWidth="2" strokeDasharray="4 3.500" /> }] : []),
-      ...wait,
-    ];
-  } else {
-    items = [
-      { key: "product", label: ws.product?.name || "Your product", mark: <circle cx="9" cy="9" r="6.500" fill="#F2F2F2" /> },
-      { key: "company", label: "Company", n: count("Company"), mark: <circle cx="9" cy="9" r="6" fill="#0A0A0A" stroke="#F2F2F2" strokeWidth="2.200" /> },
-      ...(count("Person") ? [{ key: "person", label: "Person", n: count("Person"), mark: <circle cx="9" cy="9" r="4.200" fill="#C4C4C4" /> }] : []),
-      ...(count("Signal") ? [{ key: "signal", label: "Reason to write now", n: count("Signal"), mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5CC8FF" /> }] : []),
-      ...(count("Competitor") ? [{ key: "competitor", label: "Competitor", n: count("Competitor"), mark: <circle cx="9" cy="9" r="5.800" fill="#2B2B2B" stroke="#8A8A8A" strokeWidth="1.600" /> }] : []),
-      ...wait,
-    ];
-  }
+/** What the shapes on the graph mean. Only the few that need saying: the rest is named on the graph. */
+function Legend({ net, waiting, competitors }: { net: Net; waiting: boolean; competitors: boolean }) {
+  type Item = { key: string; label: string; mark: React.ReactNode };
+  // Your net needs no key of its own: each ring says what it means on the graph.
+  const items: Item[] =
+    net === "you"
+      ? [{ key: "rings", label: "The closer to you, the closer the tie", mark: <><circle cx="9" cy="9" r="7" fill="none" stroke="#8A8A8A" strokeWidth="1.200" strokeDasharray="2 2.600" /><circle cx="9" cy="9" r="3" fill="#5CC8FF" /></> }]
+      : [
+          { key: "company", label: "Company", mark: <circle cx="9" cy="9" r="6" fill="#0A0A0A" stroke="#F2F2F2" strokeWidth="2.200" /> },
+          { key: "person", label: "Person", mark: <circle cx="9" cy="9" r="4.200" fill="#C4C4C4" /> },
+          { key: "signal", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5CC8FF" /> },
+          ...(competitors ? [{ key: "competitor", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#2B2B2B" stroke="#8A8A8A" strokeWidth="1.600" /> }] : []),
+        ];
+  if (waiting) items.push({ key: "waiting", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#F2B45A" strokeWidth="1.800" strokeDasharray="3 2.600" /> });
   return (
-    <div className="legend frost" aria-label="What the shapes on the graph mean">
+    <div className="legend" aria-label="What the shapes on the graph mean">
       {items.map((it) => (
         <span key={it.key} className="legend-item">
           <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
             {it.mark}
           </svg>
           {it.label}
-          {it.n != null && <span className="legend-n">{it.n}</span>}
         </span>
       ))}
     </div>
@@ -267,7 +246,7 @@ function Guide({ ws, tab, go, onNew, graphOpen, toggleGraph }: { ws: Workspace; 
       tab === "approve" ? (
         <>
           <span className="font-bold">Your turn. </span>
-          <span className="text-soft">Read each message, then approve it, edit it or reject it.</span>
+          <span className="text-soft">Nothing is sent until you approve it.</span>
         </>
       ) : (
         <>
@@ -558,9 +537,6 @@ export function App() {
             <CreditsPanel ws={ws} act={act} busy={busy} />
           </Popover>
         </div>
-        <div className="text-[13.5px] text-faint leading-tight text-right max-w-[180px] truncate">
-          Selling <span className="text-ink font-bold">{ws.product.name}</span>
-        </div>
         <button className="btn" disabled={running} onClick={() => setIntake(true)} title="Describe a product and search again">
           New search
         </button>
@@ -569,12 +545,17 @@ export function App() {
       <main className="flex-1 min-h-0 flex gap-4 px-6 pb-6">
         {/* Kept mounted when hidden, so the layout of the graph is not thrown away. */}
         <section className={`relative flex-col gap-3 min-w-0 ${graphOpen ? "flex" : "hidden"}`} style={{ flex: "0 0 41%" }}>
-          <NetSwitch net={net} onChange={turn} product={ws.product.name} canYou={canYou} bare={ws.founder.schools.length + ws.founder.employers.length === 0} within={ws.graph.nodes.filter((n) => n.label === "Person" && !n.props.isFounder && ringOf(reach.get(n.id)) !== 0).length} />
-          <Legend ws={ws} net={net} reach={reach} waiting={waiting.size} />
+          <div className="flex items-center gap-3 flex-none">
+            <NetSwitch net={net} onChange={turn} product={ws.product.name} canYou={canYou} within={ws.graph.nodes.filter((n) => n.label === "Person" && !n.props.isFounder && ringOf(reach.get(n.id)) !== 0).length} />
+            <span className="flex-1" />
+            <button className="btn btn-plain !text-[13px]" onClick={() => setGraphOpen(false)}>
+              Hide graph
+            </button>
+          </div>
+          <Legend net={net} waiting={waiting.size > 0} competitors={ws.graph.nodes.some((n) => n.label === "Competitor")} />
           <div className="relative flex-1 min-h-0">
             <div className="dots absolute inset-0 pointer-events-none" />
-            {/* The graph stops short of the bottom line, which is kept for the readout. */}
-            <div className="absolute inset-x-0 top-0 bottom-6">
+            <div className="absolute inset-0">
               <GraphView nodes={ws.graph.nodes} edges={ws.graph.edges} leads={ws.leads} net={net} reach={reach} highlight={highlight} flows={flows} waiting={waiting} best={best?.lead.id || null} onPick={pick} />
             </div>
             {pathLead && (
@@ -583,18 +564,6 @@ export function App() {
                 The way in to {pathLead.company}
                 <button className="border-0 bg-transparent p-0 ml-1 grid place-items-center" onClick={() => setPathFor(null)} aria-label="Stop highlighting">
                   <Icon name="x" size={14} />
-                </button>
-              </div>
-            )}
-            {ws.graph.nodes.length > 0 && (
-              <div className="absolute inset-x-0 bottom-0 num text-[11.5px] text-faint flex gap-4 items-center whitespace-nowrap overflow-hidden">
-                <span>{ws.graph.nodes.length} nodes</span>
-                <span>{ws.graph.edges.length} edges</span>
-                <span>{ws.modes.graph === "neo4j" ? "neo4j" : "embedded graph"}</span>
-                <span className="flex-1" />
-                <span className="hidden min-[1400px]:inline">click a node for its profile</span>
-                <button className="border-0 bg-transparent p-0 text-soft hover:text-ink underline underline-offset-2" onClick={() => setGraphOpen(false)}>
-                  hide graph
                 </button>
               </div>
             )}
