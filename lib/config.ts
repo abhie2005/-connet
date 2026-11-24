@@ -14,6 +14,8 @@ export const config = {
     .map((s) => s.trim())
     .filter(Boolean),
   llmTimeoutMs: Number(env("LLM_TIMEOUT_SECONDS") || 45) * 1000,
+  // How many model calls may be in flight at once. Free keys allow few requests a minute.
+  llmConcurrency: Math.max(1, Number(env("LLM_CONCURRENCY") || 3)),
 
   tavilyKey: env("TAVILY_API_KEY"),
   hunterKey: env("HUNTER_API_KEY"),
@@ -42,6 +44,9 @@ export const config = {
   maxCompanies: Number(env("TACT_MAX_COMPANIES") || 10),
   maxDrafts: Number(env("TACT_MAX_DRAFTS") || 5),
   dataDir: env("TACT_DATA_DIR") || ".data",
+  // Answers from live services are saved and reused for this long (lib/cache.ts). TACT_CACHE=0 turns it off.
+  cacheHours: env("TACT_CACHE") === "0" ? 0 : Number(env("TACT_CACHE_HOURS") || 72),
+  replayPaceMs: Number(env("TACT_REPLAY_PACE_MS") || 380),
 };
 
 export function modes(): Modes {

@@ -1,8 +1,11 @@
 // Web search. Tavily when a key is set, sample pages otherwise. Whatever comes back becomes a
 // Source, and the text kept on the Source is exactly what the model is shown, so that quotes
 // can be checked against it later.
+import { remember } from "../cache";
 import { config, modes } from "../config";
+import { bestPassages } from "../passages";
 import { sampleSearch } from "../sample/search";
+import { hooks } from "./hooks";
 import type { Source } from "../types";
 
 export interface SearchHint {
@@ -18,9 +21,24 @@ export interface FoundPage {
   provider: Source["provider"];
 }
 
-const SHOWN_CHARS = 2200;
+// How much of each page the model is shown (and quotes are checked against).
+const SHOWN_CHARS = 3200;
 
-async function tavily(query: string, max: number): Promise<FoundPage[]> {
+const squash = (t: string) => t.replace(/\s+/g, " ").trim().toLowerCase();
+
+/** What the model is shown for one result: the engine's excerpt, then the passages of the page that bear on the query. */
+export function shownText(snippet: string, raw: string, about: string): string {
+  const excerpt = snippet.trim();
+  if (!raw.trim()) return excerpt.slice(0, SHOWN_CHARS);
+  // When the excerpt is simply part of the page, the page's own passages already cover it.
+  const inPage = excerpt.length > 0 && squash(raw).includes(squash(excerpt).slice(0, 80));
+  const room = SHOWN_CHARS - (inPage ? 0 : excerpt.length + 1);
+  const body = bestPassages(raw, about, Math.max(600, room));
+  return (inPage || !excerpt ? body : `${excerpt}\n${body}`).slice(0, SHOWN_CHARS);
+}
+
+async function tavily(query: string, hint: SearchHint, max: number): Promise<FoundPage[]> {
+  hooks.searchCall(query, hint);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), 20_000);
   try {
@@ -34,23 +52,22 @@ async function tavily(query: string, max: number): Promise<FoundPage[]> {
     const body = await res.text();
     if (!res.ok) throw new Error(`Tavily ${res.status}: ${body.slice(0, 200)}`);
     const data = JSON.parse(body) as { results?: { url: string; title: string; content?: string; raw_content?: string | null }[] };
-    return (data.results || []).map((r) => {
-      const snippet = (r.content || "").trim();
-      const raw = (r.raw_content || "").replace(/\s+/g, " ").trim();
-      return {
+    const about = [query.replace(/\bOR\b/g, " "), hint.company || "", hint.segment || ""].join(" ");
+    return (data.results || [])
+      .filter((r) => r && typeof r.url === "string")
+      .map((r) => ({
         url: r.url,
         title: r.title || r.url,
-        text: (snippet + (raw && !raw.startsWith(snippet.slice(0, 60)) ? "\n" + raw : "")).slice(0, SHOWN_CHARS),
+        text: shownText(r.content || "", r.raw_content || "", about),
         provider: "tavily" as const,
-      };
-    });
+      }));
   } finally {
     clearTimeout(timer);
   }
 }
 
 export async function search(query: string, hint: SearchHint, max = 5): Promise<FoundPage[]> {
-  if (modes().search === "tavily") return tavily(query, max);
+  if (modes().search === "tavily") return remember("search", { query, max }, () => tavily(query, hint, max));
   await new Promise((r) => setTimeout(r, 250 + Math.random() * 300));
   return sampleSearch(query, hint).slice(0, max + 2);
 }

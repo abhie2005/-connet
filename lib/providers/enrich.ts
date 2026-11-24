@@ -1,5 +1,6 @@
 // Contact enrichment. Hunter.io when a key is set, sample records otherwise.
 // One domain search per company (Hunter's free plan allows 25 a month, so this is metered).
+import { remember } from "../cache";
 import { config, modes } from "../config";
 import { sampleDomain } from "../sample/enrich";
 
@@ -56,7 +57,8 @@ async function hunter(domain: string): Promise<DomainResult> {
 }
 
 export async function enrichDomain(domain: string): Promise<DomainResult> {
-  if (modes().enrich === "hunter") return hunter(domain);
+  // Saved answers matter most here: Hunter's free plan allows 25 domain searches a month.
+  if (modes().enrich === "hunter") return remember("enrich", { domain }, () => hunter(domain));
   await new Promise((r) => setTimeout(r, 500));
   return sampleDomain(domain);
 }

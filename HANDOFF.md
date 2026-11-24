@@ -7,7 +7,22 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
-## Nov 23, 23:15. Yoon Woo's Claude: first build
+## Nov 23, 23:12. Yoon Woo's Claude: live paths tested, replay
+
+**Done.**
+- The code that talks to Gemini, Tavily, Hunter, Flexprice and Band now runs in the tests against stand-ins that answer in each service's documented format (`tests/live.test.ts`). 33 checks pass. The real services are still untested.
+- Rate limits are handled: a per-minute limit is waited out, a per-day limit moves to the next model.
+- Replay: every live answer is saved on the machine; the same brief run again needs no network and says "Live data, replayed".
+- The model is shown the paragraphs of a page that bear on the question, not its first 2,200 characters.
+- The credit gate counts down even when the Flexprice wallet does not.
+
+**Found.** One live run is about 35 model calls and 20 searches. A free Gemini key will probably not finish one.
+
+**Need.**
+- `[open]` Yoon Woo: turn on Gemini billing (the $5) before the first live run.
+- `[open]` Skylar: for the video, sample data (`npm run demo`) still works with no keys. If Yoon Woo gets a live run done first, record from the replay instead: real companies look better.
+
+## Nov 23, 22:53. Yoon Woo's Claude: first build
 
 **What happened.** The organizer's email on Nov 23 named the problem statement: an AI go-to-market engine, not open "AI for productivity". Glyph does not answer it, so Yoon Woo asked for the engine to be built overnight. Pre-building is allowed. Glyph is the product it sells in the demo.
 

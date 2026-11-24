@@ -6,6 +6,7 @@ import { config, modes } from "./config";
 import { Graph } from "./graph";
 import { bandPost } from "./providers/band";
 import { lastError as billingError, readWallet, trackUsage } from "./providers/billing";
+import { hooks } from "./providers/hooks";
 import type { Activity, Actor, AgentName, AuditEntry, LedgerEntry, RunStats, Source, Workspace } from "./types";
 
 export const emptyStats = (): RunStats => ({
@@ -17,6 +18,7 @@ export const emptyStats = (): RunStats => ({
   companiesDropped: 0,
   graphQueries: 0,
   llmCalls: 0,
+  replayed: 0,
 });
 
 function fresh(): Workspace {
@@ -50,6 +52,7 @@ export class Store {
   private saveTimer: NodeJS.Timeout | null = null;
   private file = path.join(process.cwd(), config.dataDir, "workspace.json");
   private walletId: string | null = null;
+  private lastReading: number | null = null; // the Flexprice wallet, as last read
 
   constructor() {
     this.state = fresh();
@@ -66,6 +69,11 @@ export class Store {
     } catch (e) {
       console.warn("[tact] could not read the saved workspace:", e);
     }
+    // What the providers want the person watching to know goes into the feed.
+    hooks.notice = (text) => this.log("system", "step", text);
+    hooks.replayed = () => {
+      this.state.run.stats.replayed = (this.state.run.stats.replayed || 0) + 1;
+    };
     void this.refreshWallet();
   }
 
@@ -151,10 +159,13 @@ export class Store {
 
   // ---- credits --------------------------------------------------------------------
 
-  /** The balance the gate uses: Flexprice's wallet when it can be read, else the local ledger. */
+  /**
+   * The balance the gate uses. It starts from the Flexprice wallet when one can be read and
+   * follows it down (see refreshWallet), but it is counted here too, so the gate still works
+   * when events are metered in Flexprice without a price that draws the wallet down.
+   */
   available(): number {
-    const wallet = this.state.credits.flexprice.wallet;
-    return wallet != null ? wallet : this.state.credits.balance;
+    return this.state.credits.balance;
   }
 
   canSpend(credits: number): boolean {
@@ -164,9 +175,6 @@ export class Store {
   spend(event: LedgerEntry["event"], credits: number, ref: string) {
     const entry: LedgerEntry = { at: new Date().toISOString(), event, credits: -credits, ref, synced: "local" };
     this.state.credits.balance = Math.round((this.state.credits.balance - credits) * 100) / 100;
-    if (this.state.credits.flexprice.wallet != null) {
-      this.state.credits.flexprice.wallet = Math.round((this.state.credits.flexprice.wallet - credits) * 100) / 100;
-    }
     this.state.credits.ledger.push(entry);
     this.touch();
     void trackUsage(event, { credits, ref }, `tact_${Date.now()}_${this.state.credits.ledger.length}`).then((result) => {
@@ -181,9 +189,9 @@ export class Store {
     });
   }
 
-  topUp(credits: number) {
-    this.state.credits.balance += credits;
-    if (this.state.credits.flexprice.wallet != null) this.state.credits.flexprice.wallet += credits;
+  /** `inWallet`: the credits were added to the Flexprice wallet, so the next reading brings them in. */
+  topUp(credits: number, inWallet = false) {
+    if (!inWallet) this.state.credits.balance += credits;
     this.state.credits.ledger.push({ at: new Date().toISOString(), event: "credits.topup", credits, ref: "rep", synced: "local" });
     this.audit("rep", "Topped up credits", { note: `+${credits}` });
   }
@@ -196,8 +204,17 @@ export class Store {
     if (modes().billing !== "flexprice") return;
     const wallet = await readWallet();
     this.walletId = wallet.id;
-    this.state.credits.flexprice.wallet = wallet.balance;
-    this.state.credits.flexprice.lastError = wallet.balance == null ? billingError : null;
+    const reading = wallet.balance;
+    const c = this.state.credits;
+    if (reading != null) {
+      if (this.lastReading == null) c.balance = reading; // first reading: the wallet is where we start
+      else if (reading > this.lastReading) c.balance += reading - this.lastReading; // topped up
+      else if (reading < c.balance) c.balance = reading; // Flexprice has charged more than we counted
+      c.balance = Math.round(c.balance * 100) / 100;
+      this.lastReading = reading;
+    }
+    c.flexprice.wallet = reading;
+    c.flexprice.lastError = reading == null ? billingError : null;
     this.touch();
   }
 }

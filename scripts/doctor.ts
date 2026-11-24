@@ -4,6 +4,7 @@
 import { loadEnvConfig } from "@next/env";
 
 loadEnvConfig(process.cwd());
+process.env.TACT_CACHE = "0"; // every check here must reach the real service, never a saved answer
 
 const ok = (name: string, note: string) => console.log(`  OK    ${name.padEnd(12)} ${note}`);
 const bad = (name: string, note: string) => console.log(`  FAIL  ${name.padEnd(12)} ${note}`);
@@ -25,6 +26,20 @@ async function main() {
     } catch (e) {
       bad("Gemini", (e as Error).message);
     }
+    // Which models this key can use (costs no quota). Names change often, so compare with GEMINI_MODELS.
+    try {
+      const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": config.geminiKey }, signal: AbortSignal.timeout(15_000) });
+      if (!res.ok) throw new Error(`${res.status} ${(await res.text()).slice(0, 160)}`);
+      const data = (await res.json()) as { models?: { name: string; supportedGenerationMethods?: string[] }[] };
+      const usable = (data.models || []).filter((x) => (x.supportedGenerationMethods || []).includes("generateContent")).map((x) => x.name.replace(/^models\//, ""));
+      const missing = config.geminiModels.filter((x) => !usable.includes(x));
+      const flash = usable.filter((x) => /flash/.test(x) && !/image|tts|audio|live|embedding/.test(x));
+      if (missing.length) bad("  models", `not available to this key: ${missing.join(", ")}. Set GEMINI_MODELS in .env.local to some of: ${flash.slice(-8).join(", ")}`);
+      else ok("  models", `all ${config.geminiModels.length} in GEMINI_MODELS are available to this key`);
+    } catch (e) {
+      skip("  models", `could not list models: ${(e as Error).message}`);
+    }
+    console.log("        One run is about 35 model calls. A free key may not finish one: check your limits at https://aistudio.google.com/rate-limit");
   }
 
   // Tavily

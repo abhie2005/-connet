@@ -80,7 +80,7 @@ export class Graph {
 
   upsertEdge(type: EdgeType, from: string, to: string, props: Props = {}): GEdge {
     const edge = this.memory.upsertEdge(type, from, to, props);
-    this.write(`MATCH (a:Tact {id: $from}), (b:Tact {id: $to}) MERGE (a)-[r:${type}]->(b) SET r += $props`, { from, to, props: clean(props) });
+    this.write(`MATCH (a:Tact {id: $from}) MATCH (b:Tact {id: $to}) MERGE (a)-[r:${type}]->(b) SET r += $props`, { from, to, props: clean(props) });
     return edge;
   }
 
@@ -102,7 +102,7 @@ export class Graph {
       this.write(`MERGE (x:Tact {id: $id}) SET x:${n.label}, x.name = $name, x += $props`, { id: n.id, name: n.name, props: clean(n.props) });
     }
     for (const e of this.memory.edges.values()) {
-      this.write(`MATCH (a:Tact {id: $from}), (b:Tact {id: $to}) MERGE (a)-[r:${e.type}]->(b) SET r += $props`, { from: e.from, to: e.to, props: clean(e.props) });
+      this.write(`MATCH (a:Tact {id: $from}) MATCH (b:Tact {id: $to}) MERGE (a)-[r:${e.type}]->(b) SET r += $props`, { from: e.from, to: e.to, props: clean(e.props) });
     }
   }
 

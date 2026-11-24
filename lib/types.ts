@@ -276,6 +276,8 @@ export interface RunStats {
   companiesDropped: number;
   graphQueries: number;
   llmCalls: number;
+  /** Lookups in this run that were answered from saved copies (lib/cache.ts) instead of the network. */
+  replayed: number;
 }
 
 export interface Modes {

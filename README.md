@@ -36,7 +36,7 @@ For the demo itself, the production build is faster and has no dev overlay:
 npm run build && npm start
 ```
 
-Other commands: `npm test` (20 checks, sample data, no network), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull).
+Other commands: `npm test` (33 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
 
 ## Keys
 
@@ -53,11 +53,23 @@ Every key is optional. A missing key switches that one part to sample data, and 
 
 **Never commit `.env.local`.** It is in `.gitignore`.
 
+### What a run costs, and replay
+
+One run on live data makes about **35 model calls, 20 web searches and up to 3 Hunter lookups**. That matters:
+
+- **Gemini.** A free key allows few requests a minute and a small number a day per model. Tact waits out a per-minute limit (the feed says so) and moves to the next model in `GEMINI_MODELS` when one runs out for the day, but a free key may not finish a run. Adding billing in Google AI Studio (the smallest top-up) removes the problem. On a free key, set `LLM_CONCURRENCY=1`.
+- **Tavily.** The free plan's 1,000 searches a month is about 50 runs.
+- **Hunter.** The free plan's 25 domain searches a month is about 8 runs' worth.
+
+So every answer from a live service is **saved on this machine** (`.data/cache`, 72 hours). Running the same brief again reads the saved answers: the same real companies and quotes, no requests spent, no network needed. The header then says "Live data, replayed", and the connections panel says how many lookups were replayed. Change the brief and only the new questions go out. `npm run fresh` deletes the saved answers; `TACT_CACHE=0` turns saving off.
+
+For a demo: run your brief once on live data while the wifi is good, then present from the replay.
+
 ### Flexprice setup (about five minutes)
 
 1. Create a customer whose external id is `tact-demo` (or set `FLEXPRICE_CUSTOMER_ID`).
 2. Create metered features with these event names: `discovery.run`, `lead.enriched`, `outreach.drafted`, `outreach.sent`, `graph.query`.
-3. Give the customer a wallet with some credits. Tact then shows that balance and stops paid steps when it reaches zero.
+3. Give the customer a wallet with some credits. Tact starts from that balance and stops paid steps at zero. If the events have no price attached in Flexprice, the wallet does not move by itself; Tact then keeps its own count from the wallet's starting balance, and the credits panel says so.
 4. `npm run doctor -- --event` sends one test event and reads the wallet.
 
 Without a wallet, events are still metered in Flexprice and the gate uses the local balance.
@@ -81,7 +93,7 @@ Create a room in Band, register four external agents named Planner, Builder, Rev
 - **Sending is simulated.** Approving a message records it as sent and moves the account. Nothing leaves the machine. This is deliberate: a demo should not email strangers.
 - **Sample data is invented.** With no keys, the companies and people are made up (domains end in `.example`) and labeled as sample pages.
 - **Replies are pasted in by the rep.** There is no inbox connection.
-- **Tested here:** the whole pipeline on sample data (`npm test`), every screen in a browser, the production build. **Not tested by the author:** live calls to Gemini, Tavily, Hunter, Neo4j, Flexprice and Band, because the build machine could not reach them. `npm run doctor` exists to check each one on your machine.
+- **Tested here:** the whole pipeline on sample data; the live code for Gemini, Tavily, Hunter, Flexprice and Band against stand-ins that answer in each service's documented format, including rate limits, a refused setting, a model the key cannot use and a reply that is not JSON (`tests/live.test.ts`); the Cypher, with Neo4j's own syntax checker; every screen in a browser; the production build. **Not tested by the author:** the real services themselves, because the build machine could not reach them. `npm run doctor` checks each one on your machine.
 
 ## Where things are
 
@@ -93,6 +105,8 @@ Create a room in Band, register four external agents named Planner, Builder, Rev
 | `lib/score.ts` | Fit and intent scoring |
 | `lib/graph/` | The graph: `cypher.ts` (the reasoning queries), `index.ts` (Neo4j), `memory.ts` (embedded fallback) |
 | `lib/providers/` | Gemini, Tavily, Hunter, Flexprice, Band: each with a fallback |
+| `lib/cache.ts` | Saved answers from live services, for replay |
+| `lib/passages.ts` | Picks the paragraphs of a long page that bear on the question |
 | `lib/sample/` | The invented sample market |
 | `lib/store.ts` | The workspace, the activity feed, the audit trail, credits |
 | `app/api/` | `state` (polled by the page), `run`, `action` |

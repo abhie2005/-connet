@@ -2,7 +2,13 @@
 
 One line to open with: **"Every team here built an agent that sends email. Ours decides whether it should."**
 
-Run it on sample data for the video and as the backup on stage (`npm run demo`): it is the same code and it always behaves the same. Run it live (`npm run dev` with keys) for the judges if `npm run doctor` was green that morning. The header says "Sample data" or "Live data" either way, so nothing is passed off as something it is not.
+Three ways to run it, best first:
+
+1. **Live, replayed (the one to aim for on stage).** In the morning, with keys and good wifi, run the Glyph brief once on live data (`npm run dev`). Every answer is saved on the laptop. On stage, run the same brief again: real companies, real quotes, no network needed, and it cannot hit a rate limit. The header says "Live data, replayed".
+2. **Live.** The same, with nothing saved yet. Needs wifi and Gemini quota (about 35 model calls and 20 searches a run).
+3. **Sample data** (`npm run demo`). Invented companies, no keys, no network. Use it for the video if live is not ready, and as the last fallback.
+
+The header always says which one is running, so nothing is passed off as something it is not.
 
 Before recording: click **New brief** so the workspace is empty, and set the browser to about 1440 wide.
 
@@ -16,7 +22,7 @@ Before recording: click **New brief** so the workspace is empty, and set the bro
 | 0:40 | Point at the reviewer line: "checked N quotes ... M not found and dropped". Click it open. | "Here's the first thing other builds don't do. Every fact has to come with a quote, and plain code checks that the quote is really on the page. This one wasn't, so it's gone. The model cannot make a customer up." | ICP & discovery |
 | 0:55 | **Brief** tab. Confidence bars; one suggested segment. Click **Accept**. | "The ICP comes with how sure it is and why. It suggests markets we didn't ask for, and I decide." | ICP & discovery |
 | 1:10 | **Accounts** tab. Point at the three sections. | "Ranked by fit and by intent. And the second thing: an account with no reason to write today is held. One with a bad sign is left out. No reason, no email." | Enrichment & outreach |
-| 1:25 | Open Brightpath. Score breakdown, then **Show on graph**. | "Every point of the score has a reason. And this is the graph earning its place: the buyer went to UCLA, so did I. That pink line is a four-hop query, and it becomes the first line of the email." | Enrichment & outreach |
+| 1:25 | Open Brightpath. Score breakdown, then **Show on graph**. | "Every point of the score has a reason. And this is the graph earning its place: the buyer went to UCLA, so did I. That lit line is a four-hop query, and it becomes the first line of the email." | Enrichment & outreach |
 | 1:45 | **Approvals** tab. Open the Summit Prep draft. | "Third thing. A second agent reviews every draft against the facts. The first version claimed scores rose thirty percent. Nothing we found says that, so it was sent back and rewritten. Each claim links to its proof." | Enrichment & outreach |
 | 2:05 | Click **Approve and send** on Brightpath. | "Nothing leaves without a person. Approving moves the deal, and the audit trail records that I did it, not the agent." | Dashboard |
 | 2:15 | **Pipeline** tab. **Log a reply**, paste "This looks interesting, can we talk next week?" | "A reply comes in. The agent reads it, moves the deal, and asks the graph a new question: who does she know? Two former colleagues at other target accounts. Two warm introductions." | Dashboard |
@@ -25,7 +31,7 @@ Before recording: click **New brief** so the workspace is empty, and set the bro
 
 ## If they ask
 
-- **"Is that real data?"** The header says which. Sample data is an invented market so the demo cannot fail on wifi. With keys it searches the live web, and the quote check works the same way.
+- **"Is that real data?"** The header says which. "Live data, replayed" means real pages found on the live web this morning, read back from the laptop so the wifi cannot break the demo. "Sample data" is an invented market. The quote check works the same way on all of them.
 - **"What stops it hallucinating?"** The model proposes, code verifies. A fact without a word-for-word quote from a page we fetched is dropped and counted. Numbers in an email must appear in the facts.
 - **"Why a graph and not a table?"** Warm paths and referrals are path questions: founder to school to person to company. In SQL that is a pile of self-joins; in Cypher it is one pattern. The queries are in `lib/graph/cypher.ts` and each run shows in the feed.
 - **"Does it actually send email?"** Not in this build, on purpose. Approval records the send. Connecting a mailbox is one function (`decideMessage` in `lib/pipeline.ts`).

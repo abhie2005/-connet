@@ -84,7 +84,7 @@ const EVENT_NAMES: Record<string, string> = {
 
 function CreditsPanel({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set<string> }) {
   const c = ws.credits;
-  const shown = c.flexprice.wallet ?? c.balance;
+  const shown = c.balance;
   const usage = new Map<string, number>();
   for (const e of c.ledger) if (e.event !== "credits.topup") usage.set(e.event, (usage.get(e.event) || 0) + 1);
   return (
@@ -110,7 +110,11 @@ function CreditsPanel({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set<st
           <>
             <span className="font-bold">Flexprice: </span>
             {c.flexprice.accepted} usage events accepted{c.flexprice.failed ? `, ${c.flexprice.failed} failed` : ""}.{" "}
-            {c.flexprice.wallet != null ? "The balance above is the Flexprice wallet." : "No wallet found for this customer, so the gate uses the local balance."}
+            {c.flexprice.wallet == null
+              ? "No wallet found for this customer, so the gate uses this app's own count."
+              : c.flexprice.wallet > c.balance
+                ? `The Flexprice wallet reads ${c.flexprice.wallet}: it is not being drawn down by these events yet, so the gate uses this app's own count.`
+                : "The balance above follows the Flexprice wallet."}
             {c.flexprice.lastError && <div className="text-bad mt-1">{c.flexprice.lastError}</div>}
           </>
         ) : (
@@ -147,6 +151,12 @@ function Connections({ ws }: { ws: Workspace }) {
           <span className="text-soft">{value}</span>
         </div>
       ))}
+      {(ws.run.stats.replayed || 0) > 0 && (
+        <div className="box p-2.5 text-[13px] leading-snug mt-1">
+          <span className="font-bold">Replay. </span>
+          {ws.run.stats.replayed} of this run&rsquo;s lookups were answered from copies saved on this machine earlier, so they cost nothing and needed no network. Run <span className="mono">npm run fresh</span> to fetch everything again.
+        </div>
+      )}
       <div className="text-faint text-[13px] mt-1">Keys live in .env.local. A missing key switches that one part to sample data.</div>
     </div>
   );
@@ -242,13 +252,16 @@ export function App() {
   const running = ws.run.status === "running";
   const drafts = ws.messages.filter((m) => m.status === "draft").length;
   const sample = ws.modes.llm === "sample" || ws.modes.search === "sample";
+  const st = ws.run.stats;
+  // Live answers saved earlier on this machine and read back: real data, but not fetched just now.
+  const replayed = !sample && (st.replayed || 0) > 0 && (st.replayed || 0) >= (st.llmCalls + st.searches) / 2;
   const pick = (id: string) => {
     const lead: Lead | undefined = ws.leads.find((l) => l.id === id) || ws.leads.find((l) => l.contacts.some((c) => c.id === id));
     if (!lead) return;
     setSelected(lead.id);
     if (lead.warmPaths.length) setPathFor(lead.id);
   };
-  const credits = ws.credits.flexprice.wallet ?? ws.credits.balance;
+  const credits = ws.credits.balance;
 
   return (
     <div className="field h-screen flex flex-col overflow-hidden">
@@ -273,7 +286,7 @@ export function App() {
         <div className="relative">
           <button className="frost chip !py-1.5 !px-3 !text-[13.5px] border-0" onClick={() => setPop(pop === "connections" ? null : "connections")}>
             <span className="w-2 h-2 rounded-full" style={{ background: sample ? "#858585" : "#5FD08A" }} />
-            {sample ? "Sample data" : "Live data"}
+            {sample ? "Sample data" : replayed ? "Live data, replayed" : "Live data"}
           </button>
           <Popover open={pop === "connections"} onClose={() => setPop(null)} width={340}>
             <Connections ws={ws} />

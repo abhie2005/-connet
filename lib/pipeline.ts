@@ -263,6 +263,10 @@ export async function runPipeline(product: Product, founder: Founder) {
     }
 
     const drafts = s.state.messages.filter((m) => m.status === "draft").length;
+    const st = s.state.run.stats;
+    if (s.state.modes.llm !== "sample" || s.state.modes.search !== "sample") {
+      s.log("system", "step", `This run asked the model ${plural(st.llmCalls, "time")} and searched ${plural(st.searches, "time")}${st.replayed ? `. ${st.replayed} of those were answered from saved copies on this machine, not the network` : ""}.`);
+    }
     s.log("planner", "say", `Done. ${plural(drafts, "message")} waiting for your approval. Nothing is sent until you approve it.`, { to: "rep" });
     s.state.run.status = "done";
     s.state.run.step = "Done";
@@ -488,8 +492,8 @@ export async function decideExpansion(id: string, action: "accept" | "dismiss", 
 
 export async function topUp(credits: number) {
   const s = store();
-  if (s.flexpriceWalletId) await topUpWallet(s.flexpriceWalletId, credits);
-  s.topUp(credits);
+  const inWallet = s.flexpriceWalletId ? await topUpWallet(s.flexpriceWalletId, credits) : false;
+  s.topUp(credits, inWallet);
   await s.refreshWallet();
   s.touch();
 }

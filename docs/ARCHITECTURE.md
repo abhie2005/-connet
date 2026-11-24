@@ -115,6 +115,8 @@ Each query run is shown in the activity feed with its Cypher, row count and time
 
 Websites follow the same rule: a domain is only kept if a page shows it. LinkedIn URLs are only taken from a search result that is that profile. Email addresses come from Hunter with its verification status; an address built from the company's pattern is always labeled a guess.
 
+What the model reads from each page is chosen, not just cut off: a page is mostly menu and footer, so `lib/passages.ts` keeps the paragraphs that share words with the query (and the sentences beside them), up to about 3,200 characters, each exactly as it stands on the page so quotes can still be checked.
+
 ### Write, review, rewrite once (outreach)
 
 1. `buildFacts` numbers the facts the writer may use: only verified signals, verified company evidence, the contact, the warm path, the competitor in use, and the product description.
@@ -164,23 +166,31 @@ Analytics are computed from the audit trail on the page: stage-to-stage conversi
 | `outreach.drafted` | 1 |
 | `outreach.sent`, `graph.query` | 0 (counted, not charged) |
 
-Before a paid step, `canSpend()` checks the balance: the Flexprice wallet's real-time balance when one can be read for the customer, the local balance otherwise. When it is too low the step is refused with a message and the run moves on without it. The top-up button calls Flexprice's wallet top-up when a wallet exists.
+Before a paid step, `canSpend()` checks the balance. The balance starts from the Flexprice wallet when one can be read for the customer and follows it down whenever Flexprice has charged more than Tact counted; Tact also counts every spend itself, so the gate works even when the events have no price attached in Flexprice yet. When the balance is too low the step is refused with a message and the run moves on without it. The top-up button calls Flexprice's wallet top-up when a wallet exists.
 
-## 8. Band
+## 8. Rate limits and replay
+
+A run makes about 35 model calls and 20 searches. Three things keep that from failing in front of people:
+
+- **Limits are read, not guessed.** A 429 from Gemini says which quota was hit. A per-minute limit is waited out (the feed says "waiting 17 s"), with at most `LLM_CONCURRENCY` calls in flight. A per-day limit retires that model and the next one in `GEMINI_MODELS` takes over. A model the key cannot use is dropped; one that refuses the thinking setting is asked again without it; a reply that is not JSON is asked for once more.
+- **Every live answer is saved** (`lib/cache.ts`), keyed by exactly what was asked: the search query, the model prompt, the domain. Asking the same thing again within 72 hours reads the saved answer. A whole run can therefore be replayed with no network, and a changed brief only sends the questions that are new.
+- **The page says so.** A replayed run is labeled "Live data, replayed", and the connections panel gives the count.
+
+## 9. Band
 
 When `BAND_CHAT_ID` and agent keys are set, every hand-off in the activity feed is posted to the Band room through the agent API (`POST /agent/chats/{id}/messages` with an @mention of the receiving agent, or `/events` for a thought). Each of the four agents posts with its own key. The approval itself happens in Tact.
 
-## 9. Security
+## 10. Security
 
 - Keys live in `.env.local` and are only read on the server. Nothing with a key in it is sent to the browser.
 - Outbound messages pass the security step described above, and sending is simulated in this build.
 - `.github/workflows/security.yml` runs Snyk dependency and code scans on every push when a `SNYK_TOKEN` secret is set, plus lint, tests and a build.
 - Only professional, public information is collected (name, role, company, business address), always with its source, and a do-not-contact list is honored.
 
-## 10. Limits
+## 11. Limits
 
 - One workspace per server process, held in memory and saved to a local file. A serverless host would need the workspace stored elsewhere.
 - Sending and inbox reading are not connected: approval records the send, replies are pasted in.
 - The quote check is strict by design. A model that paraphrases instead of quoting loses that fact.
 - Enrichment depends on the page showing the company's website; otherwise the rep adds the domain.
-- The author could not reach the live services from the build machine. `npm run doctor` checks each one, including whether Neo4j accepts every reasoning query.
+- The author could not reach the live services from the build machine. The code that talks to them is tested against stand-ins that answer in each service's documented format (`tests/live.test.ts`), and the Cypher passes Neo4j's own syntax checker. `npm run doctor` checks the real services, including whether Neo4j accepts every reasoning query.
