@@ -130,7 +130,7 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
         ) : (
           <>
             <button className="btn btn-main !py-2" disabled={working} onClick={() => act({ type: "message", messageId: m.id, action: "approve" }, `m:${m.id}`)}>
-              <Icon name="send" />
+              <Icon name="check" />
               Approve and send
             </button>
             <button className="btn btn-quiet" onClick={() => setEditing(true)}>
@@ -156,10 +156,18 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
 export function ApprovalsTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set<string> }) {
   const drafts = ws.messages.filter((m) => m.status === "draft");
   const done = ws.messages.filter((m) => m.status !== "draft").sort((a, b) => (b.decidedAt || "").localeCompare(a.decidedAt || ""));
-  if (ws.messages.length === 0) return <Empty title="Nothing to approve yet">Drafts land here after the reviewer and the security agent have been through them.</Empty>;
+  if (ws.messages.length === 0) return <Empty title="Nothing to approve yet">Drafts land here after the reviewer and the security agent have been through them. Nothing is sent without your approval.</Empty>;
   return (
     <div>
-      <div className="text-soft text-[14px] mb-4">Nothing is sent until you approve it. In this build, sending is simulated: an approved message is recorded as sent and nothing leaves this machine.</div>
+      <div className="box flex items-start gap-3 p-3.5 mb-5">
+        <span className="text-soft mt-0.5">
+          <Icon name="lock" size={18} />
+        </span>
+        <div className="text-[14px] leading-snug">
+          <span className="font-bold">You approve every message. </span>
+          <span className="text-soft">The agents write and check a draft, and it stops here until you click approve. In this build sending is switched off, so an approved message is recorded as sent and nothing leaves this machine.</span>
+        </div>
+      </div>
       <SectionTitle count={drafts.length}>Waiting for you</SectionTitle>
       {drafts.length === 0 && <div className="text-faint text-sm">All caught up.</div>}
       <div className="grid gap-4">

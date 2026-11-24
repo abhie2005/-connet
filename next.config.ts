@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-// Tact is one interactive page plus JSON route handlers that read live, in-memory state.
+// The app is one interactive page plus JSON route handlers that read live, in-memory state.
 // Nothing here should ever be prerendered or cached, so Cache Components stays off.
 const nextConfig: NextConfig = {
   turbopack: {

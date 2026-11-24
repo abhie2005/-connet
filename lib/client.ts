@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Workspace } from "./types";
 
-export const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "Tact";
+export { APP_NAME } from "./name";
 
 export async function post(url: string, body: unknown): Promise<{ ok?: boolean; error?: string; result?: unknown }> {
   try {

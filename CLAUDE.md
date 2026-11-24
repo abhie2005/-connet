@@ -1,4 +1,4 @@
-# Tact: context for Claude
+# Connet: context for Claude
 
 Read this first. The README covers how to run it; `docs/ARCHITECTURE.md` covers how it is built; this file covers why, where it stands, and what is next.
 
@@ -14,7 +14,7 @@ Read this first. The README covers how to run it; `docs/ARCHITECTURE.md` covers 
 - **The pivot (Nov 23, 21:00):** the organizer's email named the problem statement: an "AI GTM Engine" (product in, then ICP, discovery with citations, a knowledge graph, enrichment, human-approved outreach, a pipeline dashboard). Their paper tutor, Glyph (`yoonwoo-lee/glyph-practice`), does not answer it. Glyph is now the product this engine sells in the demo.
 - **Pre-building is allowed** (Yoon Woo: "they said I could prebuild"). This repo is what they submit. It was built overnight Nov 23 to 24.
 - **Who does what:** Yoon Woo writes the code (with Claude). Skylar does the pitch, the demo video and reads over the architecture document.
-- **The name may change.** It is one setting, `NEXT_PUBLIC_APP_NAME`. Don't hard-code it.
+- **The name is Connet** (connect and network; his choice, Nov 24, 00:59). It was Tact until then. It is one setting, `NEXT_PUBLIC_APP_NAME`, read in `lib/name.ts`; the old value "Tact" in an `.env.local` counts as not set, so nobody has to edit their file. Don't hard-code the name. The repo is still `tact-gtm`, the settings are still `TACT_*`, the graph label is still `:Tact`, and the Band agents and the Flexprice wallet he registered keep the old name: leave all of those alone.
 
 ## What they are judged on
 
@@ -52,6 +52,21 @@ He first chose Glyph's sky blue and pink, then asked for "black for me and cool 
 - The graph sits straight on the black with a faint dot grid. The product is a white disc with light round it; accounts are rings, brighter for a better tier.
 - Archivo for everything; JetBrains Mono for Cypher and the few instrument-style readouts (`.mono`, `.num`).
 
+## The screen: easy first (his request, Nov 24, 00:50 to 00:59)
+
+After the first live run he said the screen was "all complex and hard", that every team's will look like that, and that a B2B product has to be so easy people drop the old way for it. He then asked for the things below. They are built; don't undo them.
+
+- **"Clear which one to send to is best."** The Leads tab opens on one card, "Best to contact first" (`Best` in `components/LeadsTab.tsx`): the person, why now, the way in, the address, one button. The rest follow in rank order as plain rows, one button each. On hold and Left out are folded away. On the graph the same lead wears a white "Best first" flag. "Best" is the highest-scoring active lead that has not been written to (`bestNext` in `components/leads.ts`).
+- **One line says what to do next** (`Guide` in `components/App.tsx`), at the top of the work on every tab.
+- **Tabs are named for the order of the work:** Target, Leads, Approve, Pipeline (they were Brief, Accounts, Approvals, Pipeline).
+- **"Like a Pokédex, not fully": a profile card for each company and person** (`components/Profile.tsx`). Left: the entry's own small graph, name, type chips, the score bar by bar. Right: who to write to (title, address, LinkedIn, where they were found, what that role cares about), why now, the way in, the others there, the proof. Arrow keys and the two arrows flip entries. Any click on the graph opens the card of what was clicked; a competitor has a smaller card. With no profile address in the sources, the LinkedIn chip searches LinkedIn for the name and company and says so.
+- **"Little dots going from Glyph to the person getting the email whenever draft is clicked."** `Flow` in `components/GraphView.tsx`: dots leave the product and run through the company to the person for as long as the writing takes (at least 1.6 s). The agent's own drafts during a run do the same. An amber ring round a person means a draft is waiting for approval; on approval the dots run once more in white.
+- **So that there is a Draft to click, the agent drafts for the best three only** (`TACT_MAX_DRAFTS`, was 5). The rest wait for the rep.
+- **"Make sure the human approves before AI sends."** Unchanged in the code (only `decideMessage` with "approve" marks a message sent, and sending is simulated), now said plainly in the Approve tab, the guide line and the profile card. He wrote "don't actually draft anything", read as "don't actually send anything".
+- **The legend** is one panel above the graph, drawn in the graph's own shapes, with counts.
+- **"What is the enrich button?"** It was jargon. It is "Find emails" now, next to "no address yet".
+- **The agents' feed is one line** (the latest thing said) until it is clicked open. Skylar opens it for the video.
+
 What he has said about interfaces, from a week of Glyph feedback. Follow these without being asked:
 
 - No lag and no shaking. Nothing resizes while it animates. No text that scrambles or types itself letter by letter into place.
@@ -61,13 +76,19 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 - Don't show how long the model took (he had "answered in N s" removed from Glyph's cards).
 - He found strong pink too much in Glyph. If a color comes back, keep it soft.
 
-## Status (Nov 23, 23:12)
+## Status (Nov 24, 01:25)
+
+**Live services on his Mac (Nov 24, 00:40, from `npm run doctor` and the two setup commands):** Gemini, Tavily, Hunter and Flexprice answer (wallet 30). Band is set up: four agents registered, the room made, a first line posted. **Neo4j does not connect** ("No routing servers available"): the host resolves and port 7687 is open, the address is right, and the username line was found doubled (`NEO4J_USERNAME=NEO4J_USERNAME=neo4j`). He has not re-run doctor since fixing it. The embedded graph stands in. He ran the app live and said "this is good" before asking for the screen to be made easier.
+
+**The new screen is checked on sample data only**, in a browser at 1440 and 1512 wide: the run, each tab, the profile card from a row and from the graph, a Draft click (dots, then the amber ring), an approval. Not yet seen by him.
+
+## Status before that (Nov 23, 23:12)
 
 **Works, checked on sample data in the terminal and in the browser (dev and production build):** the whole run in about 16 seconds; every tab; approve, reject and edit; drag a deal; log a reply and get referral paths; accept an expansion; enrich; the credit gate at zero and top-up. Lint and type-check are clean.
 
 **Setup commands (Nov 23, midnight).** `npm run setup:flexprice` creates the customer, the metered features and the wallet from one API key; `npm run setup:band` registers the four agents, makes the room and writes the keys from one user key (Band's human API may be refused on a free plan: the command then prints the by-hand steps). Both are tested against stand-ins, not the real services.
 
-**37 checks pass (`npm test`).** 21 are the sample run and the quote check. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
+**40 checks pass (`npm test`).** 23 are the sample run and the quote check, 1 is the name. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
 
 **Still never run against the real services** (the machine it was built on could not reach them). What that leaves open:
 
@@ -82,7 +103,7 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 
 **Rate limits.** A 429 from Gemini is read for which quota was hit: per-minute is waited out and the feed says so, per-day retires the model for the session and the next in `GEMINI_MODELS` takes over. `LLM_CONCURRENCY` (3) caps calls in flight.
 
-**Credits.** The balance starts from the Flexprice wallet and follows it down, but Tact also counts each spend itself, because a wallet does not move when the events have no price attached in Flexprice. The credits panel says which is happening.
+**Credits.** The balance starts from the Flexprice wallet and follows it down, but Connet also counts each spend itself, because a wallet does not move when the events have no price attached in Flexprice. The credits panel says which is happening.
 
 **The quote check ignores punctuation, not words.** Both texts are reduced to words and figures in order, so a model that swaps a curly quote, adds a full stop or writes "after school" for "after-school" still passes; a changed word or number fails. Link addresses and images are stripped from page text before the model sees it.
 

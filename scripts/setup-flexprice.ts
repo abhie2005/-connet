@@ -134,7 +134,7 @@ export async function setupFlexprice(): Promise<boolean> {
 }
 
 if (process.argv[1] && /setup-flexprice/.test(process.argv[1])) {
-  console.log("\nTact: setting up Flexprice\n");
+  console.log("\nSetting up Flexprice\n");
   setupFlexprice()
     .then((ok) => console.log(ok ? "\nDone. Restart the app (Ctrl+C, then npm run dev) so it reads the wallet.\n" : "\nNot finished: see the FAIL line above.\n"))
     .catch((e) => console.log(`\n  FAIL  ${(e as Error).message}\n`));

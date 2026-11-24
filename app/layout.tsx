@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { APP_NAME as name } from "@/lib/name";
 import "./globals.css";
 
 const archivo = localFont({
@@ -16,11 +17,9 @@ const code = localFont({
   display: "swap",
 });
 
-const name = process.env.NEXT_PUBLIC_APP_NAME || "Tact";
-
 export const metadata: Metadata = {
-  title: `${name}: the GTM agent that thinks before it sends`,
-  description: "Describe your product. Tact finds who should buy it, proves every fact with a source, looks for a warm way in, and drafts outreach you approve.",
+  title: `${name}: find who to write to, and why`,
+  description: `Describe your product. ${name} finds who should buy it, proves every fact with a source, looks for a warm way in, and drafts outreach you approve.`,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

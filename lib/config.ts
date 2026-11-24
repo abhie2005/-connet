@@ -1,11 +1,12 @@
 // Every setting comes from the environment (.env.local). Nothing here is required:
 // a missing key switches that one integration to clearly labeled sample data.
+import { APP_NAME } from "./name";
 import type { Modes } from "./types";
 
 const env = (name: string) => (process.env[name] || "").trim();
 
 export const config = {
-  appName: env("NEXT_PUBLIC_APP_NAME") || "Tact",
+  appName: APP_NAME,
 
   geminiKey: env("GEMINI_API_KEY"),
   // Tried in order. A model the key cannot use is skipped, one that is busy is tried last.
@@ -42,7 +43,8 @@ export const config = {
   forceSample: env("TACT_SAMPLE") === "1",
   startCredits: Number(env("TACT_START_CREDITS") || 30),
   maxCompanies: Number(env("TACT_MAX_COMPANIES") || 10),
-  maxDrafts: Number(env("TACT_MAX_DRAFTS") || 5),
+  // The agent writes to the best few on its own; the rest wait for the rep to ask for a draft.
+  maxDrafts: Number(env("TACT_MAX_DRAFTS") || 3),
   dataDir: env("TACT_DATA_DIR") || ".data",
   // Answers from live services are saved and reused for this long (lib/cache.ts). TACT_CACHE=0 turns it off.
   cacheHours: env("TACT_CACHE") === "0" ? 0 : Number(env("TACT_CACHE_HOURS") || 72),

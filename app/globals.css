@@ -516,3 +516,394 @@ textarea.input {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---- the next step, the legend ------------------------------------------------------- */
+
+/* One line at the top of the work: what to do next, and the button that does it. */
+.guide {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 60px;
+  padding: 12px 14px 12px 24px;
+  border-bottom: 1px solid var(--color-line);
+  flex: none;
+}
+
+/* Amber means "this is waiting for you". */
+.waitdot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-warn);
+  box-shadow: 0 0 8px rgb(242 180 90 / 0.7);
+  flex: none;
+}
+
+.btn-main .waitdot {
+  background: #b06a00;
+  box-shadow: none;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 18px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  flex: none;
+}
+
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  font-weight: 650;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.legend-n {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-faint);
+}
+
+/* ---- leads ------------------------------------------------------------------------- */
+
+/* A face for someone we have no photo of. */
+.mono-face {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  background: #1f1f1f;
+  box-shadow: inset 0 0 0 1px var(--color-line-strong);
+  color: var(--color-ink);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.mono-face.is-bright {
+  background: var(--color-ink);
+  box-shadow: none;
+  color: #000;
+}
+
+.facebtn {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  border-radius: 999px;
+  flex: none;
+  transition: transform 0.15s;
+}
+
+.facebtn:hover {
+  transform: scale(1.04);
+}
+
+/* The one to contact first. It is the brightest thing on the sheet, so it is found first. */
+.best {
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 14px;
+  padding: 20px 22px;
+  background: linear-gradient(180deg, #1a1a1a, #121212);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.07) inset;
+}
+
+.reason {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+  align-items: baseline;
+}
+
+.reason-k {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--color-faint);
+  align-self: start;
+  padding-top: 1px;
+}
+
+.reason-v {
+  font-size: 14.5px;
+  line-height: 1.4;
+}
+
+.listhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 15px;
+  font-weight: 700;
+  margin: 24px 0 4px;
+}
+
+.leadrow {
+  display: grid;
+  grid-template-columns: 22px 40px minmax(0, 1fr) 44px 138px;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 8px;
+  border-top: 1px solid var(--color-line);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.leadrow:hover {
+  background: var(--color-raise);
+}
+
+.rank {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--color-faint);
+  padding-top: 10px;
+  text-align: right;
+}
+
+.fold {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-top: 1px solid var(--color-line);
+  background: transparent;
+  padding: 11px 8px;
+  text-align: left;
+  color: var(--color-soft);
+}
+
+.fold:hover {
+  background: var(--color-raise);
+}
+
+.proofline {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  margin-top: 22px;
+  padding: 14px 8px 0;
+  border-top: 1px solid var(--color-line);
+  font-size: 13.5px;
+  color: var(--color-soft);
+}
+
+.proofline > :first-child {
+  transform: translateY(2px);
+}
+
+.chip-link {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgb(92 200 255 / 0.4);
+  color: #c6ebff;
+  text-decoration: none;
+}
+
+.chip-link:hover {
+  background: var(--color-signal-pale);
+}
+
+/* ---- the profile card ---------------------------------------------------------------- */
+
+.dex {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(980px, calc(100vw - 28px));
+  height: min(740px, calc(100vh - 28px));
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+  animation: dexin 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.dex:focus-visible {
+  outline: none;
+}
+
+.dex-small {
+  width: min(560px, calc(100vw - 28px));
+  height: auto;
+  max-height: calc(100vh - 28px);
+}
+
+@keyframes dexin {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 10px));
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+
+.dex-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 10px 9px 12px;
+  border-bottom: 1px solid var(--color-line);
+  flex: none;
+}
+
+.dex-body {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 318px minmax(0, 1fr);
+}
+
+.dex-side {
+  padding: 18px;
+  border-right: 1px solid var(--color-line);
+  background: #090909;
+  min-height: 0;
+}
+
+/* The window the entry's own small graph is shown in. */
+.dex-window {
+  position: relative;
+  height: 148px;
+  border-radius: 10px;
+  background: #000;
+  border: 1px solid var(--color-line);
+  overflow: hidden;
+}
+
+.sprite {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.sprite-t {
+  font-size: 9.5px;
+  font-weight: 650;
+  fill: var(--color-soft);
+}
+
+.sprite-i {
+  font-size: 15px;
+  font-weight: 800;
+  fill: var(--color-ink);
+}
+
+.sprite-way {
+  filter: drop-shadow(0 0 4px rgb(92 200 255 / 0.9));
+}
+
+.dex-site {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-soft);
+  text-decoration: none;
+}
+
+a.dex-site[href]:hover {
+  color: var(--color-ink);
+}
+
+.dex-main {
+  padding: 20px 24px 26px;
+  min-height: 0;
+}
+
+.dex-h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--color-soft);
+  margin: 24px 0 9px;
+}
+
+.dex-h::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-line);
+}
+
+.dex-main > .dex-h:first-child,
+.dex-main > p:first-child + .dex-h {
+  margin-top: 0;
+}
+
+.dex-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-top: 1px solid var(--color-line);
+  flex: none;
+}
+
+.person {
+  display: flex;
+  gap: 13px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  background: var(--color-raise);
+}
+
+.person.is-main {
+  background: #1b1b1b;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.26);
+}
+
+.person.is-focus {
+  box-shadow: inset 0 0 0 1.5px var(--color-signal);
+}
+
+/* The approval gate, wherever a draft is mentioned. */
+.gate {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  padding: 9px 10px 9px 14px;
+  border-radius: 10px;
+  background: var(--color-flag);
+  color: #f7d49d;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.gate.is-sent {
+  background: var(--color-raise);
+  color: var(--color-ink);
+  padding: 11px 14px;
+}
+
+@media (max-width: 860px) {
+  .dex-body {
+    grid-template-columns: minmax(0, 1fr);
+    overflow-y: auto;
+  }
+
+  .dex-side {
+    border-right: 0;
+    border-bottom: 1px solid var(--color-line);
+  }
+}

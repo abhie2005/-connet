@@ -242,7 +242,7 @@ export async function runPipeline(product: Product, founder: Founder) {
     );
 
     // 6. Enrich the best, then draft. Both are metered, so both stop when credits run out.
-    s.state.run.step = "Enriching and drafting";
+    s.state.run.step = "Finding emails and drafting";
     s.touch();
     const top = active.slice(0, config.maxDrafts);
     for (const lead of top.filter((l) => l.score.tier === "A" && l.domain).slice(0, 3)) {
@@ -292,10 +292,10 @@ function leadOrThrow(s: Store, id: string): Lead {
 export async function enrichLead(leadId: string, by: "agent" | "rep" = "rep") {
   const s = store();
   const lead = leadOrThrow(s, leadId);
-  if (!lead.domain) throw new Error(`${lead.company}: no website found in the sources. Add the domain, then enrich.`);
+  if (!lead.domain) throw new Error(`${lead.company}: no website found in the sources. Add the website, then look for emails.`);
   if (!s.canSpend(COSTS["lead.enriched"])) throw new Error(`Out of credits: enriching ${lead.company} costs ${COSTS["lead.enriched"]}. Top up to continue.`);
   s.spend("lead.enriched", COSTS["lead.enriched"], lead.company);
-  s.log("builder", "step", `Enriching ${lead.company} (${lead.domain}).`);
+  s.log("builder", "step", `Looking up the people and email addresses at ${lead.company} (${lead.domain}).`);
   const result = await enrichDomain(lead.domain);
   const source = s.addSource({ url: `https://${lead.domain}`, title: `${lead.company}: contact records (${result.provider})`, text: `${result.emails.length} addresses on ${lead.domain}. Pattern: ${result.pattern || "unknown"}.`, provider: result.provider });
   let verified = 0;
@@ -339,7 +339,7 @@ export async function enrichLead(leadId: string, by: "agent" | "rep" = "rep") {
   rescore(s, lead);
   const parts = [verified ? plural(verified, "verified address") : "", unverified ? `${unverified} found but not verified` : "", guessed ? `${guessed} guessed from the pattern and marked as a guess` : ""].filter(Boolean);
   s.log("builder", "step", `${lead.company}: ${parts.length ? parts.join(", ") : "no address found for the people we know"}.`);
-  s.audit(by, "Enriched contacts", { agent: by === "agent" ? "builder" : null, leadId: lead.id, note: `${verified} verified, ${unverified} unverified, ${guessed} guessed` });
+  s.audit(by, "Looked up email addresses", { agent: by === "agent" ? "builder" : null, leadId: lead.id, note: `${verified} verified, ${unverified} unverified, ${guessed} guessed` });
   s.touch();
 }
 
@@ -347,7 +347,7 @@ export async function draftLead(leadId: string, by: "agent" | "rep" = "rep", for
   const s = store();
   const lead = leadOrThrow(s, leadId);
   if (lead.status === "suppressed") throw new Error(`${lead.company} is left out (${lead.negative?.signal || "do not contact"}). No message will be drafted.`);
-  if (lead.status === "held" && !force) throw new Error(`${lead.company}: no reason to write yet. Tact holds accounts with no buying signal.`);
+  if (lead.status === "held" && !force) throw new Error(`${lead.company}: no reason to write yet. ${config.appName} holds accounts with no buying signal.`);
   if (!s.canSpend(COSTS["outreach.drafted"])) throw new Error(`Out of credits: a draft costs ${COSTS["outreach.drafted"]}. Top up to continue.`);
   s.spend("outreach.drafted", COSTS["outreach.drafted"], lead.company);
   if (by === "rep" && lead.status === "held") s.audit("rep", "Asked for a draft with no signal", { leadId: lead.id });

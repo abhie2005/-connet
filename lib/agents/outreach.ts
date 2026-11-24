@@ -2,7 +2,7 @@
 // The writer may only use numbered facts that passed the quote check. A second model call
 // (the reviewer) and two plain-code checks look for anything the facts do not support.
 import { llm } from "../providers/llm";
-import { strongestSignal, personaMatch } from "../score";
+import { bestContact, strongestSignal } from "../score";
 import type { Store } from "../store";
 import type { Claim, Contact, Fact, Lead, Message, Product } from "../types";
 import type { ReplyIn, ReplyOut, ReviewIn, ReviewOut, WriteIn, WriteOut } from "./shapes";
@@ -17,10 +17,7 @@ You return only JSON.`;
 const REVIEWER = `You are a strict reviewer protecting a founder's reputation. You are given an email and the only facts the writer was allowed to use. Find every statement in the subject and body about the recipient, their company, other companies or the world. A statement is supported only if a numbered fact says it; a number, date, name or event that is not in a fact is unsupported. Statements about the sender's own product are supported only if they agree with the PRODUCT fact. Be strict and literal. You return only JSON.`;
 
 export function pickContact(lead: Lead, s: Store): Contact | null {
-  if (lead.contacts.length === 0) return null;
-  const warm = lead.warmPaths.find((w) => w.kind !== "referral");
-  const rank = (c: Contact) => (warm && warm.contactId === c.id ? 8 : 0) + (personaMatch(c.title, s.state.icp) ? 4 : 0) + (c.emailStatus === "verified" ? 2 : c.email ? 1 : 0);
-  return [...lead.contacts].sort((a, b) => rank(b) - rank(a))[0];
+  return bestContact(lead, s.state.icp);
 }
 
 /** The numbered facts the writer may use: only things whose quote was found in its source. */
@@ -128,7 +125,7 @@ export function securityCheck(body: string, product: Product, contact: Contact |
     notes.push("Added a one-line way to opt out.");
   }
   if (contact?.emailStatus === "guess") notes.push("The address is a guess from the company's pattern: verify it before sending.");
-  if (contact && !contact.email) notes.push("No email address yet: enrich this contact before sending.");
+  if (contact && !contact.email) notes.push("No email address yet: use Find emails before sending.");
   return { ok, notes, body };
 }
 

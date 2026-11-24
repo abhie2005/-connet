@@ -7,6 +7,26 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 01:25. Yoon Woo's Claude: the name is Connet, and the screen is rebuilt to be easy
+
+**What happened.** Yoon Woo ran it live (Gemini, Tavily, Hunter, Flexprice and Band all answer; Neo4j does not connect yet, the embedded graph stands in). He said it works but looks "complex and hard", like every other team's will, and asked for it to be much easier to use. He also renamed it: **Connet** (connect + network).
+
+**Done (all on `main`).**
+- **Name.** Connet everywhere it shows, with a new logo. Nobody needs to edit `.env.local`: the old value "Tact" there counts as not set. The repo name, the `TACT_*` settings and the Band agents' names stay as they are.
+- **Leads tab** opens on one card, "Best to contact first", then the rest in order. One button per row. A line at the top of every tab says what to do next.
+- **Tabs renamed** to the order of the work: Target, Leads, Approve, Pipeline (were Brief, Accounts, Approvals, Pipeline).
+- **Profile card** for every company and person (click a row, or anything on the graph): score bars, who to write to, address, LinkedIn, why now, proof. Arrow keys flip through them.
+- **Graph.** Dots run from Glyph to the person when a draft is written. An amber ring means a draft is waiting for approval. A clearer legend. A "Best first" flag.
+- **"Enrich" is now "Find emails".** The agent drafts for the best three on its own (was five), so there are leads left to click **Draft** on.
+- The agents' feed is one line until it is clicked open.
+- 40 checks pass. Checked in a browser on sample data only. Yoon Woo has not seen it yet.
+
+**Need.**
+- `[open]` Yoon Woo: `git pull`, `npm run clean`, `npm run dev`. Say what still feels hard.
+- `[open]` Yoon Woo: Neo4j. The username line in `.env.local` was doubled (`NEO4J_USERNAME=NEO4J_USERNAME=neo4j`); after fixing it, run `npm run doctor` once. If it still fails, leave it: the demo does not need it.
+- `[open]` Skylar: `docs/DEMO.md` is rewritten for the new screen (new tab names, the profile card, a Draft click at 1:38, and "click the Agents bar open" at 0:20). Re-read it before recording. The video should say Connet.
+- `[done]` The first live run, Band, and Gemini billing from the entries below.
+
 ## Nov 23, 23:48. Yoon Woo's Claude: the repo is public, setup commands
 
 **Done.** The repo is live at https://github.com/yoonwoo-lee/tact-gtm. Two new commands: `npm run setup:flexprice` and `npm run setup:band` do the dashboard setup from one key each (see the README). 37 checks pass. Yoon Woo is collecting keys now.
@@ -26,7 +46,7 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 **Found.** One live run is about 35 model calls and 20 searches. A free Gemini key will probably not finish one.
 
 **Need.**
-- `[open]` Yoon Woo: turn on Gemini billing (the $5) before the first live run.
+- `[done]` Yoon Woo: turn on Gemini billing (the $5) before the first live run.
 - `[open]` Skylar: for the video, sample data (`npm run demo`) still works with no keys. If Yoon Woo gets a live run done first, record from the replay instead: real companies look better.
 
 ## Nov 23, 22:53. Yoon Woo's Claude: first build
@@ -49,5 +69,5 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 **For Yoon Woo's side:**
 
-- `[open]` First live run on the Mac: `npm run doctor`, then `npm run dev`.
-- `[open]` Band: register four agents (Planner, Builder, Reviewer, Security), put their keys and the room id in `.env.local`.
+- `[done]` First live run on the Mac: `npm run doctor`, then `npm run dev`.
+- `[done]` Band: register four agents (Planner, Builder, Reviewer, Security), put their keys and the room id in `.env.local`.

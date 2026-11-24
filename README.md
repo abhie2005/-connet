@@ -1,8 +1,8 @@
-# Tact
+# Connet
 
 **The go-to-market agent that thinks before it sends.**
 
-Describe your product in plain words. Tact works out who should buy it, finds real accounts and the people to talk to, proves every fact with a quote from its source, looks for a warm way in before it writes a cold email, and drafts outreach that you approve. Everything it learns goes into a knowledge graph you can watch being built.
+Describe your product in plain words. Connet works out who should buy it, finds real accounts and the people to talk to, proves every fact with a quote from its source, looks for a warm way in before it writes a cold email, and drafts outreach that you approve. Everything it learns goes into a knowledge graph you can watch being built.
 
 Built for HackwithBay 4.0 ("Thoughtful Agents for Productivity") by Yoon Woo and Skylar.
 
@@ -36,7 +36,7 @@ For the demo itself, the production build is faster and has no dev overlay:
 npm run build && npm start
 ```
 
-Other commands: `npm test` (37 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
+Other commands: `npm test` (40 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
 
 ## Keys
 
@@ -57,7 +57,7 @@ Every key is optional. A missing key switches that one part to sample data, and 
 
 One run on live data makes about **35 model calls, 20 web searches and up to 3 Hunter lookups**. That matters:
 
-- **Gemini.** A free key allows few requests a minute and a small number a day per model. Tact waits out a per-minute limit (the feed says so) and moves to the next model in `GEMINI_MODELS` when one runs out for the day, but a free key may not finish a run. Adding billing in Google AI Studio (the smallest top-up) removes the problem. On a free key, set `LLM_CONCURRENCY=1`.
+- **Gemini.** A free key allows few requests a minute and a small number a day per model. Connet waits out a per-minute limit (the feed says so) and moves to the next model in `GEMINI_MODELS` when one runs out for the day, but a free key may not finish a run. Adding billing in Google AI Studio (the smallest top-up) removes the problem. On a free key, set `LLM_CONCURRENCY=1`.
 - **Tavily.** The free plan's 1,000 searches a month is about 50 runs.
 - **Hunter.** The free plan's 25 domain searches a month is about 8 runs' worth.
 
@@ -70,9 +70,9 @@ For a demo: run your brief once on live data while the wifi is good, then presen
 1. Sign up at flexprice.io, create an API key with Read & Write (it is shown once), and paste it into `.env.local` as `FLEXPRICE_API_KEY`.
 2. Run `npm run setup:flexprice`.
 
-The command finds which region your account is on, creates the customer `tact-demo`, a metered feature for each event Tact sends (`discovery.run`, `lead.enriched`, `outreach.drafted`, `outreach.sent`, `graph.query`), and a wallet with 30 credits, then sends one test event. It is safe to run twice.
+The command finds which region your account is on, creates the customer `tact-demo`, a metered feature for each event Connet sends (`discovery.run`, `lead.enriched`, `outreach.drafted`, `outreach.sent`, `graph.query`), and a wallet with 30 credits, then sends one test event. It is safe to run twice.
 
-Tact starts from the wallet's balance and stops paid steps at zero. If the events have no price attached in Flexprice, the wallet does not move by itself; Tact then keeps its own count from the wallet's starting balance, and the credits panel says so. Without a Flexprice key, credits are kept in a local ledger.
+Connet starts from the wallet's balance and stops paid steps at zero. If the events have no price attached in Flexprice, the wallet does not move by itself; Connet then keeps its own count from the wallet's starting balance, and the credits panel says so. Without a Flexprice key, credits are kept in a local ledger.
 
 ### Band setup (one command, or three minutes by hand)
 
@@ -85,13 +85,24 @@ If your Band plan refuses the first step, the command says so and prints the by-
 
 ## How a run goes
 
-1. **Brief.** The planner reads the product and writes the ideal customer profile: industries (with NAICS codes), company size, personas, trigger events, signs of a bad fit, each with a confidence. It also suggests adjacent segments, which you accept, adjust or dismiss.
-2. **Accounts.** The builder searches each segment and extracts companies, each fact with a quote. The verifier keeps only what is on the page.
+1. **Target.** The planner reads the product and writes the ideal customer profile: industries (with NAICS codes), company size, personas, trigger events, signs of a bad fit, each with a confidence. It also suggests adjacent segments, which you accept, adjust or dismiss.
+2. **Leads.** The builder searches each segment and extracts companies, each fact with a quote. The verifier keeps only what is on the page.
 3. **Signals and people.** One more search per account for fresh buying signals, one for the people in the roles the ICP names, and one for people who share a school or employer with the founder.
 4. **Competitors.** Positioning, pricing where the page states it, and how the product differs.
 5. **Graph reasoning.** Multi-hop queries: warm paths, accounts using a competitor, signals per account. Then a fit and intent score from 0 to 100, as plain arithmetic you can read, and a tier.
-6. **Outreach.** The best accounts are enriched (metered) and drafted (metered). Each draft is reviewed, rewritten once if needed, security-checked, and queued for you.
+6. **Outreach.** The agent looks up email addresses for the best leads and drafts a message to the top three (both metered). The rest wait until you click **Draft**. Each draft is reviewed, rewritten once if needed, security-checked, and queued for you.
 7. **Pipeline.** Approve, edit or reject. Log a reply and the agent reads it, moves the account, and looks for referral paths. Every move is recorded with who made it, the agent or you.
+
+## The screen
+
+The screen is built so that the next thing to do is never a guess.
+
+- **One line says what to do next.** At the top of the work: "3 messages are waiting for your approval", "Next: write to Maya Okafor", with the button that does it.
+- **The best lead is set apart.** The Leads tab opens on one card, "Best to contact first": the person, why now, the way in, the address. The rest follow in order. Companies on hold and left out are folded away below.
+- **Every company and person has a profile card.** Click a row, or anything on the graph. The card shows the company's own small graph, its match score bar by bar with the reason for each point, who to write to (title, address, LinkedIn, where they were found), why now, and the proof. The arrow keys flip through the entries.
+- **The graph shows messages moving.** When a draft is asked for, dots run from the product to the person it is for. An amber ring round a person means a draft is waiting for your approval. When you approve, the dots run again in white. The lead to contact first wears a "Best first" flag.
+- **Nothing is sent without you.** A draft stops in the Approve tab until you click approve. The same rule is stated wherever a draft is mentioned.
+- **Plain names.** "Find emails" looks up the people at a company and their addresses (Hunter.io) and marks each one verified or guessed.
 
 ## What is real and what is simulated
 
@@ -115,7 +126,8 @@ If your Band plan refuses the first step, the command says so and prints the by-
 | `lib/sample/` | The invented sample market |
 | `lib/store.ts` | The workspace, the activity feed, the audit trail, credits |
 | `app/api/` | `state` (polled by the page), `run`, `action` |
-| `components/` | The page: live graph, agent feed, brief, accounts, approvals, pipeline |
+| `components/` | The page: the graph (`GraphView`), the leads list (`LeadsTab`), the profile card (`Profile`), approvals, pipeline, the agents' feed |
+| `lib/name.ts` | The product's name, from `NEXT_PUBLIC_APP_NAME` |
 | `scripts/doctor.ts` | Checks your keys |
 | `docs/ARCHITECTURE.md` | System design: ontology, queries, reasoning loops |
 | `docs/DEMO.md` | The demo script |

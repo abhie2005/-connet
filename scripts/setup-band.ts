@@ -22,6 +22,8 @@ const DOES: Record<Role, string> = {
   reviewer: "Checks every quote against its source and every claim in a draft against the facts.",
   security: "Checks what is about to be sent: links, stray addresses, a way to opt out.",
 };
+// The agents and the room keep the name the product had when they were first registered
+// ("Tact"): the room is matched on it, so renaming the product does not rename them.
 const title = (r: Role) => `Tact ${r[0].toUpperCase()}${r.slice(1)}`;
 
 type Json = Record<string, unknown>;
@@ -133,7 +135,7 @@ export async function setupBand(): Promise<boolean> {
 }
 
 if (process.argv[1] && /setup-band/.test(process.argv[1])) {
-  console.log("\nTact: setting up Band\n");
+  console.log("\nSetting up Band\n");
   setupBand()
     .then((ok) => console.log(ok ? "\nDone. Restart the app (Ctrl+C, then npm run dev). Hand-offs will be mirrored into the room.\n" : "\nNot finished: see above.\n"))
     .catch((e) => console.log(`\n  FAIL  ${(e as Error).message}\n`));

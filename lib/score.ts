@@ -1,6 +1,6 @@
 // Fit and intent, as plain arithmetic the rep can read. No model is involved in the score:
 // the same lead always gets the same number, and every point has a reason next to it.
-import type { ICP, Lead, LeadScore, ScorePart, Signal } from "./types";
+import type { Contact, ICP, IcpPersona, Lead, LeadScore, ScorePart, Signal } from "./types";
 
 const SIGNAL_POINTS: Record<string, number> = {
   funding: 14,
@@ -31,12 +31,27 @@ const words = (s: string) => s.toLowerCase().split(/[^a-z]+/).filter((w) => w.le
 
 /** Does this job title look like one of the personas we want to reach? */
 export function personaMatch(title: string, icp: ICP | null): boolean {
-  if (!icp) return false;
+  return !!matchPersona(title, icp);
+}
+
+/** The persona in the plan that this job title matches, if any. */
+export function matchPersona(title: string, icp: ICP | null): IcpPersona | null {
+  if (!icp) return null;
   const t = new Set(words(title));
-  return icp.personas.some((p) => {
-    const wanted = [...words(p.title), ...words(p.function)];
-    return wanted.filter((w) => t.has(w)).length >= 1 || (/(owner|founder|ceo|chief)/i.test(title) && /(owner|founder|ceo|chief)/i.test(p.title));
-  });
+  return (
+    icp.personas.find((p) => {
+      const wanted = [...words(p.title), ...words(p.function)];
+      return wanted.filter((w) => t.has(w)).length >= 1 || (/(owner|founder|ceo|chief)/i.test(title) && /(owner|founder|ceo|chief)/i.test(p.title));
+    }) || null
+  );
+}
+
+/** Who at this company to write to: the person with a warm path first, then a target persona, then a checked address. */
+export function bestContact(lead: Lead, icp: ICP | null): Contact | null {
+  if (lead.contacts.length === 0) return null;
+  const warm = lead.warmPaths.find((w) => w.kind !== "referral");
+  const rank = (c: Contact) => (warm && warm.contactId === c.id ? 8 : 0) + (personaMatch(c.title, icp) ? 4 : 0) + (c.emailStatus === "verified" ? 2 : c.email ? 1 : 0);
+  return [...lead.contacts].sort((a, b) => rank(b) - rank(a))[0];
 }
 
 export function strongestSignal(signals: Signal[], now = Date.now()): Signal | null {

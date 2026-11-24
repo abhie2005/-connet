@@ -13,7 +13,7 @@ const skip = (name: string, note: string) => console.log(`  --    ${name.padEnd(
 async function main() {
   const { config, modes } = await import("../lib/config");
   const m = modes();
-  console.log("\nTact: checking connections\n");
+  console.log(`\n${config.appName}: checking connections\n`);
 
   // Gemini
   if (m.llm !== "gemini") skip("Gemini", "no GEMINI_API_KEY: the app will use sample answers");

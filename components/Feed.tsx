@@ -34,7 +34,8 @@ function Line({ a }: { a: Activity }) {
 export function Feed({ activity, running, visible = true }: { activity: Activity[]; running: boolean; visible?: boolean }) {
   const box = useRef<HTMLDivElement>(null);
   const stick = useRef(true);
-  const [open, setOpen] = useState(true);
+  // Closed, it is one line: the latest thing an agent said. Open, it is the whole conversation.
+  const [open, setOpen] = useState(false);
 
   useEffect(() => {
     const el = box.current;
@@ -42,22 +43,34 @@ export function Feed({ activity, running, visible = true }: { activity: Activity
   }, [activity.length, open, visible]);
 
   const flags = activity.filter((a) => a.kind === "flag").length;
+  const last = activity[activity.length - 1];
   return (
     <div className="frost rounded-2xl flex flex-col min-h-0 overflow-hidden" style={{ maxHeight: open ? "100%" : 48 }}>
       <button className="flex items-center gap-2.5 px-4 h-12 flex-none border-0 bg-transparent text-left w-full" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span className={`lamp ${running ? "busy" : ""}`} />
-        <span className="font-bold text-[14px]">Agents</span>
-        <span className="flex items-center gap-1.5">
-          {(["planner", "builder", "reviewer", "security"] as const).map((k) => (
-            <span key={k} className="chip chip-line" title={AGENTS[k].does}>
-              <AgentMark agent={k} />
-              {AGENTS[k].name}
+        <span className="font-bold text-[14px] flex-none">Agents</span>
+        {open || !last ? (
+          <span className="flex items-center gap-1.5">
+            {(["planner", "builder", "reviewer", "security"] as const).map((k) => (
+              <span key={k} className="chip chip-line" title={AGENTS[k].does}>
+                <AgentMark agent={k} />
+                {AGENTS[k].name}
+              </span>
+            ))}
+          </span>
+        ) : (
+          <span className="flex items-center gap-2 min-w-0 text-[13.5px] text-soft">
+            <span className="flex-none">
+              <AgentMark agent={last.agent} />
             </span>
-          ))}
-        </span>
+            <span className="truncate">
+              <span className="font-bold text-ink">{AGENTS[last.agent].name}</span> {last.text}
+            </span>
+          </span>
+        )}
         <span className="flex-1" />
         {flags > 0 && (
-          <span className="chip chip-flag" title="Things the reviewer or security agent stopped">
+          <span className="chip chip-flag flex-none" title="Things the reviewer or security agent stopped">
             <Icon name="flag" size={13} />
             {flags} stopped
           </span>

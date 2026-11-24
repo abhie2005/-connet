@@ -1,6 +1,6 @@
-# Tact: system design
+# Connet: system design
 
-Tact is a closed loop from "here is my product" to "here are your customers, with approved messages sent and deals tracked". This document covers how it is put together: the agents, the knowledge graph and its queries, the reasoning loops that keep it honest, scoring, the approval gate, metering, and the limits.
+Connet is a closed loop from "here is my product" to "here are your customers, with approved messages sent and deals tracked". This document covers how it is put together: the agents, the knowledge graph and its queries, the reasoning loops that keep it honest, scoring, the approval gate, metering, and the limits.
 
 ## 1. Overview
 
@@ -166,7 +166,7 @@ Analytics are computed from the audit trail on the page: stage-to-stage conversi
 | `outreach.drafted` | 1 |
 | `outreach.sent`, `graph.query` | 0 (counted, not charged) |
 
-Before a paid step, `canSpend()` checks the balance. The balance starts from the Flexprice wallet when one can be read for the customer and follows it down whenever Flexprice has charged more than Tact counted; Tact also counts every spend itself, so the gate works even when the events have no price attached in Flexprice yet. When the balance is too low the step is refused with a message and the run moves on without it. The top-up button calls Flexprice's wallet top-up when a wallet exists.
+Before a paid step, `canSpend()` checks the balance. The balance starts from the Flexprice wallet when one can be read for the customer and follows it down whenever Flexprice has charged more than Connet counted; Connet also counts every spend itself, so the gate works even when the events have no price attached in Flexprice yet. When the balance is too low the step is refused with a message and the run moves on without it. The top-up button calls Flexprice's wallet top-up when a wallet exists.
 
 ## 8. Rate limits and replay
 
@@ -178,7 +178,7 @@ A run makes about 35 model calls and 20 searches. Three things keep that from fa
 
 ## 9. Band
 
-When `BAND_CHAT_ID` and agent keys are set, every hand-off in the activity feed is posted to the Band room through the agent API (`POST /agent/chats/{id}/messages` with an @mention of the receiving agent, or `/events` for a thought). Each of the four agents posts with its own key. The approval itself happens in Tact.
+When `BAND_CHAT_ID` and agent keys are set, every hand-off in the activity feed is posted to the Band room through the agent API (`POST /agent/chats/{id}/messages` with an @mention of the receiving agent, or `/events` for a thought). Each of the four agents posts with its own key. The approval itself happens in Connet.
 
 ## 10. Security
 

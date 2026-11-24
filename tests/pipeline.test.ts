@@ -65,6 +65,21 @@ test("a full run on sample data", async (t) => {
     assert.equal(s.state.leads.every((l) => l.stage === "matched"), true);
   });
 
+  await t.test("the agent drafts for the best few only, and the rest wait to be asked", async () => {
+    const { config } = await import("../lib/config");
+    const active = s.state.leads.filter((l) => l.status === "active");
+    assert.ok(active.length > config.maxDrafts, "the sample has more leads than the agent drafts for");
+    assert.deepEqual(s.state.messages.map((m) => m.leadId), active.slice(0, config.maxDrafts).map((l) => l.id));
+  });
+
+  await t.test("a message goes to the person with the warm path, and the page picks the same person", async () => {
+    const { bestContact } = await import("../lib/score");
+    const l = lead("Brightpath Learning Centers")!;
+    const m = s.state.messages.find((x) => x.leadId === l.id)!;
+    assert.equal(m.contactId, l.warmPaths[0].contactId);
+    for (const x of s.state.messages) assert.equal(x.contactId, bestContact(s.state.leads.find((y) => y.id === x.leadId)!, s.state.icp)?.id ?? null);
+  });
+
   await t.test("approving moves the lead, by the rep, and is recorded", () => {
     const m = s.state.messages[0];
     p.decideMessage(m.id, "approve");

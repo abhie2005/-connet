@@ -22,6 +22,19 @@ export interface Highlight {
   edges: Set<string>; // "a|b" with the two node ids in either order
 }
 
+/** A message on its way: small dots run along `path` (node ids, the product first) from `start`
+    until `end`. "draft" is a message being written; "send" is one the rep has just approved. */
+export interface Flow {
+  id: number;
+  path: string[];
+  start: number; // performance.now()
+  end: number | null; // null while the work is still going
+  tone: "draft" | "send";
+}
+
+const DOT_SPEED = 185; // graph units a second
+const DOT_GAP = 115; // milliseconds between dots
+
 const DIST: Record<string, number> = {
   MATCHED_TO: 165,
   WORKS_AT: 58,
@@ -67,12 +80,21 @@ export function GraphView({
   edges,
   leads,
   highlight,
+  flows,
+  waiting,
+  best,
   onPick,
 }: {
   nodes: GNode[];
   edges: GEdge[];
   leads: Lead[];
   highlight: Highlight | null;
+  /** Messages in motion right now. */
+  flows: Flow[];
+  /** People (or companies, when nobody is named) with a draft waiting for the rep's approval. */
+  waiting: Set<string>;
+  /** The lead to contact first. */
+  best: string | null;
   onPick: (nodeId: string) => void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -80,7 +102,7 @@ export function GraphView({
   const sim = useRef<Simulation<N, L> | null>(null);
   const data = useRef<{ nodes: N[]; links: L[]; byId: Map<string, N> }>({ nodes: [], links: [], byId: new Map() });
   const view = useRef({ k: 1, x: 0, y: 0, w: 0, h: 0 });
-  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null });
+  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best });
   const [tip, setTip] = useState<{ x: number; y: number; title: string; sub: string } | null>(null);
 
   // The page gets a fresh copy of the graph on every poll. Only a real change (a new node or
@@ -91,6 +113,9 @@ export function GraphView({
   // What the drawing loop reads. Refreshed after every render, before the effects below run.
   useEffect(() => {
     live.current.highlight = highlight;
+    live.current.flows = flows;
+    live.current.waiting = waiting;
+    live.current.best = best;
     live.current.leads = new Map(leads.map((l) => [l.id, l]));
     latest.current = { nodes, edges };
   });
@@ -209,6 +234,9 @@ export function GraphView({
 
       const isLit = (a: string, b: string) => !!hl && (hl.edges.has(`${a}|${b}`) || hl.edges.has(`${b}|${a}`));
       const dim = (id: string) => !!hl && !hl.nodes.has(id);
+      const now = performance.now();
+      const moving = new Set<string>();
+      for (const f of live.current.flows) for (const id of f.path) moving.add(id);
 
       // Edges.
       for (const l of d.links) {
@@ -332,6 +360,18 @@ export function GraphView({
             ctx.stroke();
           }
         }
+        if (live.current.waiting.has(n.id)) {
+          // A draft is waiting for the rep: a slow amber ring, the color of "needs you".
+          ctx.beginPath();
+          ctx.arc(n.x, n.y, r + 5.5, 0, Math.PI * 2);
+          ctx.setLineDash([3.5, 3.5]);
+          ctx.lineDashOffset = -dash * 0.22;
+          ctx.strokeStyle = "#F2B45A";
+          ctx.lineWidth = 1.7;
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.lineDashOffset = 0;
+        }
         if (hover === n.id) {
           ctx.beginPath();
           ctx.arc(n.x, n.y, r + 5, 0, Math.PI * 2);
@@ -339,7 +379,7 @@ export function GraphView({
           ctx.lineWidth = 2;
           ctx.stroke();
         }
-        const named = label !== "Signal" && (label !== "Person" || n.node.props.isFounder || (hl && hl.nodes.has(n.id)) || hover === n.id);
+        const named = label !== "Signal" && (label !== "Person" || n.node.props.isFounder || (hl && hl.nodes.has(n.id)) || hover === n.id || moving.has(n.id));
         if (named && age > 0.5) labels.push({ n, text: label === "Company" && lead && lead.score.total ? n.node.name : n.node.name, bold: label === "Product" || !!lead });
       }
 
@@ -361,6 +401,112 @@ export function GraphView({
         ctx.fill();
         ctx.fillStyle = bold ? "#F2F2F2" : "#B8B8B8";
         ctx.fillText(short, n.x!, y + 0.5);
+      }
+      ctx.globalAlpha = 1;
+
+      // The lead to contact first wears a small white flag, so it can be found without reading.
+      const top = live.current.best ? d.byId.get(live.current.best) : null;
+      if (top && top.x != null && top.y != null && performance.now() - top.born > 420) {
+        const px = Math.max(9.5, Math.min(11.5, 10.5 / Math.sqrt(v.k)));
+        ctx.font = `800 ${px}px ${font}`;
+        const text = "Best first";
+        const w = ctx.measureText(text).width + 14;
+        const y = top.y - top.r - px * 1.25;
+        ctx.globalAlpha = dim(top.id) ? 0.3 : 1;
+        ctx.fillStyle = "#F2F2F2";
+        ctx.beginPath();
+        ctx.roundRect(top.x - w / 2, y - px * 0.82, w, px * 1.64, 5);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(top.x - 4, y + px * 0.8);
+        ctx.lineTo(top.x + 4, y + px * 0.8);
+        ctx.lineTo(top.x, y + px * 0.8 + 4.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = "#000";
+        ctx.fillText(text, top.x, y + 0.5);
+        ctx.globalAlpha = 1;
+      }
+
+      // Messages in motion: dots that leave the product one after another and run to the person.
+      for (const f of live.current.flows) {
+        const pts: N[] = [];
+        for (const id of f.path) {
+          const n = d.byId.get(id);
+          if (n && n.x != null && n.y != null) pts.push(n);
+        }
+        if (pts.length < 2) continue;
+        const legs: number[] = [];
+        let total = 0;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const len = Math.hypot(pts[i + 1].x! - pts[i].x!, pts[i + 1].y! - pts[i].y!);
+          legs.push(len);
+          total += len;
+        }
+        if (total < 1) continue;
+        const send = f.tone === "send";
+        const core = send ? "#FFFFFF" : "#D6F1FF";
+        const glow = send ? "rgba(255,255,255,.9)" : "rgba(92,200,255,.95)";
+        const travel = (total / DOT_SPEED) * 1000;
+        const until = Math.min(now, f.end ?? now);
+        const last = Math.floor((until - f.start) / DOT_GAP);
+        const first = Math.max(0, Math.ceil((now - travel - f.start) / DOT_GAP));
+        const busy = last >= first;
+
+        if (busy) {
+          // The road they take, lit faintly underneath.
+          ctx.beginPath();
+          ctx.moveTo(pts[0].x!, pts[0].y!);
+          for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x!, pts[i].y!);
+          ctx.strokeStyle = send ? "rgba(255,255,255,.16)" : "rgba(92,200,255,.16)";
+          ctx.lineWidth = 7 / Math.sqrt(v.k);
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
+          ctx.stroke();
+          ctx.lineCap = "butt";
+          ctx.lineJoin = "miter";
+        }
+
+        const size = (send ? 3.4 : 2.9) / Math.sqrt(v.k);
+        ctx.shadowColor = glow;
+        ctx.fillStyle = core;
+        for (let i = first; i <= last; i++) {
+          const gone = ((now - (f.start + i * DOT_GAP)) / 1000) * DOT_SPEED;
+          if (gone < 0 || gone > total) continue;
+          let along = gone;
+          // Each dot keeps a little to one side of the line, its own side, so they read as a stream.
+          const side = Math.sin(i * 12.9898) * 3.2;
+          let leg = 0;
+          while (leg < legs.length - 1 && along > legs[leg]) {
+            along -= legs[leg];
+            leg += 1;
+          }
+          const a = pts[leg], b = pts[leg + 1];
+          const t = legs[leg] ? along / legs[leg] : 0;
+          const ux = (b.x! - a.x!) / (legs[leg] || 1), uy = (b.y! - a.y!) / (legs[leg] || 1);
+          const done = gone / total;
+          // Fade in as it leaves the product's disc, and out as it lands.
+          ctx.globalAlpha = Math.min(1, done * 9, (1 - done) * 12 + 0.25);
+          ctx.shadowBlur = 9;
+          ctx.beginPath();
+          ctx.arc(a.x! + (b.x! - a.x!) * t - uy * side, a.y! + (b.y! - a.y!) * t + ux * side, size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.shadowBlur = 0;
+        ctx.globalAlpha = 1;
+
+        // Where they land: a ring that opens out from the person, once for each beat.
+        const target = pts[pts.length - 1];
+        const landed = now - f.start - travel;
+        const stillLanding = f.end == null || now < f.end + travel + 700;
+        if (landed > 0 && stillLanding) {
+          const beat = (landed % 900) / 900;
+          ctx.beginPath();
+          ctx.arc(target.x!, target.y!, target.r + 4 + beat * 15, 0, Math.PI * 2);
+          ctx.strokeStyle = send ? `rgba(255,255,255,${0.75 * (1 - beat)})` : `rgba(92,200,255,${0.8 * (1 - beat)})`;
+          ctx.lineWidth = 1.8;
+          ctx.stroke();
+        }
       }
       ctx.globalAlpha = 1;
       raf = requestAnimationFrame(draw);
@@ -395,7 +541,7 @@ export function GraphView({
   const move = (e: React.MouseEvent) => {
     const n = at(e);
     live.current.hover = n?.id || null;
-    canvas.current!.style.cursor = n && (n.node.label === "Company" || n.node.label === "Person") ? "pointer" : "default";
+    canvas.current!.style.cursor = n && n.node.label !== "Product" && n.node.label !== "School" && !n.node.props.isFounder ? "pointer" : "default";
     if (!n) return setTip(null);
     const box = wrap.current!.getBoundingClientRect();
     const lead = live.current.leads.get(n.id);

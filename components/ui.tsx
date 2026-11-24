@@ -9,9 +9,9 @@ export function Logo({ size = 40 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
       <rect x="0.500" y="0.500" width="39" height="39" rx="10" fill="#000" stroke="#3A3A3A" />
-      {/* a lowercase t written in one pen stroke, with its crossbar in the live color */}
-      <path d="M18 8.500v15.500a6 6 0 0 0 6 6h3.500" fill="none" stroke="#F2F2F2" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M11.500 16h14" fill="none" stroke="#5CC8FF" strokeWidth="4" strokeLinecap="round" />
+      {/* a lowercase c in one pen stroke, and in its opening the node it reaches for, in the live color */}
+      <path d="M25.300 12.600A9.800 9.800 0 1 0 25.300 27.400" fill="none" stroke="#F2F2F2" strokeWidth="4" strokeLinecap="round" />
+      <circle cx="28.500" cy="20" r="3.100" fill="#5CC8FF" />
     </svg>
   );
 }
@@ -39,6 +39,12 @@ const PATHS: Record<string, ReactNode> = {
   path: <><circle cx="5.500" cy="17.500" r="2.500" /><circle cx="18.500" cy="6.500" r="2.500" /><path d="M8 17.500h4a3.500 3.500 0 0 0 3.500-3.500v-1a3.500 3.500 0 0 1 3-3.400" /></>,
   pause: <path d="M9 6v12M15 6v12" />,
   reply: <><path d="M10 7 5 12l5 5" /><path d="M5 12h9a5 5 0 0 1 5 5v1.500" /></>,
+  left: <path d="m14.500 6.500-5.500 5.500 5.500 5.500" />,
+  right: <path d="m9.500 6.500 5.500 5.500-5.500 5.500" />,
+  lock: <><rect x="5.500" y="10.500" width="13" height="9" rx="2" /><path d="M8.500 10.500V8a3.500 3.500 0 0 1 7 0v2.500" /></>,
+  globe: <><circle cx="12" cy="12" r="8" /><path d="M4 12h16M12 4c2.400 2.200 3.600 4.900 3.600 8s-1.200 5.800-3.600 8c-2.400-2.200-3.600-4.900-3.600-8s1.200-5.800 3.600-8Z" /></>,
+  linkedin: <><rect x="4" y="4" width="16" height="16" rx="3.500" /><path d="M8.300 11v5M8.300 8.100v.1M12 16v-5M12 13.300c0-1.300.9-2.300 2.100-2.300s1.900.9 1.900 2.300V16" /></>,
+  star: <path d="m12 4.500 2.300 4.700 5.200.8-3.700 3.600.9 5.100-4.700-2.400-4.700 2.400.9-5.100-3.700-3.600 5.200-.8L12 4.500Z" />,
 };
 
 export function Icon({ name, size = 16 }: { name: keyof typeof PATHS | string; size?: number }) {
@@ -46,6 +52,22 @@ export function Icon({ name, size = 16 }: { name: keyof typeof PATHS | string; s
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flex: "none" }}>
       {PATHS[name] || null}
     </svg>
+  );
+}
+
+export function initials(name: string): string {
+  const parts = name.replace(/[^\p{L}\p{N} ]+/gu, " ").split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/** A face for someone we have no photo of: their initials. Round for a person, square for a company. */
+export function Monogram({ name, size = 40, square, bright }: { name: string; size?: number; square?: boolean; bright?: boolean }) {
+  return (
+    <span className={`mono-face ${bright ? "is-bright" : ""}`} style={{ width: size, height: size, borderRadius: square ? Math.round(size * 0.24) : size, fontSize: Math.round(size * 0.36) }} aria-hidden="true">
+      {initials(name)}
+    </span>
   );
 }
 
