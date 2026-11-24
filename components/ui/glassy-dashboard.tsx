@@ -687,8 +687,8 @@ export function GlassyDashboard({
   const { act, busy, toast } = useActions(refresh);
   const [intake, setIntake] = useState(false);
   const [pop, setPop] = useState<"credits" | "stack" | null>(null);
-  const [view, setView] = useState<View>(routeFromHash);
-  const [active, setActive] = useState(view);
+  const [view, setView] = useState<View>("target");
+  const [active, setActive] = useState<View>("target");
   const [period, setPeriod] = useState<Period>("7 days");
   const [theme, setTheme] = useState(initialTheme);
   const [modal, setModal] = useState<Modal>(null);
@@ -739,6 +739,8 @@ export function GlassyDashboard({
 
   useEffect(() => {
     const restore = () => changeView(routeFromHash());
+    // Once, on mount: a link straight to #approve should land on it.
+    restore();
     addEventListener("popstate", restore);
     addEventListener("hashchange", restore);
     return () => { removeEventListener("popstate", restore); removeEventListener("hashchange", restore); };
@@ -895,6 +897,10 @@ export function GlassyDashboard({
                       approved or moved here is approved or moved for real, through the same endpoint. */}
                   {view === "target" && ws && (
                     <>
+                      {/* The net leads, here as on Leads: it is the first thing the product shows. */}
+                      <div className="gd-net-block">
+                        <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} />
+                      </div>
                       <CommandView d={d} open={selectView} />
                       <div className="gd-app-tab"><BriefTab ws={ws} act={act} busy={busy} /></div>
                       <SpendView d={d} download={downloadLedger} />
