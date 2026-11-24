@@ -34,11 +34,15 @@ export async function teamilyPost(leadId: string, text: string, once: string): P
       signal: AbortSignal.timeout(15000),
     });
     // 202 means the agent is still thinking. The message is in either way, which is all we want.
-    if (!res.ok && res.status !== 202) throw new Error(`Teamily ${res.status}: ${(await res.text()).slice(0, 160)}`);
+    if (!res.ok && res.status !== 202) throw new Error(`Teamily ${res.status}: ${(await res.text()).slice(0, 300)}`);
     teamilyError = null;
+    console.log(`[teamily] posted to ${conversationFor(leadId)} (${res.status})`);
     return true;
   } catch (e) {
     teamilyError = e instanceof Error ? e.message : String(e);
+    // Said out loud in the server log: a mirror that quietly does nothing is worse than one that
+    // says why. The deal room itself is untouched either way.
+    console.warn(`[teamily] ${teamilyError}`);
     return false;
   }
 }
