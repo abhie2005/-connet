@@ -441,6 +441,10 @@ export const dashboardStyles = `
 
    This rides on <body> while the dashboard is mounted, because Profile portals its dialog out
    of the page and would otherwise keep the violet on its own in front of everything else. */
+/* The opening screen covers the page rather than replacing it, so the stylesheet above — which
+   is part of this component's markup — is still mounted to re-skin it. */
+.gd-intake { position: fixed; inset: 0; z-index: 80; overflow: auto; }
+
 body.gd-skin {
   --color-void: #8c8c93;
   --color-panel: #ffffff;

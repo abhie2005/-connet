@@ -7,6 +7,7 @@
    started from shipped invented revenue, orders, visitors and refunds; a surface that makes up
    its own numbers would undo the one claim this product makes, so those panels are gone rather
    than filled with something plausible. */
+import { createPortal } from "react-dom";
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type CSSProperties, type MouseEvent, type ReactNode } from "react";
 import { ArrowDownToLine, ArrowRight, ArrowUpRight, BarChart3, Bell, Coins, BriefcaseBusiness, ChevronRight, Clock3, Filter, LayoutDashboard, ListChecks, Moon, Search, ShieldCheck, Sun, TrendingUp, TriangleAlert, Users, X, Zap } from "lucide-react";
 import { useGSAP } from "@gsap/react";
@@ -806,26 +807,6 @@ export function GlassyDashboard({
     saveCsv("connet-ledger.csv", rows);
   };
 
-  /* The app's own opening screen, not a copy of it: Intake posts to /api/run itself, so a search
-     started here is the same search started at /. It keeps the app's clothes — .field and all —
-     because it is the app's screen, and this page is only where it was opened from. */
-  if (intake && ws) {
-    return (
-      <div className="field">
-        <Intake
-          initial={ws.product}
-          founder={ws.founder}
-          sample={ws.modes.llm === "sample"}
-          onBack={ws.product ? () => setIntake(false) : undefined}
-          onStarted={() => {
-            setIntake(false);
-            void refresh();
-          }}
-        />
-      </div>
-    );
-  }
-
   return (
     <div className="gd-app" data-theme={theme} ref={root} style={{ "--gd-panel-frost": `${Math.max(0, Math.min(36, panelFrost))}px` } as CSSProperties}>
       <style>{dashboardStyles}</style>
@@ -978,6 +959,24 @@ export function GlassyDashboard({
             />
           );
         })()}
+        {/* Out to <body>, the way Profile's dialog goes: this page's rules are all scoped under
+            .gd-app and would flatten the opening screen's own spacing. Out there it keeps its own
+            layout and still picks up the grey tokens, which ride on <body>. */}
+        {intake && ws && createPortal(
+          <div className="gd-intake field">
+            <Intake
+              initial={ws.product}
+              founder={ws.founder}
+              sample={ws.modes.llm === "sample"}
+              onBack={ws.product ? () => setIntake(false) : undefined}
+              onStarted={() => {
+                setIntake(false);
+                void refresh();
+              }}
+            />
+          </div>,
+          document.body,
+        )}
         {toast && <p className="gd-toast" role="status">{toast}</p>}
         <footer className="gd-footer">
           <span>Every figure on this page is read from the workspace.</span>
