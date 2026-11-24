@@ -33,7 +33,7 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 - JSON-RPC 2.0 over HTTP, protocol `2025-06-18`, hand-rolled in `app/api/mcp/route.ts`. No SDK, no new dependency.
 - **Approving a draft is not a tool, and neither is inviting the client.** Those are the two human gates and nothing reachable over a public URL can reach them. `tests/mcp.test.ts` asserts the whole tool list and that `invite_client` comes back an error.
-- Shut unless `CONNET_MCP_TOKEN` is set, because reaching it needs `ngrok http 3000`. Unset it answers 404, which is what a live run should have until the moment it is wanted.
+- Shut unless `CONNET_MCP_TOKEN` is set - a password you make up, not a key from anybody. Unset, it answers 404, which is what a live run should have until the moment it is wanted. `npm run tunnel` (or `npm run tunnel -- 3001`) opens a Cloudflare quick tunnel, needs no account, checks the endpoint answers through it, and writes the URL and header to paste into Teamily into `teamily-mcp.local.json` (git-ignored). Ctrl-C takes it off the internet again.
 - Anything said through it is stored `from: "outside"`, shown as **Said from outside this app**, and written to the audit trail.
 - `tests/mcp.test.ts`, 8 checks. **113 checks pass in total**, lint and build clean.
 

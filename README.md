@@ -135,14 +135,20 @@ Teamily is an AI-native messenger, and its agents can call MCP tools. Rather tha
 
 **Approving a draft is not a tool, and neither is inviting the client.** Reading what was written is fine; deciding to send it, and deciding to put the client in the room, stay presses in this app's own screen. There is a test that says so.
 
-Turn it on with `CONNET_MCP_TOKEN` in `.env.local`, any long random string. Without it the endpoint answers 404, which is what you want, because reaching it from Teamily needs a public URL:
+Turn it on with `CONNET_MCP_TOKEN` in `.env.local`. **It is not a key from anybody: it is a password you make up**, and it is what stands between the deal rooms and anyone who finds the public URL. Without it the endpoint answers 404.
 
 ```bash
-ngrok http 3000
-# then in Teamily, add the MCP server:
-#   URL:    https://<your-ngrok-subdomain>.ngrok-free.app/api/mcp
-#   Header: Authorization: Bearer <CONNET_MCP_TOKEN>
+echo "CONNET_MCP_TOKEN=$(openssl rand -hex 32)" >> .env.local
 ```
+
+Then put it on a public URL, because Teamily cannot reach `localhost`:
+
+```bash
+npm run tunnel            # the app on port 3000
+npm run tunnel -- 3001    # or whichever port it is on
+```
+
+That opens a Cloudflare quick tunnel (no account, no key: `brew install cloudflared`), checks the endpoint really answers through it, prints the URL and header to paste into Teamily, and writes both to `teamily-mcp.local.json`, which is git-ignored because it carries the token. The URL is new every time, so re-paste it after a restart. **Ctrl-C closes the tunnel**, and the endpoint goes back to being reachable only from your machine - do that when you are done.
 
 ## The screen
 
