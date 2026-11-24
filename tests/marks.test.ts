@@ -1,7 +1,7 @@
 // Marking a draft: which sentences make a claim nothing backs, and deleting exactly those.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { markUp, pieces, says, strip } from "../lib/marks";
+import { located, markUp, pieces, says, strip, without } from "../lib/marks";
 
 const body = `Hi Patricia,
 
@@ -46,4 +46,16 @@ test("deleting takes the marked sentence out and closes the gap", () => {
 test("a paragraph that was nothing but the claim leaves no hole", () => {
   const text = "Hello there, Maya.\n\nSchools using it saw scores rise 30% in a term.\n\nCould we talk next week?";
   assert.equal(strip(text, ["Schools using it saw scores rise 30% in a term"]), "Hello there, Maya.\n\nCould we talk next week?");
+});
+
+test("one claim can be taken out and the others left in", () => {
+  const typing = "Students often type on screens or lack real-time support while working through worksheets";
+  const raised = "It raised $12.5M this year";
+  assert.equal(located("A note", body, typing), true);
+  assert.equal(located("A note", body, "Windward won a national award for its library"), false);
+  const cut = without("Students often type on screens or lack real-time support", body, [typing], "Glyph for Windward");
+  assert.equal(cut.subject, "Glyph for Windward", "a subject that was only the claim becomes the plain one");
+  assert.ok(!cut.body.includes("type on screens"));
+  assert.ok(cut.body.includes("$12.5M"), "the claim that was not named stays");
+  assert.ok(without("A note for Windward School", body, [raised], "x").subject === "A note for Windward School");
 });

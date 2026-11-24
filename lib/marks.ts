@@ -70,3 +70,15 @@ export function strip(text: string, unbacked: string[]): string {
     .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
+
+/** Is this claim made anywhere in the message, in words close enough to mark? */
+export function located(subject: string, body: string, claim: string): boolean {
+  return [...markUp(subject, [claim]), ...markUp(body, [claim])].some((m) => m.mark === "del");
+}
+
+/** A message with the sentences that make these claims taken out. A subject that was nothing
+    but the claim becomes the plain one given. */
+export function without(subject: string, body: string, claims: string[], plainSubject: string): { subject: string; body: string } {
+  const left = strip(subject, claims);
+  return { subject: left.split(/\s+/).filter(Boolean).length >= 3 ? left : plainSubject, body: strip(body, claims) };
+}

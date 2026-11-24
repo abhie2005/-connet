@@ -204,6 +204,8 @@ export interface Claim {
   fact: number | null;
   supported: boolean;
   note: string;
+  /** The rep chose to keep it although nothing backs it. Never set by an agent. */
+  kept?: boolean;
 }
 
 export interface Message {
@@ -304,6 +306,17 @@ export interface Founder {
   employers: string[];
 }
 
+/** How much the writer may add that no checked fact backs.
+    strict: nothing; what is left unbacked is taken out before the rep sees it.
+    balanced: nothing on purpose; what slips through is marked for the rep.
+    open: a sentence or two of its own pitch, each marked for the rep. */
+export type Freedom = "strict" | "balanced" | "open";
+export const FREEDOMS: Freedom[] = ["strict", "balanced", "open"];
+
+export interface Settings {
+  freedom: Freedom;
+}
+
 export interface Workspace {
   rev: number;
   product: Product | null;
@@ -327,6 +340,7 @@ export interface Workspace {
   graph: { nodes: GNode[]; edges: GEdge[] };
   modes: Modes;
   doNotContact: string[]; // domains
+  settings: Settings;
 }
 
 export const COSTS = {

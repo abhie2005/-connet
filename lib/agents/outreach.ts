@@ -4,12 +4,22 @@
 import { llm } from "../providers/llm";
 import { bestContact, strongestSignal } from "../score";
 import type { Store } from "../store";
-import type { Claim, Contact, Fact, Lead, Message, Product } from "../types";
+import { located, without } from "../marks";
+import type { Claim, Contact, Fact, Freedom, Lead, Message, Product } from "../types";
 import type { ReplyIn, ReplyOut, ReviewIn, ReviewOut, WriteIn, WriteOut } from "./shapes";
 
-const WRITER = `You write short, plain, honest first-touch sales emails for a startup founder. Rules:
+// How much the writer may add that no fact backs is the rep's setting (Settings.freedom). The
+// rule about invented numbers, results, customers and quotes is the same at every setting.
+const LEEWAY: Record<Freedom, string> = {
+  strict: `- Every sentence about the recipient, their company or the world must restate one of the numbered FACTS. If there is no fact for it, leave it out. No general remarks about their industry, no guesses about what they need. List every such statement in "claims" with the number of the fact it rests on.`,
+  balanced: `- You may only state things about the recipient, their company or the world that are in the numbered FACTS. List every such statement in "claims" with the number of the fact it rests on.`,
+  open: `- What you state as fact about the recipient, their company or the world must be in the numbered FACTS. List every such statement in "claims" with the number of the fact it rests on.
+- You may also add at most two sentences of your own pitch: a view on the problem, or why the product could matter to a team like theirs. Word them as your view ("my guess is", "I'd expect"), never as a fact about the recipient, and list each one in "claims" with "fact": null.`,
+};
+
+const writer = (freedom: Freedom) => `You write short, plain, honest first-touch sales emails for a startup founder. Rules:
 - The body is at most 110 words. Plain text. No flattery, no hype words, no exclamation marks, no emojis.
-- You may only state things about the recipient, their company or the world that are in the numbered FACTS. List every such statement in "claims" with the number of the fact it rests on.
+${LEEWAY[freedom]}
 - Never invent numbers, results, customers or quotes. What the product does comes only from the PRODUCT fact.
 - One clear, small ask at the end. Sign with the sender's name only.
 You return only JSON.`;
@@ -129,7 +139,16 @@ export function securityCheck(body: string, product: Product, contact: Contact |
   return { ok, notes, body };
 }
 
-async function review(s: Store, draft: WriteOut, facts: Fact[]): Promise<{ claims: Claim[]; pass: boolean; notes: string[] }> {
+/** The strict setting's cut: every unbacked claim that can be found in the message is taken out
+    of it, sentence and all. What cannot be found stays, still marked unbacked for the rep. */
+export function takeOut(subject: string, body: string, claims: Claim[], plainSubject: string): { subject: string; body: string; claims: Claim[]; taken: string[] } {
+  const cut = claims.filter((c) => !c.supported && located(subject, body, c.text));
+  if (!cut.length) return { subject, body, claims, taken: [] };
+  const next = without(subject, body, cut.map((c) => c.text), plainSubject);
+  return { ...next, claims: claims.filter((c) => !cut.includes(c)), taken: cut.map((c) => c.text) };
+}
+
+async function review(s: Store, draft: WriteOut, facts: Fact[]): Promise<{ claims: Claim[]; pass: boolean; notes: string[]; numbers: boolean }> {
   const input: ReviewIn = { subject: draft.subject, body: draft.body, claims: draft.claims || [], facts };
   s.state.run.stats.llmCalls += 1;
   const out = await llm().json<ReviewOut>({ task: "review_outreach", system: REVIEWER, user: reviewPrompt(input), input, temperature: 0 });
@@ -140,13 +159,14 @@ async function review(s: Store, draft: WriteOut, facts: Fact[]): Promise<{ claim
     return { text: String(c.text || ""), fact, supported, note: supported ? "" : String(c.note || "Not supported by a fact") };
   });
   const notes = [...(out.notes || []).map(String)];
-  for (const token of strayNumbers(`${draft.subject}\n${draft.body}`, facts)) {
+  const stray = strayNumbers(`${draft.subject}\n${draft.body}`, facts);
+  for (const token of stray) {
     notes.push(`The number "${token}" is not in the facts. Remove it.`);
     claims.push({ text: `Uses the number ${token}`, fact: null, supported: false, note: "Number not found in any fact" });
   }
   const pass = out.verdict === "pass" && claims.every((c) => c.supported);
   if (!pass && notes.length === 0) for (const c of claims.filter((x) => !x.supported)) notes.push(`Unsupported: "${c.text}". Remove it.`);
-  return { claims, pass, notes };
+  return { claims, pass, notes, numbers: stray.length > 0 };
 }
 
 /** Draft one message for a lead, review it, rewrite once if needed, then run the security rules. */
@@ -156,6 +176,7 @@ export async function draftMessage(s: Store, lead: Lead): Promise<Message> {
   const facts = buildFacts(lead, contact, product, s);
   const variant: "A" | "B" = s.state.messages.length % 2 === 0 ? "A" : "B";
   const hasWarm = facts.some((f) => f.kind === "warm_path");
+  const freedom: Freedom = s.state.settings?.freedom || "balanced";
   const base: WriteIn = {
     product,
     sender: s.state.founder.name || "The founder",
@@ -166,27 +187,47 @@ export async function draftMessage(s: Store, lead: Lead): Promise<Message> {
     variant,
     angle: hasWarm ? "Warm path" : variant === "A" ? "Signal-led" : "Problem-led",
     notes: [],
+    ...(freedom === "balanced" ? {} : { freedom }),
   };
 
   s.log("builder", "step", `Writing to ${contact ? contact.name : lead.company} from ${facts.length} checked facts (variant ${variant}${hasWarm ? ", opening with the warm path" : ""}).`);
   s.state.run.stats.llmCalls += 1;
-  let draft = await llm().json<WriteOut>({ task: "write_outreach", system: WRITER, user: writePrompt(base), input: base, temperature: 0.5 });
+  let draft = await llm().json<WriteOut>({ task: "write_outreach", system: writer(freedom), user: writePrompt(base), input: base, temperature: 0.5 });
   s.log("builder", "say", `Draft for ${lead.company} is ready. Please check every claim against the facts.`, { to: "reviewer" });
 
   let result = await review(s, draft, facts);
   let rounds = 1;
   const history: string[] = [];
-  if (!result.pass) {
+  // At the open setting the writer's own sentences are expected, so they do not send the draft
+  // back. A number that is in no fact still does, at every setting.
+  if (!result.pass && (freedom !== "open" || result.numbers)) {
     history.push(...result.notes);
     s.log("reviewer", "flag", `Rejected the draft for ${lead.company}: ${result.notes[0] || "a claim is not supported by the facts."}`, { to: "builder", detail: result.notes.join("\n") });
     const again: WriteIn = { ...base, notes: result.notes };
     s.state.run.stats.llmCalls += 1;
-    draft = await llm().json<WriteOut>({ task: "write_outreach", system: WRITER, user: writePrompt(again), input: again, temperature: 0.3 });
+    draft = await llm().json<WriteOut>({ task: "write_outreach", system: writer(freedom), user: writePrompt(again), input: again, temperature: 0.3 });
     result = await review(s, draft, facts);
     rounds = 2;
   }
-  const verdict = result.pass ? (rounds === 1 ? "pass" : "revised") : "needs_human";
-  if (result.pass) {
+  // At the strict setting nothing unbacked reaches the rep: what can be found in the message is
+  // cut out here, by plain code, and listed for them as taken out.
+  const taken: string[] = [];
+  if (freedom === "strict" && !result.pass) {
+    const cut = takeOut(String(draft.subject || ""), String(draft.body || ""), result.claims, `${product.name} for ${lead.company}`);
+    if (cut.taken.length) {
+      draft = { ...draft, subject: cut.subject, body: cut.body };
+      taken.push(...cut.taken);
+      result = { ...result, claims: cut.claims, pass: cut.claims.every((c) => c.supported) };
+      s.log("reviewer", "flag", `Facts only: took ${taken.length} unbacked sentence${taken.length === 1 ? "" : "s"} out of the draft for ${lead.company} before the rep sees it.`, { to: "rep", detail: taken.join("\n") });
+    }
+  }
+  const verdict = result.pass ? (rounds === 1 && !taken.length ? "pass" : "revised") : "needs_human";
+  if (taken.length && result.pass) {
+    s.log("reviewer", "say", `What is left of the draft for ${lead.company} is backed by a fact.`, { to: "security" });
+  } else if (freedom === "open" && !result.pass && rounds === 1) {
+    const own = result.claims.filter((c) => !c.supported).length;
+    s.log("reviewer", "flag", `The draft for ${lead.company} has ${own} sentence${own === 1 ? "" : "s"} no fact backs, as the setting allows. Marked for the rep to keep or delete.`, { to: "rep", detail: result.notes.join("\n") });
+  } else if (result.pass) {
     s.log("reviewer", "say", rounds === 1 ? `Approved the draft for ${lead.company}: ${result.claims.length} claim${result.claims.length === 1 ? "" : "s"}, all backed by a fact.` : `The rewrite for ${lead.company} passes: the unsupported claim is gone.`, { to: "security" });
   } else {
     s.log("reviewer", "flag", `The draft for ${lead.company} still has an unsupported claim after one rewrite. Sending it to the rep marked "needs a human".`, { to: "rep", detail: result.notes.join("\n") });
@@ -208,7 +249,7 @@ export async function draftMessage(s: Store, lead: Lead): Promise<Message> {
     linkedinNote: String(draft.linkedin_note || "").trim().slice(0, 300),
     facts,
     claims: result.claims,
-    review: { verdict, rounds, notes: [...history, ...(result.pass ? [] : result.notes)] },
+    review: { verdict, rounds, notes: taken.length ? [...taken, ...(result.pass ? [] : result.notes)] : [...history, ...(result.pass ? [] : result.notes)] },
     security: { ok: sec.ok, notes: sec.notes },
     status: "draft",
     createdAt: new Date().toISOString(),

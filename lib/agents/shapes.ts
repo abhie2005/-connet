@@ -97,6 +97,8 @@ export interface WriteIn {
   variant: "A" | "B";
   angle: string;
   notes: string[]; // the reviewer's notes, when this is a rewrite
+  /** Left out when it is the usual setting, so answers recorded before the setting existed still replay. */
+  freedom?: "strict" | "open";
 }
 
 export interface WriteOut {

@@ -1,7 +1,7 @@
 // Everything the rep can do after a run, as one endpoint: { type, ... }.
-import { decideExpansion, decideMessage, draftLead, enrichLead, logReply, moveStage, setDomain, suppress, topUp } from "@/lib/pipeline";
+import { decideClaim, decideExpansion, decideMessage, draftLead, enrichLead, logReply, moveStage, setDomain, setFreedom, suppress, topUp } from "@/lib/pipeline";
 import { store } from "@/lib/store";
-import { STAGES, type Stage } from "@/lib/types";
+import { STAGES, type Freedom, type Stage } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
@@ -21,6 +21,12 @@ export async function POST(request: Request) {
         break;
       case "message":
         decideMessage(str(body.messageId), body.action as "approve" | "reject" | "edit", { subject: body.subject as string | undefined, body: body.body as string | undefined });
+        break;
+      case "claim":
+        decideClaim(str(body.messageId), Number(body.index), body.action as "delete" | "keep" | "unkeep");
+        break;
+      case "settings":
+        setFreedom(body.freedom as Freedom);
         break;
       case "stage":
         if (!STAGES.includes(body.stage as Stage)) throw new Error("Unknown stage");

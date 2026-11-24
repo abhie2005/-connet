@@ -183,6 +183,11 @@ function write(input: WriteIn): WriteOut {
       claims.push({ text: "Students' SAT scores rose 30% last year", fact: null });
     }
   }
+  if (input.freedom === "open") {
+    const own = "My guess is that parents are already asking what your policy on AI is.";
+    lines.splice(Math.max(2, lines.length - 2), 0, own, "");
+    claims.push({ text: own, fact: null });
+  }
   lines.push(input.sender);
   const warm = fact("warm_path");
   return {

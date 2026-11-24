@@ -42,6 +42,7 @@ function fresh(): Workspace {
     graph: { nodes: [], edges: [] },
     modes: modes(),
     doNotContact: [],
+    settings: { freedom: "balanced" },
   };
 }
 
@@ -100,7 +101,7 @@ export class Store {
   }
 
   reset() {
-    const keep = { product: this.state.product, founder: this.state.founder };
+    const keep = { product: this.state.product, founder: this.state.founder, settings: this.state.settings };
     this.graph.clear();
     this.state = { ...fresh(), ...keep, rev: this.state.rev + 1 };
     this.seq = 0;

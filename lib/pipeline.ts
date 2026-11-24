@@ -15,7 +15,8 @@ import { enrichDomain, guessEmail } from "./providers/enrich";
 import { topUpWallet } from "./providers/billing";
 import { scoreLead, strongestSignal } from "./score";
 import { emptyStats, store, type Store } from "./store";
-import { COSTS, STAGE_NAMES, type Evidence, type Founder, type Lead, type Product, type Stage, type WarmPath } from "./types";
+import { without } from "./marks";
+import { COSTS, FREEDOMS, STAGE_NAMES, type Evidence, type Founder, type Freedom, type Lead, type Product, type Stage, type WarmPath } from "./types";
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : /(s|ch|sh|x)$/.test(word) ? "es" : "s"}`;
 
@@ -379,6 +380,40 @@ export function decideMessage(messageId: string, action: "approve" | "reject" | 
     s.audit("rep", "Approved and sent", { leadId: lead.id, messageId, note: `To ${message.to}${message.editedByRep ? " (edited by the rep)" : ""}. Sending is simulated.` });
     if (lead.stage === "matched") setStage(s, lead, "contacted", "rep", "Message approved");
   }
+  s.touch();
+}
+
+/** The rep deals with one unbacked claim: delete its sentence, keep it, or take the keep back. */
+export function decideClaim(messageId: string, index: number, action: "delete" | "keep" | "unkeep") {
+  const s = store();
+  const message = s.state.messages.find((m) => m.id === messageId);
+  if (!message) throw new Error("No such message");
+  if (message.status !== "draft") throw new Error("Only a draft can be changed");
+  const claim = message.claims[index];
+  if (!claim || claim.supported) throw new Error("No such claim");
+  const lead = leadOrThrow(s, message.leadId);
+  const quote = claim.text.length > 90 ? `${claim.text.slice(0, 87)}...` : claim.text;
+  if (action === "delete") {
+    const next = without(message.subject, message.body, [claim.text], `${s.state.product?.name || "A note"} for ${lead.company}`);
+    message.subject = next.subject;
+    message.body = next.body;
+    message.editedByRep = true;
+    claim.kept = false;
+    s.audit("rep", "Deleted an unbacked sentence", { leadId: lead.id, messageId, note: quote });
+  } else {
+    claim.kept = action === "keep";
+    s.audit("rep", claim.kept ? "Kept a sentence nothing backs" : "Marked a sentence as unbacked again", { leadId: lead.id, messageId, note: quote });
+  }
+  s.touch();
+}
+
+/** How much the writer may add on its own. It applies to drafts written from now on. */
+export function setFreedom(freedom: Freedom) {
+  const s = store();
+  if (!FREEDOMS.includes(freedom)) throw new Error("Unknown setting");
+  if (s.state.settings?.freedom === freedom) return;
+  s.state.settings = { ...s.state.settings, freedom };
+  s.audit("rep", "Changed how much the AI may add", { note: freedom === "strict" ? "Facts only" : freedom === "open" ? "Its own pitch, marked" : "Balanced" });
   s.touch();
 }
 

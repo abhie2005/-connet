@@ -1,10 +1,11 @@
 "use client";
 // The workspace: the live graph on the left, the work on the right, and one line at the top of
 // the work that says what to do next.
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import * as Dialog from "@radix-ui/react-dialog";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { APP_NAME, post, useWorkspace } from "@/lib/client";
 import { reach as reachOf, ringOf, type Net } from "@/lib/graph/nets";
-import { COSTS, type Lead, type Workspace } from "@/lib/types";
+import { COSTS, type Freedom, type Lead, type Workspace } from "@/lib/types";
 import { ApprovalsTab } from "./ApprovalsTab";
 import { BriefTab, type Act } from "./BriefTab";
 import { Feed } from "./Feed";
@@ -16,48 +17,80 @@ import { CompetitorCard, Profile } from "./Profile";
 import { bestNext, ranked, routeTo, viewOf } from "./leads";
 import { Icon, Logo } from "./ui";
 
-// The four tabs follow the order of the work: who to aim at, who was found, what to approve,
-// what happened next.
+// The four sections follow the order of the work: who to aim at, who was found, what to approve,
+// what happened next. They live in the menu that slides out from the left.
 type Tab = "target" | "leads" | "approve" | "pipeline";
 
-function Tabs({ tab, onChange, counts }: { tab: Tab; onChange: (t: Tab) => void; counts: Record<Tab, number | null> }) {
-  const items: { key: Tab; label: string; icon: string }[] = [
-    { key: "target", label: "Target", icon: "brief" },
-    { key: "leads", label: "Leads", icon: "person" },
-    { key: "approve", label: "Approve", icon: "mail" },
-    { key: "pipeline", label: "Pipeline", icon: "columns" },
-  ];
-  const refs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const [thumb, setThumb] = useState({ x: 0, w: 0, ready: false });
-  const measure = useCallback(() => {
-    const el = refs.current[tab];
-    if (el) setThumb({ x: el.offsetLeft, w: el.offsetWidth, ready: true });
-  }, [tab]);
-  useLayoutEffect(measure, [measure, counts.leads, counts.approve]);
-  useEffect(() => {
-    window.addEventListener("resize", measure);
-    document.fonts?.ready.then(measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [measure]);
+const TABS: { key: Tab; label: string; icon: string; hint: string }[] = [
+  { key: "target", label: "Target", icon: "brief", hint: "Who should buy it" },
+  { key: "leads", label: "Leads", icon: "person", hint: "Who was found, best first" },
+  { key: "approve", label: "Approve", icon: "mail", hint: "Drafts waiting for you" },
+  { key: "pipeline", label: "Pipeline", icon: "columns", hint: "What happened after sending" },
+];
+
+// The one setting: how much the writer may add that no checked fact backs.
+const LEEWAY: { key: Freedom; label: string; says: string }[] = [
+  { key: "strict", label: "Nothing", says: "Checked facts only. A sentence nothing backs is taken out before you see the draft." },
+  { key: "balanced", label: "A little", says: "Checked facts first. A sentence it could not back is marked, for you to keep or delete." },
+  { key: "open", label: "More", says: "It may add a sentence or two of its own pitch. Each one is marked, for you to keep or delete." },
+];
+
+/** The menu: slides out from the left. The four sections, and the writing setting. */
+function Menu({ open, onClose, tab, go, counts, freedom, onFreedom }: { open: boolean; onClose: () => void; tab: Tab; go: (t: Tab) => void; counts: Record<Tab, number | null>; freedom: Freedom; onFreedom: (f: Freedom) => void }) {
+  const at = Math.max(0, LEEWAY.findIndex((x) => x.key === freedom));
   return (
-    <div className="tabs frost" role="tablist">
-      <span className="thumb" style={{ transform: `translateX(${thumb.x}px)`, width: thumb.w, opacity: thumb.ready ? 1 : 0 }} />
-      {items.map((it) => (
-        <button
-          key={it.key}
-          ref={(el) => {
-            refs.current[it.key] = el;
-          }}
-          role="tab"
-          aria-selected={tab === it.key}
-          onClick={() => onChange(it.key)}
-        >
-          <Icon name={it.icon} />
-          {it.label}
-          {counts[it.key] ? <span className="count">{counts[it.key]}</span> : null}
-        </button>
-      ))}
-    </div>
+    <Dialog.Root open={open} onOpenChange={(o) => !o && onClose()}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="dialog-overlay menu-overlay" />
+        <Dialog.Content className="menu sheet" aria-describedby={undefined}>
+          <div className="flex items-center gap-2.5 px-5 pt-5 pb-3">
+            <Logo size={32} />
+            <Dialog.Title className="text-[20px] font-extrabold tracking-tight leading-none m-0 flex-1">{APP_NAME}</Dialog.Title>
+            <Dialog.Close className="btn btn-plain !p-2" aria-label="Close menu">
+              <Icon name="x" />
+            </Dialog.Close>
+          </div>
+
+          <nav className="menu-nav" aria-label="Sections">
+            {TABS.map((it) => (
+              <button
+                key={it.key}
+                className="menu-item"
+                aria-current={tab === it.key ? "page" : undefined}
+                onClick={() => {
+                  go(it.key);
+                  onClose();
+                }}
+              >
+                <Icon name={it.icon} size={19} />
+                <span className="flex-1 min-w-0 text-left">
+                  <span className="menu-label">{it.label}</span>
+                  <span className="menu-hint">{it.hint}</span>
+                </span>
+                {counts[it.key] ? <span className="count">{counts[it.key]}</span> : null}
+              </button>
+            ))}
+          </nav>
+
+          <div className="menu-set">
+            <div className="menu-head">Settings</div>
+            <div className="font-bold text-[15px] leading-snug" id="leeway">
+              How much may the AI add on its own?
+            </div>
+            <div className="seg" role="radiogroup" aria-labelledby="leeway">
+              <span className="thumb" style={{ transform: `translateX(${at * 100}%)` }} />
+              {LEEWAY.map((x) => (
+                <button key={x.key} role="radio" aria-checked={freedom === x.key} onClick={() => onFreedom(x.key)}>
+                  {x.label}
+                </button>
+              ))}
+            </div>
+            <p className="m-0 text-[14px] leading-snug text-soft">{LEEWAY[at].says}</p>
+            <p className="m-0 text-[12.5px] leading-snug text-faint">A number that is in no source is always flagged. This applies to drafts written from now on.</p>
+          </div>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
 
@@ -328,6 +361,9 @@ export function App() {
   const [intake, setIntake] = useState(false);
   const [pop, setPop] = useState<"credits" | "connections" | null>(null);
   const [graphOpen, setGraphOpen] = useState(true);
+  const [menu, setMenu] = useState(false);
+  /** The setting as just clicked, shown at once while the server catches up. */
+  const [leeway, setLeeway] = useState<Freedom | null>(null);
   const [flows, setFlows] = useState<Flow[]>([]);
   // Two nets over one graph: who the product is connected to, and who you are.
   const [net, setNet] = useState<Net>("product");
@@ -510,14 +546,38 @@ export function App() {
     if (ws.competitors.some((c) => c.id === id)) setRival(id);
   };
 
+  const counts: Record<Tab, number | null> = { target: null, leads: ws.leads.filter((l) => l.status === "active").length, approve: drafts, pipeline: null };
+  const here = TABS.find((x) => x.key === tab)!;
+  const freedom: Freedom = leeway ?? ws.settings?.freedom ?? "balanced";
+
   return (
     <div className="field h-screen flex flex-col overflow-hidden" data-net={net}>
+      <Menu
+        open={menu}
+        onClose={() => setMenu(false)}
+        tab={tab}
+        go={go}
+        counts={counts}
+        freedom={freedom}
+        onFreedom={(f) => {
+          setLeeway(f);
+          act({ type: "settings", freedom: f }, "settings");
+        }}
+      />
       <header className="flex items-center gap-4 px-6 pt-5 pb-3 flex-none">
+        <button className="menu-btn frost" onClick={() => setMenu(true)} aria-label="Open menu" aria-haspopup="dialog" aria-expanded={menu}>
+          <Icon name="menu" size={20} />
+          {drafts > 0 && tab !== "approve" && <span className="waitdot menu-dot" />}
+        </button>
         <div className="flex items-center gap-2.5">
           <Logo size={38} />
           <div className="text-[24px] font-extrabold tracking-tight leading-none">{APP_NAME}</div>
         </div>
-        <Tabs tab={tab} onChange={go} counts={{ target: null, leads: ws.leads.filter((l) => l.status === "active").length, approve: drafts, pipeline: null }} />
+        <button className="crumb" onClick={() => setMenu(true)} title="Open the menu to go somewhere else">
+          <Icon name={here.icon} size={17} />
+          {here.label}
+          {counts[tab] ? <span className="count">{counts[tab]}</span> : null}
+        </button>
         <span className="flex-1" />
         <div className="relative">
           <button className="frost chip !py-1.5 !px-3 !text-[13.5px] border-0" onClick={() => setPop(pop === "connections" ? null : "connections")}>

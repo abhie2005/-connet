@@ -125,5 +125,63 @@ test("a full run on sample data", async (t) => {
     assert.equal(s.state.credits.balance, 19);
   });
 
+  await t.test("one unbacked claim at a time: the rep keeps one and deletes another", async () => {
+    const l = s.state.leads.find((x) => x.status === "active")!;
+    const m = await p.draftLead(l.id, "rep", true);
+    const keep = "Most tutoring centers already print every worksheet they use.";
+    const drop = "Parents in your area have asked for this by name.";
+    m.body = m.body.replace("\n\n", `\n\n${keep} ${drop}\n\n`);
+    m.claims.push({ text: keep, fact: null, supported: false, note: "" }, { text: drop, fact: null, supported: false, note: "" });
+    const at = m.claims.length - 2;
+    p.decideClaim(m.id, at, "keep");
+    assert.equal(m.claims[at].kept, true);
+    assert.equal(m.claims[at].supported, false, "kept is not the same as backed");
+    p.decideClaim(m.id, at + 1, "delete");
+    assert.ok(m.body.includes(keep));
+    assert.ok(!m.body.includes(drop));
+    assert.equal(m.editedByRep, true);
+    p.decideClaim(m.id, at, "unkeep");
+    assert.equal(m.claims[at].kept, false);
+    assert.throws(() => p.decideClaim(m.id, 0, "delete"), /No such claim/, "a backed claim is not the rep's to delete this way");
+    assert.equal(s.state.audit.filter((a) => /unbacked sentence|nothing backs/.test(a.action)).length, 2);
+  });
+
+  await t.test("the setting: at 'more' the writer adds a sentence of its own and it reaches the rep marked", async () => {
+    assert.equal(s.state.settings.freedom, "balanced");
+    p.setFreedom("open");
+    const l = s.state.leads.find((x) => x.status === "active")!;
+    const m = await p.draftLead(l.id, "rep", true);
+    const own = m.claims.filter((c) => !c.supported);
+    assert.equal(own.length, 1);
+    assert.ok(m.body.includes(own[0].text));
+    assert.equal(m.review.rounds, 1, "its own pitch does not send the draft back");
+    assert.equal(m.review.verdict, "needs_human");
+    assert.equal(m.status, "draft");
+  });
+
+  await t.test("the setting: at 'nothing' what no fact backs is cut before the rep sees it", async () => {
+    const { takeOut } = await import("../lib/agents/outreach");
+    const body = "Hi Maya,\n\nI saw Brightpath is opening six centers. Students often lack real-time support while working through worksheets.\n\nCould I show you?\n\nYoon Woo";
+    const claims = [
+      { text: "Brightpath is opening six centers", fact: 2, supported: true, note: "" },
+      { text: "Students often lack real-time support while working through worksheets", fact: null, supported: false, note: "" },
+      { text: "Uses the number 40%", fact: null, supported: false, note: "" },
+    ];
+    const cut = takeOut("Paper tutoring for Brightpath", body, claims, "Glyph for Brightpath");
+    assert.ok(!cut.body.includes("real-time support"));
+    assert.ok(cut.body.includes("opening six centers"));
+    assert.equal(cut.taken.length, 1);
+    assert.equal(cut.claims.filter((c) => !c.supported).length, 1, "what cannot be found in the text stays marked for the rep");
+
+    p.setFreedom("strict");
+    const l = s.state.leads.find((x) => x.status === "active")!;
+    const m = await p.draftLead(l.id, "rep", true);
+    assert.equal(m.claims.filter((c) => !c.supported).length, 0);
+    assert.ok(!/My guess is/.test(m.body));
+    s.reset();
+    assert.equal(s.state.settings.freedom, "strict", "the setting outlives a new search");
+    p.setFreedom("balanced");
+  });
+
   await new Promise((r) => setTimeout(r, 800));
 });

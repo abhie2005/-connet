@@ -4,7 +4,7 @@
 // and the security agent did to it before it got this far.
 import { useState } from "react";
 import { ago } from "@/lib/client";
-import { markUp, says, strip, type Marked } from "@/lib/marks";
+import { markUp, says, without, type Marked } from "@/lib/marks";
 import type { Evidence, Message, Workspace } from "@/lib/types";
 import type { Act } from "./BriefTab";
 import { Empty, Icon, SectionTitle, SourceLink } from "./ui";
@@ -44,8 +44,11 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
   };
 
   // What the reviewer could not back, found again in the message as it stands now.
-  const unbacked = m.claims.filter((c) => !c.supported);
-  const backed = m.claims.filter((c) => c.supported);
+  // A claim the rep chose to keep is no longer marked; it is listed as kept, never as backed.
+  const all = m.claims.map((c, index) => ({ ...c, index }));
+  const unbacked = all.filter((c) => !c.supported && !c.kept);
+  const kept = all.filter((c) => !c.supported && c.kept);
+  const backed = all.filter((c) => c.supported);
   const wrong = unbacked.map((c) => c.text);
   const inSubject = markUp(m.subject, wrong);
   const inBody = markUp(m.body, wrong, m.security.notes.some((n) => /opt out/i.test(n)) ? OPT_OUT : null);
@@ -62,15 +65,15 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
   const save = async () => {
     if (await act({ type: "message", messageId: m.id, action: "edit", subject, body }, `m:${m.id}`)) setEditing(false);
   };
-  /** Take out every sentence marked in red. A subject that was nothing but the claim becomes a plain one. */
-  const remove = async () => {
-    const left = strip(m.subject, wrong);
-    const nextSubject = left.split(/\s+/).length >= 3 ? left : `${ws.product?.name || "A note"} for ${lead?.company || m.to.split(",")[0]}`;
-    const nextBody = strip(m.body, wrong);
-    setSubject(nextSubject);
-    setBody(nextBody);
-    await act({ type: "message", messageId: m.id, action: "edit", subject: nextSubject, body: nextBody }, `m:${m.id}`);
+  /** Take out every sentence still marked in red. A subject that was nothing but the claim becomes a plain one. */
+  const removeAll = async () => {
+    const next = without(m.subject, m.body, wrong, `${ws.product?.name || "A note"} for ${lead?.company || m.to.split(",")[0]}`);
+    setSubject(next.subject);
+    setBody(next.body);
+    await act({ type: "message", messageId: m.id, action: "edit", subject: next.subject, body: next.body }, `m:${m.id}`);
   };
+  /** One claim at a time: delete its sentence, keep it as it is, or take a keep back. */
+  const claim = (index: number, action: "delete" | "keep" | "unkeep") => act({ type: "claim", messageId: m.id, index, action }, `m:${m.id}`);
 
   return (
     <div className="rounded-2xl border border-line p-5 arrive">
@@ -106,26 +109,38 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
                 <Icon name={todo ? "x" : "check"} size={16} />
               </span>
               <span className="font-bold text-[14.5px] leading-snug flex-1">
-                {todo ? `${todo} ${todo === 1 ? "claim" : "claims"} not backed` : gone.length ? "Nothing unbacked is left" : "Every claim is backed"}
+                {todo ? `${todo} ${todo === 1 ? "claim" : "claims"} not backed` : gone.length || kept.length ? "Nothing is left to decide" : "Every claim is backed"}
               </span>
-              {present.length > 0 && (
-                <button className="btn !py-1 !px-3 !text-[13px]" disabled={working} onClick={remove} title="Takes the sentences marked in red out of the message. You can still edit it afterwards.">
-                  Delete {present.length === 1 ? "it" : "them"}
+              {present.length > 1 && (
+                <button className="btn !py-1 !px-3 !text-[13px]" disabled={working} onClick={removeAll} title="Takes every sentence marked in red out of the message. You can still edit it afterwards.">
+                  Delete all
                 </button>
               )}
             </div>
 
             {todo > 0 && (
               <div className="mb-3.5">
-                <span className="mark-del mark-key">Delete</span>
-                <ul className="list-none m-0 mt-1.5 p-0 grid gap-1.5">
-                  {[...present, ...loose].map((c, i) => (
-                    <li key={i} className="leading-snug line-clamp-2" title={c.note}>
-                      {c.text}
+                <span className="mark-del mark-key">Not backed</span>
+                <ul className="list-none m-0 mt-2 p-0 grid gap-2">
+                  {[...present, ...loose].map((c) => (
+                    <li key={c.index} className="claim">
+                      <div className="leading-snug line-clamp-3" title={c.note}>
+                        {c.text}
+                      </div>
+                      <div className="claim-acts">
+                        <button className="claim-btn" disabled={working} onClick={() => claim(c.index, "keep")} title="Leave this sentence in the message. It will be listed as kept by you, not as backed.">
+                          Keep
+                        </button>
+                        {present.includes(c) && (
+                          <button className="claim-btn is-del" disabled={working} onClick={() => claim(c.index, "delete")} title="Take this sentence out of the message.">
+                            Delete
+                          </button>
+                        )}
+                      </div>
                     </li>
                   ))}
                 </ul>
-                {loose.length > 0 && present.length === 0 && <div className="text-faint mt-1.5 leading-snug">Not found word for word, so nothing is marked. Use Edit to take {loose.length === 1 ? "it" : "them"} out.</div>}
+                {loose.length > 0 && <div className="text-faint mt-1.5 leading-snug">{present.length ? "One of these was" : loose.length === 1 ? "This was" : "These were"} not found word for word, so nothing is marked for it. Use Edit to take it out, or keep it.</div>}
               </div>
             )}
 
@@ -136,6 +151,24 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
                   {gone.map((c, i) => (
                     <li key={i} className="leading-snug line-clamp-1 line-through">
                       {c.text}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {kept.length > 0 && (
+              <div className="mb-3.5">
+                <span className="mark-key text-soft">Kept by you</span>
+                <ul className="list-none m-0 mt-2 p-0 grid gap-2">
+                  {kept.map((c) => (
+                    <li key={c.index} className="claim">
+                      <div className="leading-snug line-clamp-2">{c.text}</div>
+                      <div className="claim-acts">
+                        <button className="claim-btn" disabled={working} onClick={() => claim(c.index, "unkeep")}>
+                          Undo
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
