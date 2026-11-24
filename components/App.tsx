@@ -3,6 +3,7 @@
 // the work that says what to do next.
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { APP_NAME, post, useWorkspace } from "@/lib/client";
+import { reach as reachOf, ringOf, type Net, type Reach } from "@/lib/graph/nets";
 import { COSTS, type Lead, type Workspace } from "@/lib/types";
 import { ApprovalsTab } from "./ApprovalsTab";
 import { BriefTab, type Act } from "./BriefTab";
@@ -166,21 +167,66 @@ function Connections({ ws }: { ws: Workspace }) {
     </div>
   );
 }
+/** The switch between the two nets. The thumb takes the color of whoever the net is about:
+    white for the product, the live blue for you. Both halves are the same width, so nothing
+    resizes when it moves. */
+function NetSwitch({ net, onChange, product, canYou, within, bare }: { net: Net; onChange: (n: Net) => void; product: string; canYou: boolean; within: number; bare: boolean }) {
+  return (
+    <div className="flex items-center gap-3 flex-none min-w-0">
+      <div className="netswitch frost" data-net={net} role="group" aria-label="Which net to show">
+        <span className="thumb" />
+        <button aria-pressed={net === "product"} onClick={() => onChange("product")} title={`Who ${product} is connected to`}>
+          <svg width="11" height="11" viewBox="0 0 11 11" aria-hidden="true" style={{ flex: "none" }}>
+            <circle cx="5.500" cy="5.500" r="5" fill="currentColor" />
+          </svg>
+          <span className="truncate">{product}&rsquo;s net</span>
+        </button>
+        <button aria-pressed={net === "you"} disabled={!canYou} onClick={() => onChange("you")} title={canYou ? "Who you are connected to" : "Add your name and schools under New search to see your own net"}>
+          <Icon name="person" size={15} />
+          Your net
+          {within > 0 && (
+            <span className="count" title={`${within} ${within === 1 ? "person" : "people"} within reach of you`}>
+              {within}
+            </span>
+          )}
+        </button>
+      </div>
+      <div className="text-[13px] text-faint leading-tight min-w-0 truncate">{net === "you" ? (bare ? "No schools or employers given yet. Add yours under New search." : "Who you can reach. Closer in is a closer tie.") : `Who ${product} is connected to.`}</div>
+    </div>
+  );
+}
+
 /** What is drawn on the graph, in the shapes it is drawn in, with how many of each there are. */
-function Legend({ ws, waiting, warm }: { ws: Workspace; waiting: number; warm: boolean }) {
-  const count = (label: string) => ws.graph.nodes.filter((n) => n.label === label && !n.props.isFounder).length;
-  const founder = ws.graph.nodes.some((n) => n.props.isFounder);
-  const items: { key: string; label: string; n?: number; mark: React.ReactNode }[] = [
-    { key: "product", label: ws.product?.name || "Your product", mark: <circle cx="9" cy="9" r="6.5" fill="#F2F2F2" /> },
-    { key: "company", label: "Company", n: count("Company"), mark: <circle cx="9" cy="9" r="6" fill="#0A0A0A" stroke="#F2F2F2" strokeWidth="2.2" /> },
-    ...(count("Person") ? [{ key: "person", label: "Person", n: count("Person"), mark: <circle cx="9" cy="9" r="4.2" fill="#C4C4C4" /> }] : []),
-    ...(founder ? [{ key: "you", label: "You", mark: <circle cx="9" cy="9" r="4.6" fill="#5CC8FF" /> }] : []),
-    ...(count("Signal") ? [{ key: "signal", label: "Reason to write now", n: count("Signal"), mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5CC8FF" /> }] : []),
-    ...(count("Competitor") ? [{ key: "competitor", label: "Competitor", n: count("Competitor"), mark: <circle cx="9" cy="9" r="5.800" fill="#2B2B2B" stroke="#8A8A8A" strokeWidth="1.600" /> }] : []),
-    ...(count("School") ? [{ key: "school", label: "Shared school", n: count("School"), mark: <rect x="3.500" y="3.500" width="11" height="11" rx="2.500" fill="#0A0A0A" stroke="#B5B5B5" strokeWidth="1.600" /> }] : []),
-    ...(warm ? [{ key: "way", label: "Warm way in", mark: <path d="M1.500 9h15" stroke="#E3F5FF" strokeWidth="2.200" strokeDasharray="4 3" /> }] : []),
-    ...(waiting ? [{ key: "waiting", label: "Draft waiting for you", n: waiting, mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#F2B45A" strokeWidth="1.800" strokeDasharray="3 2.600" /> }] : []),
-  ];
+function Legend({ ws, net, reach, waiting }: { ws: Workspace; net: Net; reach: Map<string, Reach>; waiting: number }) {
+  const count = (label: string) => ws.graph.nodes.filter((n) => n.label === label && !n.props.isFounder && n.props.isTarget !== false).length;
+  type Item = { key: string; label: string; n?: number; mark: React.ReactNode };
+  const wait: Item[] = waiting ? [{ key: "waiting", label: "Draft waiting for you", n: waiting, mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#F2B45A" strokeWidth="1.800" strokeDasharray="3 2.600" /> }] : [];
+  let items: Item[];
+  if (net === "you") {
+    const people = ws.graph.nodes.filter((n) => n.label === "Person" && !n.props.isFounder);
+    const on = (ring: 0 | 1 | 2) => people.filter((n) => ringOf(reach.get(n.id)) === ring).length;
+    const yours = ws.graph.nodes.filter((n) => n.label !== "Person" && reach.get(n.id)?.dist === 1).length;
+    const written = ws.graph.edges.some((e) => e.type === "CONTACTED_VIA");
+    items = [
+      { key: "you", label: "You", mark: <circle cx="9" cy="9" r="6.500" fill="#5CC8FF" /> },
+      ...(yours ? [{ key: "hub", label: "Your school or past employer", n: yours, mark: <rect x="3.500" y="3.500" width="11" height="11" rx="2.500" fill="#0A0A0A" stroke="#E3F5FF" strokeWidth="1.600" /> }] : []),
+      { key: "r1", label: "Shares it with you", n: on(1), mark: <circle cx="9" cy="9" r="4.800" fill="#F2F2F2" /> },
+      { key: "r2", label: "One introduction away", n: on(2), mark: <circle cx="9" cy="9" r="4.200" fill="#C4C4C4" /> },
+      { key: "r0", label: "No way in yet", n: on(0), mark: <circle cx="9" cy="9" r="4.200" fill="#5E5E5E" /> },
+      { key: "company", label: "Where they work", n: ws.graph.nodes.filter((n) => n.label === "Company" && n.props.isTarget !== false && reach.has(n.id)).length, mark: <circle cx="9" cy="9" r="6" fill="#0A0A0A" stroke="#F2F2F2" strokeWidth="2.200" /> },
+      ...(written ? [{ key: "sent", label: "Written to", mark: <path d="M1.500 9h15" stroke="#5CC8FF" strokeWidth="2" strokeDasharray="4 3.500" /> }] : []),
+      ...wait,
+    ];
+  } else {
+    items = [
+      { key: "product", label: ws.product?.name || "Your product", mark: <circle cx="9" cy="9" r="6.500" fill="#F2F2F2" /> },
+      { key: "company", label: "Company", n: count("Company"), mark: <circle cx="9" cy="9" r="6" fill="#0A0A0A" stroke="#F2F2F2" strokeWidth="2.200" /> },
+      ...(count("Person") ? [{ key: "person", label: "Person", n: count("Person"), mark: <circle cx="9" cy="9" r="4.200" fill="#C4C4C4" /> }] : []),
+      ...(count("Signal") ? [{ key: "signal", label: "Reason to write now", n: count("Signal"), mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5CC8FF" /> }] : []),
+      ...(count("Competitor") ? [{ key: "competitor", label: "Competitor", n: count("Competitor"), mark: <circle cx="9" cy="9" r="5.800" fill="#2B2B2B" stroke="#8A8A8A" strokeWidth="1.600" /> }] : []),
+      ...wait,
+    ];
+  }
   return (
     <div className="legend frost" aria-label="What the shapes on the graph mean">
       {items.map((it) => (
@@ -304,6 +350,8 @@ export function App() {
   const [pop, setPop] = useState<"credits" | "connections" | null>(null);
   const [graphOpen, setGraphOpen] = useState(true);
   const [flows, setFlows] = useState<Flow[]>([]);
+  // Two nets over one graph: who the product is connected to, and who you are.
+  const [net, setNet] = useState<Net>("product");
   const picked = useRef(false);
   const hadLeads = useRef(false);
   const flowId = useRef(0);
@@ -349,7 +397,7 @@ export function App() {
   const draft = useCallback(
     async (lead: Lead, force?: boolean) => {
       if (!ws) return;
-      const path = routeTo(viewOf(lead, ws), ws);
+      const path = routeTo(viewOf(lead, ws), ws, net);
       const began = performance.now();
       asked.current.add(lead.id);
       const stop = path.length > 1 ? flow(path, "draft", null) : null;
@@ -358,7 +406,7 @@ export function App() {
       stop?.(ok ? Math.max(performance.now(), began + 1600) : performance.now());
       setTimeout(() => asked.current.delete(lead.id), 5000);
     },
-    [ws, act, flow],
+    [ws, act, flow, net],
   );
 
   useEffect(() => {
@@ -368,11 +416,13 @@ export function App() {
   }, [toast]);
 
   // Follow the run: once the first leads exist, show them (unless the user chose a tab).
+  // A new search counts as a change even when it finds as many leads as the last one did.
   const leadCount = ws?.leads.length || 0;
+  const runKey = ws?.run.startedAt || "";
   useEffect(() => {
     if (leadCount > 0 && !hadLeads.current && !picked.current) setTab("leads");
     hadLeads.current = leadCount > 0;
-  }, [leadCount]);
+  }, [leadCount, runKey]);
 
   // A draft the agent wrote on its own, or a message the rep just approved, also shows on the graph.
   useEffect(() => {
@@ -386,10 +436,10 @@ export function App() {
       const approved = was === "draft" && m.status === "sent";
       if (!fresh && !approved) continue;
       const lead = ws.leads.find((l) => l.id === m.leadId);
-      const path = lead ? routeTo(viewOf(lead, ws), ws) : [];
+      const path = lead ? routeTo(viewOf(lead, ws), ws, net) : [];
       if (path.length > 1) flow(path, approved ? "send" : "draft", approved ? 650 : 1200);
     }
-  }, [ws, flow]);
+  }, [ws, flow, net]);
 
   const go = (t: Tab) => {
     picked.current = true;
@@ -408,6 +458,8 @@ export function App() {
     }
     return { nodes, edges };
   }, [pathLead]);
+
+  const reach = useMemo(() => reachOf(ws?.graph || { nodes: [], edges: [] }), [ws]);
 
   const waiting = useMemo(() => {
     const on = new Set((ws?.graph.nodes || []).map((n) => n.id));
@@ -429,6 +481,7 @@ export function App() {
             known.current = new Map();
             asked.current.clear();
             setFlows([]);
+            setNet("product");
             setIntake(false);
             setTab("target");
             setCard(null);
@@ -449,6 +502,12 @@ export function App() {
   const replayed = !sample && (st.replayed || 0) > 0 && (st.replayed || 0) >= (st.llmCalls + st.searches) / 2;
   const credits = ws.credits.balance;
   const best = running ? null : bestNext(ws);
+  const canYou = ws.graph.nodes.some((n) => n.props.isFounder);
+  const turn = (to: Net) => {
+    setNet(to);
+    // The lit way in runs through you and the school you share, which only your net shows.
+    if (to === "product") setPathFor(null);
+  };
 
   // Profiles flip through every lead, in the order the list shows them.
   const order = [...ranked(ws).map((v) => v.lead), ...ws.leads.filter((l) => l.status === "held"), ...ws.leads.filter((l) => l.status === "suppressed")];
@@ -464,7 +523,7 @@ export function App() {
     const lead = ws.leads.find((l) => l.id === id);
     if (lead) {
       open(lead.id);
-      if (lead.warmPaths.length) setPathFor(lead.id);
+      if (lead.warmPaths.length && net === "you") setPathFor(lead.id);
       return;
     }
     const of = ws.leads.find((l) => l.contacts.some((c) => c.id === id)) || ws.leads.find((l) => l.signals.some((s) => s.id === id));
@@ -473,7 +532,7 @@ export function App() {
   };
 
   return (
-    <div className="field h-screen flex flex-col overflow-hidden">
+    <div className="field h-screen flex flex-col overflow-hidden" data-net={net}>
       <header className="flex items-center gap-4 px-6 pt-5 pb-3 flex-none">
         <div className="flex items-center gap-2.5">
           <Logo size={38} />
@@ -510,12 +569,13 @@ export function App() {
       <main className="flex-1 min-h-0 flex gap-4 px-6 pb-6">
         {/* Kept mounted when hidden, so the layout of the graph is not thrown away. */}
         <section className={`relative flex-col gap-3 min-w-0 ${graphOpen ? "flex" : "hidden"}`} style={{ flex: "0 0 41%" }}>
-          <Legend ws={ws} waiting={waiting.size} warm={ws.leads.some((l) => l.warmPaths.length > 0)} />
+          <NetSwitch net={net} onChange={turn} product={ws.product.name} canYou={canYou} bare={ws.founder.schools.length + ws.founder.employers.length === 0} within={ws.graph.nodes.filter((n) => n.label === "Person" && !n.props.isFounder && ringOf(reach.get(n.id)) !== 0).length} />
+          <Legend ws={ws} net={net} reach={reach} waiting={waiting.size} />
           <div className="relative flex-1 min-h-0">
             <div className="dots absolute inset-0 pointer-events-none" />
             {/* The graph stops short of the bottom line, which is kept for the readout. */}
             <div className="absolute inset-x-0 top-0 bottom-6">
-              <GraphView nodes={ws.graph.nodes} edges={ws.graph.edges} leads={ws.leads} highlight={highlight} flows={flows} waiting={waiting} best={best?.lead.id || null} onPick={pick} />
+              <GraphView nodes={ws.graph.nodes} edges={ws.graph.edges} leads={ws.leads} net={net} reach={reach} highlight={highlight} flows={flows} waiting={waiting} best={best?.lead.id || null} onPick={pick} />
             </div>
             {pathLead && (
               <div className="absolute left-0 top-0 tag !py-1.5 arrive">
@@ -571,6 +631,8 @@ export function App() {
           setCard({ lead: to.id, focus: null });
         }}
         onShowPath={(lead) => {
+          // The way in runs from you, through what you share, to the person: your net shows it.
+          if (canYou) setNet("you");
           setPathFor(lead.id);
           setGraphOpen(true);
           setCard(null);

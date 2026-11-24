@@ -76,7 +76,24 @@ export function Intake({ initial, founder, sample, onStarted }: { initial: Produ
           </div>
         </div>
 
-        {error && <div className="mt-3 text-bad font-semibold text-sm">{error}</div>}
+        {error && (
+          <div className="mt-3 flex items-center gap-3 flex-wrap">
+            <span className="text-bad font-semibold text-sm">{error}</span>
+            {/credits/i.test(error) && (
+              <button
+                className="btn"
+                disabled={busy}
+                onClick={async () => {
+                  setBusy(true);
+                  await post("/api/action", { type: "topup", credits: 20 });
+                  start();
+                }}
+              >
+                Top up 20 and search
+              </button>
+            )}
+          </div>
+        )}
 
         <div className="flex items-center gap-2 mt-6">
           <button className="btn btn-main" onClick={start} disabled={busy}>

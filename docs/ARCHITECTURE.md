@@ -103,6 +103,15 @@ RETURN DISTINCT p1.id AS fromPersonId, p2.id AS toPersonId, c.id AS companyId,
 
 Each query run is shown in the activity feed with its Cypher, row count and time, and is metered as a `graph.query` usage event.
 
+### Two nets over the one graph (`lib/graph/nets.ts`)
+
+The page shows the same graph from two sides, with a switch between them.
+
+- **The product's net** is who the product is connected to: the product in the middle, the companies matched to it, their people, their reasons to write and the competitors. The founder and the schools and past employers people came through are left out of it.
+- **Your net** is who the founder can reach: the founder in the middle, and every person found, placed on a ring by how many people stand between them. Ring one shares a school or employer with the founder, or has already had a message. Ring two is tied to someone on ring one (the same company, the same past employer, the same school): one introduction away. Everyone else stands on the outside ring, "no way in yet". Only the schools and companies that lie on a way to someone are drawn.
+
+The distance is a breadth-first walk from the founder over `STUDIED_AT`, `PREVIOUSLY_EMPLOYED_AT`, `WORKS_AT` and messages sent, done in plain code on the nodes and edges the page already has (`reach`). A step on to a person counts one; a step on to a school or company counts nothing. Hovering a person says how they are tied ("One introduction away: Maya Okafor shares UCLA with you, and both are tied to Lumen Education"). Nothing is stored twice and no model is involved; `tests/nets.test.ts` covers it.
+
 ## 4. Reasoning loops
 
 ### Propose, then verify (discovery)

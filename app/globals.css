@@ -907,3 +907,90 @@ a.dex-site[href]:hover {
     border-bottom: 1px solid var(--color-line);
   }
 }
+
+/* ---- the two nets -------------------------------------------------------------------- */
+
+/* The switch between the product's net and yours. Two equal halves and a thumb that slides
+   under the one that is on, without overshoot, taking the color of whoever the net is about. */
+.netswitch {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  width: 286px;
+  padding: 3px;
+  border-radius: 10px;
+  flex: none;
+}
+
+.netswitch button {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-weight: 700;
+  font-size: 13.5px;
+  color: var(--color-soft);
+  transition: color 0.3s;
+}
+
+.netswitch button:hover:not(:disabled) {
+  color: var(--color-ink);
+}
+
+.netswitch button[aria-pressed="true"],
+.netswitch button[aria-pressed="true"]:hover {
+  color: #000;
+}
+
+.netswitch button:disabled {
+  opacity: 0.4;
+}
+
+.netswitch .thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 7px;
+  background: var(--color-ink);
+  transition:
+    transform 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.45s;
+  will-change: transform;
+}
+
+.netswitch[data-net="you"] .thumb {
+  transform: translateX(100%);
+  background: var(--color-signal);
+}
+
+/* In your net the light behind the graph turns a little blue. It is a second still layer that
+   fades in over the first, so nothing is repainted while it changes. */
+.field::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(46% 52% at 21% 42%, rgba(92, 200, 255, 0.1), transparent 72%);
+  opacity: 0;
+  transition: opacity 0.7s ease;
+}
+
+.field[data-net="you"]::after {
+  opacity: 1;
+}
+
+.netswitch button[aria-pressed="true"] .count {
+  background: rgb(0 0 0 / 0.82);
+  color: var(--color-ink);
+}

@@ -107,7 +107,7 @@ function sortLeads(s: Store) {
 export async function runPipeline(product: Product, founder: Founder) {
   const s = store();
   if (s.state.run.status === "running") throw new Error("A run is already in progress");
-  if (!s.canSpend(COSTS["discovery.run"])) throw new Error("Out of credits: a discovery run costs 5. Top up to continue.");
+  if (!s.canSpend(COSTS["discovery.run"])) throw new Error(`Out of credits: a search costs ${COSTS["discovery.run"]}. Top up to continue.`);
 
   const credits = s.state.credits;
   const keepDnc = s.state.doNotContact;

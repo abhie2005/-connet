@@ -1,4 +1,5 @@
 // What the page needs to know about a lead at a glance: who to write to, and how far along it is.
+import { FOUNDER, type Net } from "@/lib/graph/nets";
 import { bestContact } from "@/lib/score";
 import type { Contact, Lead, Message, Signal, Workspace } from "@/lib/types";
 
@@ -34,10 +35,15 @@ export function bestNext(ws: Workspace): LeadView | null {
   return ranked(ws).find((v) => !v.sent) || null;
 }
 
-/** The nodes a message travels along on the graph: the product, the company, the person. */
-export function routeTo(view: LeadView, ws: Workspace): string[] {
+/** The nodes a message travels along on the graph. In the product's net: the product, the
+    company, the person. In your net: you, the school or employer you share if there is one,
+    the person. */
+export function routeTo(view: LeadView, ws: Workspace, net: Net = "product"): string[] {
   const has = new Set(ws.graph.nodes.map((n) => n.id));
-  return ["product", view.lead.id, view.contact?.id || ""].filter((id) => id && has.has(id));
+  const to = view.contact?.id || view.lead.id;
+  if (net === "product") return ["product", view.lead.id, view.contact?.id || ""].filter((id) => id && has.has(id));
+  const warm = view.lead.warmPaths.find((w) => w.kind !== "referral" && w.contactId === view.contact?.id);
+  return [FOUNDER, warm?.viaId || "", to].filter((id) => id && has.has(id));
 }
 
 export const COST_NOTE = {

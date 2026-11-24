@@ -7,6 +7,17 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 02:30. Yoon Woo's Claude: two nets, and a search that ran out of credits said nothing
+
+**Done (on `main`).**
+- **Two nets with a switch above the graph** (Yoon Woo's request: like Glyph's STEM | Humanities). **Glyph's net** is who the product is connected to. **Your net** puts the founder in the middle and everyone found on a ring: same school or employer, one introduction away, or no way in yet. Hover a person to read how they are tied. "Show on graph" for a warm way in turns to your net by itself.
+- **Fixed:** with fewer than 5 credits, "Find my customers" did nothing and said nothing. It now says so on the start screen, with a "Top up 20 and search" button.
+- 46 checks pass. Checked in a browser on sample data only.
+
+**Need.**
+- `[open]` Yoon Woo: `git pull`, `npm run clean`, `npm run dev`, and try the switch on your live run.
+- `[open]` Skylar: `docs/DEMO.md` changed again at 1:20 and 1:38 (the graph turns to "Your net" for the warm way in, then back). The earlier `[open]` items still stand.
+
 ## Nov 24, 01:25. Yoon Woo's Claude: the name is Connet, and the screen is rebuilt to be easy
 
 **What happened.** Yoon Woo ran it live (Gemini, Tavily, Hunter, Flexprice and Band all answer; Neo4j does not connect yet, the embedded graph stands in). He said it works but looks "complex and hard", like every other team's will, and asked for it to be much easier to use. He also renamed it: **Connet** (connect + network).

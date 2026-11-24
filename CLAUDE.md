@@ -63,7 +63,11 @@ After the first live run he said the screen was "all complex and hard", that eve
 - **"Little dots going from Glyph to the person getting the email whenever draft is clicked."** `Flow` in `components/GraphView.tsx`: dots leave the product and run through the company to the person for as long as the writing takes (at least 1.6 s). The agent's own drafts during a run do the same. An amber ring round a person means a draft is waiting for approval; on approval the dots run once more in white.
 - **So that there is a Draft to click, the agent drafts for the best three only** (`TACT_MAX_DRAFTS`, was 5). The rest wait for the rep.
 - **"Make sure the human approves before AI sends."** Unchanged in the code (only `decideMessage` with "approve" marks a message sent, and sending is simulated), now said plainly in the Approve tab, the guide line and the profile card. He wrote "don't actually draft anything", read as "don't actually send anything".
-- **The legend** is one panel above the graph, drawn in the graph's own shapes, with counts.
+- **The legend** is one panel above the graph, drawn in the graph's own shapes, with counts. Each net has its own.
+- **Two nets (his request, Nov 24, 02:07: "instead of one net, could you make two", "like the stem and humanities for glyph thing").** A switch above the graph, `NetSwitch` in `components/App.tsx`: two equal halves and a thumb that slides without overshoot, white under "Glyph's net", ice blue under "Your net". The light behind the graph turns a little blue in your net (a second still layer fading in, as in Glyph's mode switch), and one ring opens out from the new middle. The nodes both nets share glide to their new places (`GLIDE` in `components/GraphView.tsx`: each frame draws a node part of the way to where the layout holds it).
+  - **Glyph's net:** the product in the middle; companies, their people, reasons to write, competitors. The founder and the schools are no longer in it.
+  - **Your net:** you in the middle, people on rings: "same school or employer", "one introduction away", "no way in yet" (small unnamed dots; hover for who). Only the schools and companies on a way to someone are drawn. The count on the switch is how many people are within reach.
+  - The split and the distances are in `lib/graph/nets.ts` (plain functions, tested). "Show on graph" for a warm way in turns to your net by itself. A Draft clicked while your net is on show sends its dots from you. A new search starts in the product's net.
 - **"What is the enrich button?"** It was jargon. It is "Find emails" now, next to "no address yet".
 - **The agents' feed is one line** (the latest thing said) until it is clicked open. Skylar opens it for the video.
 
@@ -76,7 +80,15 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 - Don't show how long the model took (he had "answered in N s" removed from Glyph's cards).
 - He found strong pink too much in Glyph. If a color comes back, keep it soft.
 
-## Status (Nov 24, 01:25)
+## Status (Nov 24, 02:30)
+
+**The two nets are checked on sample data only**, at 1512 and 1280 wide: the switch both ways, a search watched from each, a Draft clicked in your net, "Show on graph", the hover notes. He has not seen them yet.
+
+**Found while checking, and fixed:** a search started with fewer than 5 credits did nothing at all (the refusal happened after the page had been told "ok"). The start screen now says "Out of credits: a search costs 5 and N are left" with a "Top up 20 and search" button. He starts with 30 and a search with its drafts uses about 12, so he will meet this on the third search.
+
+**46 checks pass** (6 new in `tests/nets.test.ts`).
+
+## Status before that (Nov 24, 01:25)
 
 **Live services on his Mac (Nov 24, 00:40, from `npm run doctor` and the two setup commands):** Gemini, Tavily, Hunter and Flexprice answer (wallet 30). Band is set up: four agents registered, the room made, a first line posted. **Neo4j does not connect** ("No routing servers available"): the host resolves and port 7687 is open, the address is right, and the username line was found doubled (`NEO4J_USERNAME=NEO4J_USERNAME=neo4j`). He has not re-run doctor since fixing it. The embedded graph stands in. He ran the app live and said "this is good" before asking for the screen to be made easier.
 
@@ -88,7 +100,7 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 
 **Setup commands (Nov 23, midnight).** `npm run setup:flexprice` creates the customer, the metered features and the wallet from one API key; `npm run setup:band` registers the four agents, makes the room and writes the keys from one user key (Band's human API may be refused on a free plan: the command then prints the by-hand steps). Both are tested against stand-ins, not the real services.
 
-**40 checks pass (`npm test`).** 23 are the sample run and the quote check, 1 is the name. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
+**46 checks pass (`npm test`).** 23 are the sample run and the quote check, 1 is the name, 6 are the two nets. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
 
 **Still never run against the real services** (the machine it was built on could not reach them). What that leaves open:
 

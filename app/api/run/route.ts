@@ -3,7 +3,7 @@
 import { after } from "next/server";
 import { runPipeline } from "@/lib/pipeline";
 import { store } from "@/lib/store";
-import type { Founder, Product } from "@/lib/types";
+import { COSTS, type Founder, type Product } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 300;
@@ -32,7 +32,10 @@ export async function POST(request: Request) {
     employers: list(body.founder?.employers),
   };
   const s = store();
-  if (s.state.run.status === "running") return Response.json({ error: "A run is already in progress." }, { status: 409 });
+  if (s.state.run.status === "running") return Response.json({ error: "A search is already in progress." }, { status: 409 });
+  // Say so now. The search itself starts after this answer is sent, so a refusal there would
+  // never reach the page, and the button would seem to do nothing.
+  if (!s.canSpend(COSTS["discovery.run"])) return Response.json({ error: `Out of credits: a search costs ${COSTS["discovery.run"]} and ${s.state.credits.balance} are left.` }, { status: 402 });
   after(() => runPipeline(product, founder).catch((e) => console.error("[tact] run failed:", e)));
   return Response.json({ ok: true });
 }
