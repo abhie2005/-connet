@@ -36,7 +36,7 @@ For the demo itself, the production build is faster and has no dev overlay:
 npm run build && npm start
 ```
 
-Other commands: `npm test` (35 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
+Other commands: `npm test` (37 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
 
 ## Keys
 
@@ -65,18 +65,23 @@ So every answer from a live service is **saved on this machine** (`.data/cache`,
 
 For a demo: run your brief once on live data while the wifi is good, then present from the replay.
 
-### Flexprice setup (about five minutes)
+### Flexprice setup (one command)
 
-1. Create a customer whose external id is `tact-demo` (or set `FLEXPRICE_CUSTOMER_ID`).
-2. Create metered features with these event names: `discovery.run`, `lead.enriched`, `outreach.drafted`, `outreach.sent`, `graph.query`.
-3. Give the customer a wallet with some credits. Tact starts from that balance and stops paid steps at zero. If the events have no price attached in Flexprice, the wallet does not move by itself; Tact then keeps its own count from the wallet's starting balance, and the credits panel says so.
-4. `npm run doctor -- --event` sends one test event and reads the wallet.
+1. Sign up at flexprice.io, create an API key with Read & Write (it is shown once), and paste it into `.env.local` as `FLEXPRICE_API_KEY`.
+2. Run `npm run setup:flexprice`.
 
-Without a wallet, events are still metered in Flexprice and the gate uses the local balance.
+The command finds which region your account is on, creates the customer `tact-demo`, a metered feature for each event Tact sends (`discovery.run`, `lead.enriched`, `outreach.drafted`, `outreach.sent`, `graph.query`), and a wallet with 30 credits, then sends one test event. It is safe to run twice.
 
-### Band setup
+Tact starts from the wallet's balance and stops paid steps at zero. If the events have no price attached in Flexprice, the wallet does not move by itself; Tact then keeps its own count from the wallet's starting balance, and the credits panel says so. Without a Flexprice key, credits are kept in a local ledger.
 
-Create a room in Band, register four external agents named Planner, Builder, Reviewer and Security, add them and yourself to the room, and put the room id and the four agent keys in `.env.local`. Every hand-off between agents is then posted in the room with an @mention.
+### Band setup (one command, or three minutes by hand)
+
+1. Sign up at band.ai. In Settings, API Keys, create a key and paste it into `.env.local` as `BAND_USER_API_KEY`.
+2. Run `npm run setup:band`.
+
+The command registers four agents (Tact Planner, Tact Builder, Tact Reviewer, Tact Security), creates a room, adds the agents and you to it, saves the room id and the four agent keys in `.env.local`, and posts a first line in the room. From then on every hand-off between agents is posted there with an @mention.
+
+If your Band plan refuses the first step, the command says so and prints the by-hand steps: create four external agents in Band, generate a key for each, paste the four keys, and run the command again for the room.
 
 ## How a run goes
 

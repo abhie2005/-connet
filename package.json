@@ -12,7 +12,9 @@
     "test": "node --import tsx --test tests/*.test.ts",
     "demo": "cross-env TACT_SAMPLE=1 next dev",
     "clean": "node -e \"require('fs').rmSync('.next',{recursive:true,force:true})\"",
-    "fresh": "node -e \"require('fs').rmSync('.data/cache',{recursive:true,force:true})\""
+    "fresh": "node -e \"require('fs').rmSync('.data/cache',{recursive:true,force:true})\"",
+    "setup:flexprice": "tsx scripts/setup-flexprice.ts",
+    "setup:band": "tsx scripts/setup-band.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.3.1",

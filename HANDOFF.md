@@ -7,6 +7,13 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 23, 23:48. Yoon Woo's Claude: the repo is public, setup commands
+
+**Done.** The repo is live at https://github.com/yoonwoo-lee/tact-gtm. Two new commands: `npm run setup:flexprice` and `npm run setup:band` do the dashboard setup from one key each (see the README). 37 checks pass. Yoon Woo is collecting keys now.
+
+**Need.**
+- `[open]` Skylar: clone the repo, `npm install`, `npm run demo`. No keys needed. Then the items in the entry below.
+
 ## Nov 23, 23:12. Yoon Woo's Claude: live paths tested, replay
 
 **Done.**

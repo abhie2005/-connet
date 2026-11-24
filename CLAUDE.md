@@ -65,7 +65,9 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 
 **Works, checked on sample data in the terminal and in the browser (dev and production build):** the whole run in about 16 seconds; every tab; approve, reject and edit; drag a deal; log a reply and get referral paths; accept an expansion; enrich; the credit gate at zero and top-up. Lint and type-check are clean.
 
-**35 checks pass (`npm test`).** 21 are the sample run and the quote check. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
+**Setup commands (Nov 23, midnight).** `npm run setup:flexprice` creates the customer, the metered features and the wallet from one API key; `npm run setup:band` registers the four agents, makes the room and writes the keys from one user key (Band's human API may be refused on a free plan: the command then prints the by-hand steps). Both are tested against stand-ins, not the real services.
+
+**37 checks pass (`npm test`).** 21 are the sample run and the quote check. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
 
 **Still never run against the real services** (the machine it was built on could not reach them). What that leaves open:
 
