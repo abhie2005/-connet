@@ -8,10 +8,10 @@ import type { AgentName, Evidence, Source } from "@/lib/types";
 export function Logo({ size = 40 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
-      <rect x="0.500" y="0.500" width="39" height="39" rx="10" fill="#000" stroke="#3A3A3A" />
+      <rect width="40" height="40" rx="10" fill="#1B1640" />
       {/* a lowercase c in one pen stroke, and in its opening the node it reaches for, in the live color */}
-      <path d="M25.300 12.600A9.800 9.800 0 1 0 25.300 27.400" fill="none" stroke="#F2F2F2" strokeWidth="4" strokeLinecap="round" />
-      <circle cx="28.500" cy="20" r="3.100" fill="#F4A98C" />
+      <path d="M25.300 12.600A9.800 9.800 0 1 0 25.300 27.400" fill="none" stroke="#FBFAFF" strokeWidth="4" strokeLinecap="round" />
+      <circle cx="28.500" cy="20" r="3.100" fill="#A9B8FF" />
     </svg>
   );
 }

@@ -23,7 +23,7 @@ function Line({ a }: { a: Activity }) {
             <button className="link text-[12.5px] border-0 bg-transparent p-0 font-semibold" onClick={() => setOpen(!open)}>
               {open ? "hide" : a.kind === "query" ? "show query" : "show"}
             </button>
-            {open && <pre className="mono whitespace-pre-wrap bg-black rounded-lg border border-line p-2.5 mt-1.5 mb-1 text-ink overflow-x-auto">{a.detail}</pre>}
+            {open && <pre className="mono whitespace-pre-wrap bg-raise rounded-lg border border-line p-2.5 mt-1.5 mb-1 text-ink overflow-x-auto">{a.detail}</pre>}
           </>
         )}
       </div>

@@ -152,7 +152,7 @@ function Connections({ ws }: { ws: Workspace }) {
     <div className="grid gap-2 text-[14px]">
       {rows.map(([name, value, live]) => (
         <div key={name} className="flex items-center gap-2.5">
-          <span className="w-2 h-2 rounded-full flex-none" style={{ background: live ? "#5FD08A" : "#4A4A4A" }} />
+          <span className="w-2 h-2 rounded-full flex-none" style={{ background: live ? "#17914F" : "#B9B3DE" }} />
           <span className="font-semibold w-[118px] flex-none">{name}</span>
           <span className="text-soft">{value}</span>
         </div>
@@ -168,7 +168,7 @@ function Connections({ ws }: { ws: Workspace }) {
   );
 }
 /** The switch between the two nets. The thumb takes the color of whoever the net is about:
-    white for the product, the live peach for you. Both halves are the same width, so nothing
+    ink for the product, the violet accent for you. Both halves are the same width, so nothing
     resizes when it moves. */
 function NetSwitch({ net, onChange, product, canYou, within }: { net: Net; onChange: (n: Net) => void; product: string; canYou: boolean; within: number }) {
   return (
@@ -199,14 +199,14 @@ function Legend({ net, waiting, competitors }: { net: Net; waiting: boolean; com
   // Your net needs no key of its own: each ring says what it means on the graph.
   const items: Item[] =
     net === "you"
-      ? [{ key: "rings", label: "The closer to you, the closer the tie", mark: <><circle cx="9" cy="9" r="7" fill="none" stroke="#8A8A8A" strokeWidth="1.200" strokeDasharray="2 2.600" /><circle cx="9" cy="9" r="3" fill="#F4A98C" /></> }]
+      ? [{ key: "rings", label: "The closer to you, the closer the tie", mark: <><circle cx="9" cy="9" r="7" fill="none" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.200" strokeDasharray="2 2.600" /><circle cx="9" cy="9" r="3" fill="#5A34D6" /></> }]
       : [
-          { key: "company", label: "Company", mark: <circle cx="9" cy="9" r="6" fill="#0A0A0A" stroke="#F2F2F2" strokeWidth="2.200" /> },
-          { key: "person", label: "Person", mark: <circle cx="9" cy="9" r="4.200" fill="#C4C4C4" /> },
-          { key: "signal", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#F4A98C" /> },
-          ...(competitors ? [{ key: "competitor", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#2B2B2B" stroke="#8A8A8A" strokeWidth="1.600" /> }] : []),
+          { key: "company", label: "Company", mark: <circle cx="9" cy="9" r="6" fill="#FFFFFF" stroke="#1B1640" strokeWidth="2.200" /> },
+          { key: "person", label: "Person", mark: <circle cx="9" cy="9" r="4.400" fill="#2E2863" stroke="#FFFFFF" strokeWidth="1.400" /> },
+          { key: "signal", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5A34D6" stroke="#FFFFFF" strokeWidth="1.200" /> },
+          ...(competitors ? [{ key: "competitor", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#CBC8F6" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.600" /> }] : []),
         ];
-  if (waiting) items.push({ key: "waiting", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#F0CB52" strokeWidth="1.800" strokeDasharray="3 2.600" /> });
+  if (waiting) items.push({ key: "waiting", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="3 2.600" /> });
   return (
     <div className="legend" aria-label="What the shapes on the graph mean">
       {items.map((it) => (
@@ -521,7 +521,7 @@ export function App() {
         <span className="flex-1" />
         <div className="relative">
           <button className="frost chip !py-1.5 !px-3 !text-[13.5px] border-0" onClick={() => setPop(pop === "connections" ? null : "connections")}>
-            <span className="w-2 h-2 rounded-full" style={{ background: sample ? "#858585" : "#5FD08A" }} />
+            <span className="w-2 h-2 rounded-full" style={{ background: sample ? "#807BA6" : "#17914F" }} />
             {sample ? "Sample data" : replayed ? "Live data, replayed" : "Live data"}
           </button>
           <Popover open={pop === "connections"} onClose={() => setPop(null)} width={340}>
@@ -548,7 +548,7 @@ export function App() {
           <div className="flex items-center gap-3 flex-none">
             <NetSwitch net={net} onChange={turn} product={ws.product.name} canYou={canYou} within={ws.graph.nodes.filter((n) => n.label === "Person" && !n.props.isFounder && ringOf(reach.get(n.id)) !== 0).length} />
             <span className="flex-1" />
-            <button className="btn btn-plain !text-[13px]" onClick={() => setGraphOpen(false)}>
+            <button className="btn btn-plain !text-[13px] !text-ink" onClick={() => setGraphOpen(false)}>
               Hide graph
             </button>
           </div>

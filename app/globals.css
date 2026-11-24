@@ -1,26 +1,30 @@
 @import "tailwindcss";
 
-/* The look: black and grey. Brightness carries the hierarchy (white is the main action and what
-   is selected), a warm peach (the one Glyph used) is kept for what is live (the running lamp,
-   reasons to write, the way in on the graph, your own net), and yellow for what an agent
-   stopped or what is waiting for you. A match score is green, yellow or red by how good it is.
-   Hairlines instead of shadows. */
+/* The look: blue into purple. One soft field runs behind the whole window (sky blue on the left,
+   violet on the right; it turns to purple all over in your own net), the graph is drawn straight
+   on it, and the work sits on white sheets that float on it. Deep indigo ink carries the
+   hierarchy (the main action and what is selected are ink), violet is kept for what is
+   live (the running lamp, reasons to write, the way in, your own net), and amber for what an
+   agent stopped or what is waiting for you. A match score is green, amber or red. */
 @theme {
-  --color-void: #000000;
-  --color-panel: #0e0e0e;
-  --color-raise: #171717;
-  --color-raise-2: #222222;
-  --color-line: #262626;
-  --color-line-strong: #3a3a3a;
-  --color-ink: #f2f2f2;
-  --color-soft: #ababab;
-  --color-faint: #858585;
-  --color-signal: #f4a98c;
-  --color-signal-pale: rgb(244 169 140 / 0.12);
-  --color-good: #5fd08a;
-  --color-warn: #f0cb52;
-  --color-flag: rgb(240 203 82 / 0.11);
-  --color-bad: #ff6b6b;
+  --color-void: #9a9ff7;
+  --color-panel: #fdfcff;
+  --color-raise: #f3f1fd;
+  --color-raise-2: #e8e4fb;
+  --color-line: #e4e0f7;
+  --color-line-strong: #c8c1ee;
+  --color-ink: #1b1640;
+  --color-on-ink: #fbfaff;
+  --color-soft: #4d4873;
+  --color-faint: #807ba6;
+  --color-signal: #6541e0;
+  --color-signal-ink: #4326ad;
+  --color-signal-pale: rgb(101 65 224 / 0.1);
+  --color-good: #17914f;
+  --color-warn: #b06f00;
+  --color-flag: rgb(226 160 30 / 0.18);
+  --color-flag-ink: #7a4d00;
+  --color-bad: #d03838;
   --radius-lg: 6px;
   --radius-xl: 8px;
   --radius-2xl: 10px;
@@ -29,8 +33,8 @@
 }
 
 :root {
-  color-scheme: dark;
-  --frost: rgba(14, 14, 14, 0.8);
+  color-scheme: light;
+  --frost: rgba(251, 250, 255, 0.58);
 }
 
 * {
@@ -71,7 +75,7 @@ button:disabled {
 }
 
 ::selection {
-  background: rgb(244 169 140 / 0.3);
+  background: rgb(101 65 224 / 0.22);
 }
 
 h1,
@@ -89,19 +93,21 @@ h3 {
   background: var(--color-void);
 }
 
-/* A little light behind the graph, so the black is not flat. */
+/* The field itself: blue into purple, with a soft light behind the graph. */
 .field::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(46% 52% at 21% 42%, rgba(255, 255, 255, 0.06), transparent 72%);
+  background:
+    radial-gradient(48% 56% at 21% 44%, rgba(255, 255, 255, 0.36), transparent 72%),
+    linear-gradient(118deg, #84b4fa 0%, #989ff7 48%, #b08df3 100%);
 }
 
 /* The graph's drawing surface: a faint dot grid that fades out towards the edges. */
 .dots {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.11) 1px, transparent 1.3px);
+  background-image: radial-gradient(rgba(27, 22, 64, 0.13) 1px, transparent 1.3px);
   background-size: 22px 22px;
   -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, #000 35%, transparent 100%);
   mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, #000 35%, transparent 100%);
@@ -111,14 +117,16 @@ h3 {
   background: var(--color-panel);
   border: 1px solid var(--color-line);
   border-radius: 14px;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 14px 38px rgba(44, 30, 128, 0.2);
 }
 
 .frost {
   background: var(--frost);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid rgba(255, 255, 255, 0.55);
 }
 
 /* ---- small parts -------------------------------------------------------------------- */
@@ -135,7 +143,7 @@ h3 {
   font-size: 14px;
   line-height: 1.3;
   white-space: nowrap;
-  background: var(--color-raise-2);
+  background: #fff;
   box-shadow: inset 0 0 0 1px var(--color-line-strong);
   color: var(--color-ink);
   transition:
@@ -145,7 +153,7 @@ h3 {
 }
 
 .btn:hover:not(:disabled) {
-  background: #2c2c2c;
+  background: var(--color-raise);
 }
 
 .btn:active:not(:disabled) {
@@ -179,13 +187,13 @@ h3 {
 .btn-main {
   background: var(--color-ink);
   box-shadow: none;
-  color: #000;
+  color: var(--color-on-ink);
   padding: 10px 20px;
   font-size: 15px;
 }
 
 .btn-main:hover:not(:disabled) {
-  background: #fff;
+  background: #000;
 }
 
 /* What is live: the running step, the way in. */
@@ -194,8 +202,8 @@ h3 {
   align-items: center;
   gap: 6px;
   background: var(--color-signal-pale);
-  box-shadow: inset 0 0 0 1px rgb(244 169 140 / 0.38);
-  color: #ffe2d5;
+  box-shadow: inset 0 0 0 1px rgb(101 65 224 / 0.34);
+  color: var(--color-signal-ink);
   border-radius: 6px;
   padding: 3px 10px;
   font-size: 12.5px;
@@ -218,17 +226,17 @@ h3 {
 
 .chip-flag {
   background: var(--color-flag);
-  color: #f6e3a3;
+  color: var(--color-flag-ink);
 }
 
 .chip-signal {
   background: var(--color-signal-pale);
-  color: #ffdccb;
+  color: var(--color-signal-ink);
 }
 
 .chip-bright {
   background: var(--color-ink);
-  color: #000;
+  color: var(--color-on-ink);
 }
 
 .chip-line {
@@ -250,11 +258,11 @@ h3 {
 
 .tier-A {
   background: var(--color-ink);
-  color: #000;
+  color: var(--color-on-ink);
 }
 
 .tier-B {
-  box-shadow: inset 0 0 0 1.5px #8a8a8a;
+  box-shadow: inset 0 0 0 1.5px #6f6a96;
   color: var(--color-ink);
 }
 
@@ -272,7 +280,7 @@ h3 {
 .quote {
   border-left: 2px solid var(--color-line-strong);
   padding: 2px 0 2px 11px;
-  color: #dcdcdc;
+  color: #322d5c;
   font-size: 14px;
 }
 
@@ -285,7 +293,7 @@ h3 {
 /* The way in: the one box that carries the live color. */
 .waybox {
   background: var(--color-signal-pale);
-  box-shadow: inset 0 0 0 1px rgb(244 169 140 / 0.38);
+  box-shadow: inset 0 0 0 1px rgb(101 65 224 / 0.34);
   border-radius: 10px;
 }
 
@@ -296,7 +304,7 @@ h3 {
   padding: 10px 13px;
   font: inherit;
   color: var(--color-ink);
-  background: #000;
+  background: #fff;
   transition: border-color 0.15s;
 }
 
@@ -306,7 +314,7 @@ h3 {
 }
 
 .input::placeholder {
-  color: #6b6b6b;
+  color: #a29dc4;
 }
 
 textarea.input {
@@ -317,7 +325,7 @@ textarea.input {
 .bar {
   height: 4px;
   border-radius: 999px;
-  background: #2a2a2a;
+  background: #dcd6f5;
   overflow: hidden;
 }
 
@@ -325,7 +333,7 @@ textarea.input {
   display: block;
   height: 100%;
   border-radius: 999px;
-  background: #d9d9d9;
+  background: var(--color-ink);
 }
 
 .rowline {
@@ -335,7 +343,7 @@ textarea.input {
 .scroll {
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #333 transparent;
+  scrollbar-color: #c4bdea transparent;
 }
 
 .mono {
@@ -354,7 +362,7 @@ textarea.input {
 .link {
   color: var(--color-signal);
   text-decoration: underline;
-  text-decoration-color: rgb(244 169 140 / 0.4);
+  text-decoration-color: rgb(101 65 224 / 0.4);
   text-underline-offset: 3px;
 }
 
@@ -391,7 +399,7 @@ textarea.input {
 }
 
 .tabs button[aria-selected="true"] {
-  color: #000;
+  color: var(--color-on-ink);
 }
 
 .tabs .thumb {
@@ -424,8 +432,8 @@ textarea.input {
 }
 
 .tabs button[aria-selected="true"] .count {
-  background: #000;
-  color: var(--color-ink);
+  background: rgb(255 255 255 / 0.2);
+  color: var(--color-on-ink);
 }
 
 @keyframes arrive {
@@ -457,20 +465,20 @@ textarea.input {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #5a5a5a;
+  background: #b9b3de;
   flex: none;
 }
 
 .lamp.busy {
   background: var(--color-signal);
-  box-shadow: 0 0 10px rgb(244 169 140 / 0.9);
+  box-shadow: 0 0 10px rgb(101 65 224 / 0.7);
   animation: pulse 0.9s ease-in-out infinite;
 }
 
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.62);
+  background: rgba(24, 16, 78, 0.36);
   backdrop-filter: blur(3px);
   z-index: 40;
 }
@@ -484,7 +492,7 @@ textarea.input {
   z-index: 50;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 30px 80px rgba(24, 16, 78, 0.4);
   animation: slidein 0.28s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -496,7 +504,7 @@ textarea.input {
   width: min(520px, calc(100vw - 28px));
   z-index: 50;
   padding: 24px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 30px 80px rgba(24, 16, 78, 0.4);
 }
 
 @keyframes slidein {
@@ -532,18 +540,18 @@ textarea.input {
   flex: none;
 }
 
-/* Yellow means "this is waiting for you". */
+/* Amber means "this is waiting for you". */
 .waitdot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   background: var(--color-warn);
-  box-shadow: 0 0 8px rgb(240 203 82 / 0.7);
+  box-shadow: 0 0 8px rgb(214 140 10 / 0.6);
   flex: none;
 }
 
 .btn-main .waitdot {
-  background: #9a7a00;
+  background: #ffcf5c;
   box-shadow: none;
 }
 
@@ -563,7 +571,7 @@ textarea.input {
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
-  color: var(--color-soft);
+  color: var(--color-ink);
   white-space: nowrap;
 }
 
@@ -581,7 +589,7 @@ textarea.input {
   display: inline-grid;
   place-items: center;
   flex: none;
-  background: #1f1f1f;
+  background: var(--color-raise-2);
   box-shadow: inset 0 0 0 1px var(--color-line-strong);
   color: var(--color-ink);
   font-weight: 800;
@@ -592,7 +600,7 @@ textarea.input {
 .mono-face.is-bright {
   background: var(--color-ink);
   box-shadow: none;
-  color: #000;
+  color: var(--color-on-ink);
 }
 
 .facebtn {
@@ -608,13 +616,13 @@ textarea.input {
   transform: scale(1.04);
 }
 
-/* The one to contact first. It is the brightest thing on the sheet, so it is found first. */
+/* The one to contact first. It is the one framed thing on the sheet, so it is found first. */
 .best {
-  border: 1px solid rgb(255 255 255 / 0.3);
+  border: 1.5px solid var(--color-ink);
   border-radius: 14px;
   padding: 20px 22px;
-  background: linear-gradient(180deg, #1a1a1a, #121212);
-  box-shadow: 0 1px 0 rgb(255 255 255 / 0.07) inset;
+  background: linear-gradient(180deg, #ffffff, #f1eeff);
+  box-shadow: 0 8px 22px rgb(44 30 128 / 0.1);
 }
 
 .reason {
@@ -708,8 +716,8 @@ textarea.input {
 
 .chip-link {
   background: transparent;
-  box-shadow: inset 0 0 0 1px rgb(244 169 140 / 0.4);
-  color: #ffdccb;
+  box-shadow: inset 0 0 0 1px rgb(101 65 224 / 0.4);
+  color: var(--color-signal-ink);
   text-decoration: none;
 }
 
@@ -730,7 +738,7 @@ textarea.input {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 30px 80px rgba(24, 16, 78, 0.4);
   animation: dexin 0.24s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -771,7 +779,7 @@ textarea.input {
   gap: 18px;
   padding: 18px 24px;
   border-bottom: 1px solid var(--color-line);
-  background: #090909;
+  background: var(--color-raise);
   flex: none;
 }
 
@@ -781,8 +789,8 @@ textarea.input {
   width: 176px;
   height: 100px;
   border-radius: 10px;
-  background: #000;
-  border: 1px solid var(--color-line);
+  background: var(--color-void);
+  border: 1px solid var(--color-line-strong);
   overflow: hidden;
   flex: none;
 }
@@ -823,8 +831,8 @@ textarea.input {
 
 .sprite-t {
   font-size: 9.5px;
-  font-weight: 650;
-  fill: var(--color-soft);
+  font-weight: 700;
+  fill: var(--color-ink);
 }
 
 .sprite-i {
@@ -834,7 +842,7 @@ textarea.input {
 }
 
 .sprite-way {
-  filter: drop-shadow(0 0 4px rgb(244 169 140 / 0.9));
+  filter: drop-shadow(0 0 3px rgb(255 255 255 / 0.95));
 }
 
 .dex-site {
@@ -898,8 +906,8 @@ a.dex-site[href]:hover {
 }
 
 .person.is-main {
-  background: #1b1b1b;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.26);
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgb(27 22 64 / 0.24);
 }
 
 .person.is-focus {
@@ -915,7 +923,7 @@ a.dex-site[href]:hover {
   padding: 9px 10px 9px 14px;
   border-radius: 10px;
   background: var(--color-flag);
-  color: #f6e3a3;
+  color: var(--color-flag-ink);
   font-size: 14px;
   line-height: 1.35;
 }
@@ -971,7 +979,7 @@ a.dex-site[href]:hover {
 
 .netswitch button[aria-pressed="true"],
 .netswitch button[aria-pressed="true"]:hover {
-  color: #000;
+  color: var(--color-on-ink);
 }
 
 .netswitch button:disabled {
@@ -997,7 +1005,7 @@ a.dex-site[href]:hover {
   background: var(--color-signal);
 }
 
-/* In your net the light behind the graph turns a little peach. It is a second still layer that
+/* In your net the field turns from blue-and-purple to purple. It is a second still layer that
    fades in over the first, so nothing is repainted while it changes. */
 .field::after {
   content: "";
@@ -1005,7 +1013,9 @@ a.dex-site[href]:hover {
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  background: radial-gradient(46% 52% at 21% 42%, rgba(244,169,140, 0.1), transparent 72%);
+  background:
+    radial-gradient(48% 56% at 21% 44%, rgba(255, 255, 255, 0.34), transparent 72%),
+    linear-gradient(118deg, #a79bf7 0%, #b38cf2 50%, #c583ea 100%);
   opacity: 0;
   transition: opacity 0.7s ease;
 }
@@ -1015,8 +1025,8 @@ a.dex-site[href]:hover {
 }
 
 .netswitch button[aria-pressed="true"] .count {
-  background: rgb(0 0 0 / 0.82);
-  color: var(--color-ink);
+  background: rgb(255 255 255 / 0.22);
+  color: var(--color-on-ink);
 }
 
 /* ---- the match score ----------------------------------------------------------------- */
@@ -1051,18 +1061,18 @@ a.dex-site[href]:hover {
 /* ---- what to delete and what was added, in a draft ----------------------------------- */
 
 .mark-del {
-  background: rgb(255 107 107 / 0.15);
-  color: #ffb4b4;
+  background: rgb(208 56 56 / 0.12);
+  color: #a02424;
   text-decoration: line-through;
-  text-decoration-color: rgb(255 107 107 / 0.85);
+  text-decoration-color: rgb(208 56 56 / 0.8);
   border-radius: 3px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;
 }
 
 .mark-add {
-  background: rgb(95 208 138 / 0.14);
-  color: #baf0d0;
+  background: rgb(23 145 79 / 0.14);
+  color: #116637;
   border-radius: 3px;
   box-decoration-break: clone;
   -webkit-box-decoration-break: clone;

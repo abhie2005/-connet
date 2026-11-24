@@ -39,17 +39,18 @@ Keep these four working above everything else. They are the pitch.
 3. **Warm paths from the graph.** Shared school or employer with the founder; referral paths after a reply. Shown as a bright dashed line on the graph. This is the showpiece.
 4. **A second agent reviews every draft.** Unsupported claims are sent back once, then handed to the rep.
 
-## The look: black and grey (his request, Nov 23, 22:40)
+## The look: blue into purple (his request, Nov 24, 03:02)
 
-He first chose Glyph's sky blue and pink, then asked for "black for me and cool tech vibe", "black and grey ish". That is what is built. Tokens are in `app/globals.css`.
+The fourth look in two days, each at his request: Glyph's sky blue and pink, then black and grey ("cool tech vibe", Nov 23), then peach all over (Nov 24, 02:56: "no like the whole thing make it peachy color"; built, never pushed), then, six minutes later, "try purple and like a matching blue kind of vibe. Make sure it's appealing to the eyes". That last one is what is built. Tokens are in `app/globals.css`. Where older notes below say black, grey, peach, ice blue or yellow, this section wins.
 
-- **Black field** `#000000`, panels `#0E0E0E`, boxes inside a panel `#171717`, hairlines `#262626`. Hairlines instead of shadows; corners 6 to 14 px.
-- **Brightness is the hierarchy.** White `#F2F2F2` is the main action, the selected tab, Tier A. Tier B is a grey outline, Tier C a dim one.
-- **Peach `#F4A98C` (Glyph's, his request of Nov 24, 02:48; it was ice blue `#5CC8FF` before) only for what is live:** the running lamp, buying signals, the founder, the warm path on the graph (a bright dashed line with a glow), links, focus, your net.
-- **Yellow `#F0CB52` (was amber) only for what an agent stopped** or what needs the rep: dropped quotes, guessed addresses, a draft waiting for approval.
-- Green, yellow and red color the match score. Red also strikes out what to delete in a draft and green marks what was added. Otherwise green and red are small ticks and error text.
+- **One soft field behind the whole window:** sky blue `#84B4FA` on the left running into violet `#B08DF3` on the right (`.field::before`), with a white light behind the graph. In "Your net" a second still layer fades in and the field is purple all over (`#A79BF7` to `#C583EA`, `.field::after`), the way Glyph's field changes with its mode. Only opacity moves.
+- **White sheets float on it** (`#FDFCFF`, soft indigo shadow); boxes inside a sheet are lilac `#F3F1FD`, hairlines `#E4E0F7`. Corners 6 to 14 px.
+- **Deep indigo ink `#1B1640` is the hierarchy:** the main action, the selected tab, the "Best first" flag, Tier A rings. Softer text `#4D4873`, faint `#807BA6`.
+- **Violet `#6541E0` only for what is live:** the running lamp, reasons to write, the way in, links, focus, the "Your net" thumb and the founder's disc (`#5A34D6` on the canvas).
+- **Amber `#B06F00` only for what an agent stopped** or what needs the rep: dropped quotes, guessed addresses, a draft waiting for approval (the dot on "Review draft").
+- Green, amber and red color the match score. Red also strikes out what to delete in a draft and green marks what was added. Otherwise green and red are small ticks and error text.
 - Agents are told apart by a small mark each (ring, square, eye, triangle), not by a color each.
-- The graph sits straight on the black with a faint dot grid. The product is a white disc with light round it; accounts are rings, brighter for a better tier.
+- **The graph is drawn straight on the field** with a faint dot grid (palette at the top of `components/GraphView.tsx`). The product is a white disc with light round it; companies are white discs with an ink ring, darker for a better tier; people are dark dots with a white outline; reasons to write are violet diamonds; names sit on white pills. White is what moves or waits: the way in (a dashed white line), a draft on its way (white dots), a draft waiting for you (a dashed white ring). Dots for an approved message are ink.
 - Archivo for everything; JetBrains Mono for Cypher and the few instrument-style readouts (`.mono`, `.num`).
 
 ## The screen: easy first (his request, Nov 24, 00:50 to 00:59)
@@ -80,7 +81,7 @@ After the first live run he said the screen was "all complex and hard", that eve
 
 **Nov 24, 02:48 (he sent the Approve tab on live data, with a long reviewer note open). These replace what is said above where they differ:**
 
-- **"Make the color like the peach color that glyph was."** The one accent is Glyph's peach `#F4A98C` now, not ice blue: the running lamp, reasons to write, the way in, links, focus, and everything about "Your net" (the thumb, the founder's disc, the light behind the graph). Read as the accent, not the background: the field stays black. Because peach and amber are too close, "waiting for you / an agent stopped this" moved from amber to yellow `#F0CB52`.
+- **"Make the color like the peach color that glyph was."** The one accent is Glyph's peach `#F4A98C` now, not ice blue: the running lamp, reasons to write, the way in, links, focus, and everything about "Your net" (the thumb, the founder's disc, the light behind the graph). (Superseded twice the same night: see "The look" above. The accent is violet and the field blue into purple.)
 - **"Make the number rating 49/100 rather than match out of 100 and color it … green yellow red."** `Score` in `components/ui.tsx`: "49/100", green from 70 (tier A), yellow from 45 (tier B), red below (tier C). Used on the best card, the rows and the profile card.
 - **"Remove the compress and keep the old version of that."** The Approve card is two columns again (the message, and beside it what the second agent made of it), with nothing folded. The folds in the profile card stay: he asked for those to be simpler and did not ask for them back.
 - **"Less wordy and simple to understand what needs to be added and deleted."** In the message itself, a sentence that makes a claim nothing backs is struck out in red, and the line the security check added is green (`lib/marks.ts`, tested). The right column is short lists under small labels: Delete, Added, Backed by a source, Taken out before you saw it. The reviewer's paragraph of instructions is no longer shown (each claim's reason is its tooltip). "Delete them" takes the red sentences out in one click (an edit by the rep, so it is recorded as one); a subject that was nothing but the claim becomes "<product> for <company>".
@@ -95,7 +96,11 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 - Don't show how long the model took (he had "answered in N s" removed from Glyph's cards).
 - He found strong pink too much in Glyph. If a color comes back, keep it soft.
 
-## Status (Nov 24, 03:00)
+## Status (Nov 24, 03:20)
+
+**The blue-into-purple look is checked on sample data only** (1512 wide): every tab, both nets, the profile card, a Draft click with its dots, the first screen. No console errors. He has not seen it yet. 51 checks pass; lint and build are clean. After pulling he must run `npm run clean` before `npm run dev`, or the old stylesheet stays.
+
+### Earlier status (Nov 24, 03:00)
 
 **Checked on sample data only** (1512 wide): the peach accent in both nets, the colored scores, the two-column Approve card on a draft made to look like his live one (three unbacked claims: struck out, then "Delete them"), a clean draft, a rewritten one. He has not seen it yet. 51 checks pass (5 new in `tests/marks.test.ts`).
 

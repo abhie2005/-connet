@@ -7,6 +7,21 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 03:20. Yoon Woo's Claude: the whole app is blue into purple
+
+**Why.** Yoon Woo, 02:56: "no like the whole thing make it peachy color" (peach had been made the accent only). Then at 03:02, before the peach version was pushed: "try purple and like a matching blue kind of vibe. Make sure it's appealing to the eyes".
+
+**Done (on `main`).** No black anywhere now.
+- One soft field behind the window, sky blue on the left into violet on the right. In "Your net" it turns purple all over (like Glyph's field changing with its mode).
+- The work sits on white sheets. Deep indigo for text, the main button and the selected tab; violet for what is live; amber for what waits for you; scores still green, amber, red.
+- The graph is drawn on the field: white discs for companies, dark dots for people, violet diamonds for reasons to write, white for the way in, the moving dots and the "draft waiting" ring.
+- Only colors changed. Layout, words and behavior are as in the 03:00 entry. 51 checks pass. Checked in a browser on sample data only.
+- The look is written up in `CLAUDE.md` ("The look: blue into purple").
+
+**Need.**
+- `[open]` Yoon Woo: `git pull`, `npm run clean` (or the old colors stay), `npm run dev`.
+- `[open]` Skylar: the video should show this look, not the black or peach one. `docs/DEMO.md` at 1:38 now says "dashed white ring" where it said "yellow ring".
+
 ## Nov 24, 03:00. Yoon Woo's Claude: peach, scores out of 100, and a draft that shows what to delete
 
 **Done (on `main`), all at Yoon Woo's request.**
@@ -18,7 +33,7 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 **Need.**
 - `[open]` Yoon Woo: `git pull`, `npm run clean`, `npm run dev`.
-- `[open]` Skylar: the video should show the peach look. One click changed in `docs/DEMO.md` at 1:48 (no more "Show proof").
+- `[done]` Skylar: the video should show the peach look (superseded by the 03:20 entry). One click changed in `docs/DEMO.md` at 1:48 (no more "Show proof").
 
 ## Nov 24, 02:40. Yoon Woo's Claude: every screen cut down
 
