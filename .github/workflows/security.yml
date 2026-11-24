@@ -1,0 +1,36 @@
+# Security checks on every push: Snyk scans the dependencies (SCA) and the code (SAST).
+# Needs a SNYK_TOKEN repository secret; without one the job is skipped.
+name: security
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  snyk:
+    runs-on: ubuntu-latest
+    env:
+      SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Dependencies (SCA)
+        if: env.SNYK_TOKEN != ''
+        run: npx snyk test --severity-threshold=high
+      - name: Code (SAST)
+        if: env.SNYK_TOKEN != ''
+        run: npx snyk code test --severity-threshold=high
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build

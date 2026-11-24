@@ -1,9 +1,8 @@
 import type { NextConfig } from "next";
 
+// Tact is one interactive page plus JSON route handlers that read live, in-memory state.
+// Nothing here should ever be prerendered or cached, so Cache Components stays off.
 const nextConfig: NextConfig = {
-  /* config options here */
-  cacheComponents: true,
-  partialPrefetching: true,
   turbopack: {
     rules: {
       "*.css": {
@@ -12,6 +11,9 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  serverExternalPackages: ["neo4j-driver"],
+  allowedDevOrigins: ["127.0.0.1"],
+  devIndicators: false,
 };
 
 export default nextConfig;
