@@ -309,3 +309,12 @@ test("the passages kept from a long page are the ones about the question, word f
   assert.ok(kept.includes(fact), kept);
   assert.equal(bestPassages("Short page. Nothing to cut.", "anything", 1200), "Short page. Nothing to cut.");
 });
+
+test("page text: a link keeps its words and loses its address, so a quote across it still matches", async () => {
+  const { plainText, shownText } = await import("../lib/providers/search");
+  const { quoteInText } = await import("../lib/verify");
+  const md = "## News\n\n**Northwind Tutoring** is [hiring 40 reading tutors](https://northwind.example/jobs?id=1_(a)) ahead of the *spring term*. ![logo](https://x.example/l.png)";
+  assert.equal(plainText(md).includes("https://"), false);
+  const shown = shownText("", md, "Northwind Tutoring hiring");
+  assert.equal(quoteInText("Northwind Tutoring is hiring 40 reading tutors ahead of the spring term", shown), true);
+});

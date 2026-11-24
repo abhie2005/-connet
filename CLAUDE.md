@@ -65,7 +65,7 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 
 **Works, checked on sample data in the terminal and in the browser (dev and production build):** the whole run in about 16 seconds; every tab; approve, reject and edit; drag a deal; log a reply and get referral paths; accept an expansion; enrich; the credit gate at zero and top-up. Lint and type-check are clean.
 
-**33 checks pass (`npm test`).** 20 are the sample run. 13 are new (`tests/live.test.ts`): the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
+**35 checks pass (`npm test`).** 21 are the sample run and the quote check. 14 are in `tests/live.test.ts`: the live code for Gemini, Tavily, Hunter, Flexprice and Band runs against stand-ins that answer in each service's documented format, and must end where the sample run ends. The stand-ins include a model the key cannot use (404), a refused thinking setting (400), a per-minute and a per-day rate limit (429), a reply that is not JSON, and pages that are mostly menu. The Cypher was checked with Neo4j's own language package (`@neo4j-cypher/language-support`, not a dependency): all clean.
 
 **Still never run against the real services** (the machine it was built on could not reach them). What that leaves open:
 
@@ -81,6 +81,10 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
 **Rate limits.** A 429 from Gemini is read for which quota was hit: per-minute is waited out and the feed says so, per-day retires the model for the session and the next in `GEMINI_MODELS` takes over. `LLM_CONCURRENCY` (3) caps calls in flight.
 
 **Credits.** The balance starts from the Flexprice wallet and follows it down, but Tact also counts each spend itself, because a wallet does not move when the events have no price attached in Flexprice. The credits panel says which is happening.
+
+**The quote check ignores punctuation, not words.** Both texts are reduced to words and figures in order, so a model that swaps a curly quote, adds a full stop or writes "after school" for "after-school" still passes; a changed word or number fails. Link addresses and images are stripped from page text before the model sees it.
+
+**Discovery leans towards the founder's own region.** The ICP prompt is told the founder's schools and past employers and asked to aim a search there when it makes commercial sense, because the warm path (the showpiece) needs people who share a school or employer. Whether a real model finds one on live pages is unknown until the first live run. If none shows up, sample data still shows it.
 
 **Simulated on purpose:** sending email (approval records it), reading an inbox (replies are pasted in).
 

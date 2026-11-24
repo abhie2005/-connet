@@ -3,15 +3,17 @@
 // The model proposes; this code decides.
 import type { Evidence, Source } from "./types";
 
-/** Lowercase, straighten quotes and dashes, drop punctuation, squeeze spaces. */
+/**
+ * Lowercase and reduce to words and numbers in order. Punctuation, quote marks, hyphens and
+ * spacing are dropped on both sides, because a model that copies a sentence faithfully still
+ * swaps a curly quote, adds a full stop or writes "after school" for "after-school". The words
+ * and the figures ($, % included) must still match, one after another.
+ */
 export function normalize(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[‘’‚‛]/g, "'")
-    .replace(/[“”„]/g, '"')
-    .replace(/[‐-―]/g, "-")
     .replace(/&amp;/g, "&")
-    .replace(/[^a-z0-9$%&'@.+\- ]+/g, " ")
+    .replace(/[^a-z0-9$%&]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
 }

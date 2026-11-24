@@ -194,7 +194,7 @@ export async function runPipeline(product: Product, founder: Founder) {
     if (anchors.length) {
       s.state.run.step = "Looking for a warm way in";
       s.log("builder", "step", `Looking for people who share ${anchors.join(" or ")} with ${founder.name || "the founder"}.`);
-      const pairs = worth.slice(0, 4).flatMap((lead) => anchors.map((anchor) => ({ lead, anchor })));
+      const pairs = worth.slice(0, anchors.length > 1 ? 4 : 6).flatMap((lead) => anchors.map((anchor) => ({ lead, anchor })));
       await inBatches(pairs, 4, async ({ lead, anchor }) => {
         try {
           const r = await findPeople(s, lead, anchor);

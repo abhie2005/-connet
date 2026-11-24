@@ -50,3 +50,13 @@ test("a number in an email that is in no fact is caught; the meeting length is n
   assert.deepEqual(strayNumbers("I saw you are hiring 60 tutors. Do you have 15 minutes?", facts), []);
   assert.deepEqual(strayNumbers("Your scores rose 30% last year, and you hired 60 tutors.", facts), ["30%"]);
 });
+
+test("punctuation a careful copyist changes does not fail a quote; a changed word or figure does", () => {
+  const text = "The network, which serves 11,000 students, said: “We’re opening six after-school centers.” It raised $12M (Series A), led by Northgate.";
+  assert.equal(quoteInText("We're opening six after school centers.", text), true);
+  assert.equal(quoteInText("serves 11,000 students", text), true);
+  assert.equal(quoteInText("It raised $12M Series A led by Northgate", text), true);
+  assert.equal(quoteInText("It raised $21M (Series A), led by Northgate.", text), false);
+  assert.equal(quoteInText("We're opening seven after-school centers", text), false);
+  assert.equal(quoteInText("serves 11,000 teachers", text), false);
+});

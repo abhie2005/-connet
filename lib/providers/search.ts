@@ -26,9 +26,19 @@ const SHOWN_CHARS = 3200;
 
 const squash = (t: string) => t.replace(/\s+/g, " ").trim().toLowerCase();
 
+/** Page text comes as markdown. Keep the words of a link and drop its address, drop images. */
+export function plainText(markdown: string): string {
+  return markdown
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]*)\]\((?:[^()]|\([^)]*\))*\)/g, "$1")
+    .replace(/^[#>*\-\s]+(?=\S)/gm, "")
+    .replace(/[*_`]{1,3}([^*_`\n]+)[*_`]{1,3}/g, "$1");
+}
+
 /** What the model is shown for one result: the engine's excerpt, then the passages of the page that bear on the query. */
-export function shownText(snippet: string, raw: string, about: string): string {
-  const excerpt = snippet.trim();
+export function shownText(snippet: string, rawPage: string, about: string): string {
+  const excerpt = plainText(snippet).trim();
+  const raw = plainText(rawPage);
   if (!raw.trim()) return excerpt.slice(0, SHOWN_CHARS);
   // When the excerpt is simply part of the page, the page's own passages already cover it.
   const inPage = excerpt.length > 0 && squash(raw).includes(squash(excerpt).slice(0, 80));

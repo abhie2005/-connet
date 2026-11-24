@@ -109,7 +109,7 @@ Each query run is shown in the activity feed with its Cypher, row count and time
 
 1. The builder searches (Tavily) and keeps the text of each result as a `Source`.
 2. The model is shown the numbered pages and asked for companies, signals, people and competitors. Every item must carry `{source: n, quote: "..."}`.
-3. `lib/verify.ts` normalises both texts (case, quote marks, dashes, spacing) and checks that the quote is in the text of source `n`. A quote joined with "..." needs every part to be there. Fewer than three words is not proof.
+3. `lib/verify.ts` reduces both texts to their words and figures in order (case, punctuation, quote marks, hyphens and spacing are ignored; `$` and `%` are kept) and checks that the quote is in the text of source `n`. A changed word or number fails. A quote joined with "..." needs every part to be there. Fewer than three words is not proof.
 4. Two more conditions in `lib/agents/discover.ts`: the page must name the company the fact is pinned on, and a quote about a person must contain their name.
 5. What passes is kept with its source link. What fails is dropped and counted; the reviewer reports "checked 23 quotes, 20 found word for word, 3 dropped" with the list.
 

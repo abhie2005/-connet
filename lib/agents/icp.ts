@@ -13,6 +13,8 @@ Website: ${product.url || "(none)"}
 Pricing: ${product.pricing || "(not given)"}
 Customers so far: ${product.customers || "(none yet)"}
 Founder: ${founder.name || "(not given)"}
+Founder's schools: ${founder.schools.join(", ") || "(not given)"}
+Founder's past employers: ${founder.employers.join(", ") || "(not given)"}
 
 Define the ideal customer profile for selling this to organisations (B2B). Return JSON:
 {
@@ -26,7 +28,7 @@ Define the ideal customer profile for selling this to organisations (B2B). Retur
   "expansions": [{"segment": "an adjacent segment the founder may not have thought of", "reasoning": "why it could work, with the evidence you are relying on, and the main risk", "confidence": 0.0-1.0}],
   "search_plan": [{"query": "a web search that finds NAMED organisations in one segment (news, announcements, job posts)", "purpose": "accounts", "segment": "exactly one of the industry names above"}, {"query": "a web search that finds competing products and their pricing", "purpose": "competitors", "segment": ""}]
 }
-Rules: 3 to 5 industries, 3 to 4 personas, 4 to 6 triggers, 2 to 3 negatives, 2 to 3 expansions. search_plan: one "accounts" query per industry (specific enough to return real organisations, not definitions) and one or two "competitors" queries. Confidence is how sure you are from the description alone; be honest, most values should sit between 0.4 and 0.9.`;
+Rules: 3 to 5 industries, 3 to 4 personas, 4 to 6 triggers, 2 to 3 negatives, 2 to 3 expansions. search_plan: one "accounts" query per industry (specific enough to return real organisations, not definitions) and one or two "competitors" queries. Confidence is how sure you are from the description alone; be honest, most values should sit between 0.4 and 0.9. A first sale is easiest where the founder already has a way in: when it makes commercial sense, put the region around the founder's school or past employer first in "regions", and aim at least one "accounts" query at organisations in that region.`;
 }
 
 const clamp = (n: unknown) => Math.max(0, Math.min(1, Number(n) || 0));

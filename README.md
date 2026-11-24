@@ -36,7 +36,7 @@ For the demo itself, the production build is faster and has no dev overlay:
 npm run build && npm start
 ```
 
-Other commands: `npm test` (33 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
+Other commands: `npm test` (35 checks, no network: the sample run, plus the live code run against stand-ins for every service), `npm run smoke` (the whole run printed in the terminal), `npm run lint`, `npm run clean` (clears the build cache: use it if the page looks out of date after a pull), `npm run fresh` (deletes the saved answers, see below).
 
 ## Keys
 
