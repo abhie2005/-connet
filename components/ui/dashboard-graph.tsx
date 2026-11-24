@@ -10,7 +10,6 @@
    The colours are this page's, not the app's: GraphView takes a palette, so the same drawing is
    violet at / and grey here, and the key below reads the same palette so the two cannot disagree. */
 import { useMemo, useState } from "react";
-import { ArrowUpRight } from "lucide-react";
 import { GraphView, type Flow, type Spot } from "@/components/GraphView";
 import { graphMarks } from "@/components/graph-marks";
 import { DashboardParticles } from "./dashboard-particles";
@@ -40,7 +39,7 @@ function Nets({ net, onChange, product, canYou, within }: { net: Net; onChange: 
   );
 }
 
-export function DashboardGraph({ ws, appHref, theme, picked, onPick, net, onNet, flows }: { ws: Workspace; appHref: string; theme: "light" | "dark"; picked: string | null; onPick: (id: string | null) => void; net: Net; onNet: (n: Net) => void; flows: Flow[] }) {
+export function DashboardGraph({ ws, theme, picked, onPick, net, onNet, flows }: { ws: Workspace; theme: "light" | "dark"; picked: string | null; onPick: (id: string | null) => void; net: Net; onNet: (n: Net) => void; flows: Flow[] }) {
   const C = theme === "dark" ? SLATE_DARK : SLATE;
   const [spot, setSpot] = useState<Spot | null>(null);
 
@@ -124,7 +123,6 @@ export function DashboardGraph({ ws, appHref, theme, picked, onPick, net, onNet,
 
       <footer className="gd-graph-foot">
         <span>{ws.graph.nodes.length} things found · {ws.graph.edges.length} connections between them</span>
-        <a className="gd-secondary" href={appHref}>Open it in the app <ArrowUpRight aria-hidden="true" /></a>
       </footer>
     </section>
   );

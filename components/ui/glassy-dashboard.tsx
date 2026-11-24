@@ -872,7 +872,6 @@ export function GlassyDashboard({
             <button type="button" className="gd-primary gd-new" disabled={running} onClick={() => setIntake(true)} title="Describe a product and search again">
               New search
             </button>
-            <a className="gd-secondary gd-open" href={appHref}>Open the app</a>
             <button type="button" className="gd-icon-button" aria-label={theme === "light" ? "Dark theme" : "Light theme"} onClick={() => setTheme(theme === "light" ? "dark" : "light")}>
               {theme === "light" ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
             </button>
@@ -910,8 +909,12 @@ export function GlassyDashboard({
               {!d.started ? (
                 <div className="gd-blank" role="status">
                   <h2>{failed ? "The workspace could not be read." : "Nothing to show yet."}</h2>
-                  <p>{failed ? "The app has to be running for this page to read it." : "Describe a product in the app and run a search. Every figure here comes from that run — this page has no numbers of its own."}</p>
-                  <a className="gd-primary" href={appHref}>Open the app <ArrowRight aria-hidden="true" /></a>
+                  <p>{failed ? "Nothing answered at /api/state. The server has to be running for this page to read anything." : "Describe a product and run a search. Every figure here comes from that run — this page has no numbers of its own."}</p>
+                  {!failed && (
+                    <button type="button" className="gd-primary" onClick={() => setIntake(true)}>
+                      New search <ArrowRight aria-hidden="true" />
+                    </button>
+                  )}
                 </div>
               ) : /* The graph is pinned beside the work on every section, as it is in the app: it
                       is the picture the product is about, and scrolling the work should not lose it.
@@ -921,7 +924,7 @@ export function GlassyDashboard({
               ws ? (
                   <div className="gd-split">
                     <div className="gd-split-net">
-                      <DashboardGraph ws={ws} appHref={appHref} theme={theme} picked={picked} onPick={setPicked} net={net} onNet={setNet} flows={flows} />
+                      <DashboardGraph ws={ws} theme={theme} picked={picked} onPick={setPicked} net={net} onNet={setNet} flows={flows} />
                     </div>
                     <div className="gd-content gd-split-work" ref={content} key={view} data-view={view}>
                         {view === "target" && (
@@ -1014,7 +1017,17 @@ export function GlassyDashboard({
             <div><dt>When</dt><dd>{modal.item.when || "—"}</dd></div>
             <div><dt>Reference</dt><dd>{modal.item.id}</dd></div>
           </dl>
-          <a className="gd-primary" href={appHref}>Open it in the app <ArrowRight aria-hidden="true" /></a>
+          {(() => {
+            // A lane item is a lead on three of the lanes and a message on the fourth, so the
+            // account is read back from whichever it turns out to be.
+            const lead = ws?.leads.find((l) => l.id === modal.item.id)?.id || ws?.messages.find((m) => m.id === modal.item.id)?.leadId || null;
+            if (!lead) return null;
+            return (
+              <button type="button" className="gd-primary" onClick={() => { close(); open(lead); }}>
+                Open this account <ArrowRight aria-hidden="true" />
+              </button>
+            );
+          })()}
         </Dialog>
       )}
     </div>

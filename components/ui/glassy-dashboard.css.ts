@@ -117,7 +117,6 @@ export const dashboardStyles = `
 .gd-top-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .gd-top-actions > * { flex: none; }
 .gd-chip, .gd-new { white-space: nowrap; }
-.gd-open { min-block-size: 38px; padding: 0 14px; white-space: nowrap; }
 .gd-icon-button { position: relative; min-inline-size: 44px; min-block-size: 44px; display: inline-grid; place-items: center; border-radius: 999px; border: 1px solid var(--gd-line); padding: 0; background: var(--gd-inner); }
 .gd-icon-button svg { width: 17px; height: 17px; stroke-width: 1.75; }
 .gd-notices { background: var(--gd-raised); }
@@ -489,7 +488,6 @@ body.gd-skin .dots { background-image: radial-gradient(rgba(24, 24, 27, 0.13) 1p
   .gd-top { grid-template-columns: minmax(0, 1fr) auto; padding: 7px 9px; gap: 6px 12px; border-radius: 21px; }
   .gd-ask { grid-area: 2 / 1 / 3 / -1; min-block-size: 41px; }
   .gd-top-actions { grid-area: 1 / 2; }
-  .gd-open { display: none; }
   .gd-top-actions .gd-icon-button { width: 41px; min-inline-size: 41px; min-block-size: 41px; }
   .gd-stage { border-radius: 23px; }
   .gd-stage-scroll { block-size: auto; padding: 15px 13px 17px; overflow: visible; }
