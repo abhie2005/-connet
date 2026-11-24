@@ -199,6 +199,25 @@ export async function runPipeline(product: Product, founder: Founder) {
     });
     reportLine(s, "Buying signals", signalTotals);
 
+    // 3b. The Hiring Radar: postings first, and each one that holds up is a hiring signal.
+    const radarTitles = watchTitles(s.state.icp);
+    if (radarTitles.length > 0) {
+      s.state.run.step = "Watching job postings";
+      s.touch();
+      s.log("builder", "say", `Watching job boards for ${plural(radarTitles.length, "role")} the plan names: ${radarTitles.join(", ")}. A posting is a buying signal with a date on it.`, { to: "planner" });
+      try {
+        const radar = await findJobs(s);
+        reportLine(s, "Job postings", radar);
+        if (radar.postings.length > 0) {
+          const firsts = radar.postings.filter((j) => j.firstHire).length;
+          s.log("builder", "say", `${plural(radar.postings.length, "posting")} held up${firsts ? `, ${firsts} of them a first hire for that function` : ""}.`, { to: "planner" });
+        }
+        for (const lead of s.state.leads) rescore(s, lead);
+      } catch (e) {
+        s.log("builder", "error", `Hiring Radar: ${(e as Error).message}`);
+      }
+    }
+
     // 4. People, and a warm way in.
     s.state.run.step = "Finding the people";
     s.touch();
