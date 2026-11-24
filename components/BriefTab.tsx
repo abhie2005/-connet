@@ -9,7 +9,7 @@ import { Confidence, Empty, Icon, SectionTitle, SourceLink } from "./ui";
 export type Act = (body: Record<string, unknown>, key?: string) => Promise<boolean>;
 
 /** One line of the picture: a name, how sure, and the reasoning one press away. */
-function Line({ name, note, sure, compact, right, children }: { name: string; note?: string; sure?: number; compact?: boolean; right?: React.ReactNode; children?: React.ReactNode }) {
+function Line({ name, note, sure, right, children }: { name: string; note?: string; sure?: number; right?: React.ReactNode; children?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="tline">
@@ -23,10 +23,20 @@ function Line({ name, note, sure, compact, right, children }: { name: string; no
           <span className="font-bold leading-snug min-w-0">{name}</span>
           {note && <span className="text-faint text-[13px] leading-snug truncate">{note}</span>}
         </button>
-        {sure != null && <Confidence value={sure} compact={compact} />}
         {right}
       </div>
-      {open && children && <div className="tline-more arrive">{children}</div>}
+      {open && children && (
+        <div className="tline-more arrive">
+          {/* The agent's confidence in this line comes out with its reasoning (his choice, Nov 24). */}
+          {sure != null && (
+            <div className="tline-conf">
+              <span>Confidence</span>
+              <Confidence value={sure} />
+            </div>
+          )}
+          {children}
+        </div>
+      )}
     </div>
   );
 }
@@ -77,18 +87,13 @@ export function BriefTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set
   return (
     <div>
       <p className="m-0 mb-3 text-[14.5px] leading-snug text-soft">
-        Who should buy <span className="font-bold text-ink">{ws.product?.name || "this"}</span>, worked out from your description. Each line carries the agent&rsquo;s confidence, from 0.00 to 1.00. Press a line to see why.
+        Who should buy <span className="font-bold text-ink">{ws.product?.name || "this"}</span>, worked out from your description. Press a line to see why, and how confident the agent is, from 0.00 to 1.00.
       </p>
       {/* The whole answer in three boxes. */}
       <div className="tiles">
         <div className="tile">
           <div className="tile-k">Sell to</div>
           <div className="tile-v">{top?.name || "Not worked out yet"}</div>
-          {top && (
-            <div className="tile-s">
-              <Confidence value={top.confidence} compact />
-            </div>
-          )}
         </div>
         <div className="tile">
           <div className="tile-k">Company size</div>
@@ -97,9 +102,6 @@ export function BriefTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set
             {/staff|employee|people|headcount/i.test(icp.companySize.headcount) ? "" : " staff"}
           </div>
           <div className="tile-s">{icp.companySize.revenue}</div>
-          <div className="tile-s">
-            <Confidence value={icp.companySize.confidence} compact />
-          </div>
         </div>
         <div className="tile">
           <div className="tile-k">Start in</div>
@@ -119,6 +121,18 @@ export function BriefTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set
         <div className="tline-more arrive !ml-0 !mt-1">
           <p className="m-0">{icp.summary}</p>
           {icp.companySize.why && <p className="m-0 mt-1.5">{icp.companySize.why}</p>}
+          <div className="flex flex-wrap gap-x-6 gap-y-1.5 mt-2.5">
+            {top && (
+              <div className="tline-conf !mb-0">
+                <span>Sell to</span>
+                <Confidence value={top.confidence} />
+              </div>
+            )}
+            <div className="tline-conf !mb-0">
+              <span>Company size</span>
+              <Confidence value={icp.companySize.confidence} />
+            </div>
+          </div>
         </div>
       )}
 
@@ -141,7 +155,7 @@ export function BriefTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set
         <div className="min-w-0">
           <SectionTitle>Write when</SectionTitle>
           {icp.triggers.map((t) => (
-            <Line key={t.event} name={t.event} sure={t.confidence} compact>
+            <Line key={t.event} name={t.event} sure={t.confidence}>
               <p className="m-0">{t.whyItMatters}</p>
             </Line>
           ))}

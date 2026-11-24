@@ -13,8 +13,10 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 **Done (on `main`).** Every inferred field on Target shows the agent's confidence as a bar, a score to two places and a word (0.90 High, 0.62 Medium, 0.55 Low): the Sell to and Company size boxes, each segment, each role, each trigger, each suggested segment. Only scores the model really gave are shown. 77 checks pass.
 
+**06:10, changed at his word:** the score shows when a line is opened (with its reason), not on the closed line.
+
 **Need.**
-- `[open]` Skylar: say the words "field-level confidence" at 0:52, pointing at the scores: it is the brief's own phrase.
+- `[open]` Skylar: at 0:52 press one line so the score is on screen, and say "field-level confidence": it is the brief's own phrase.
 
 ## Nov 24, 06:15. Yoon Woo's Claude: "Already decided" fixed, hover for the legend and the rings, read what was sent
 
