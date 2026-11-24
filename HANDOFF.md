@@ -7,6 +7,19 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 05:40. Yoon Woo's Claude: Target at a glance, and a shorter "way in"
+
+**Why.** Yoon Woo, 05:20, looking at Target on live data: make the right side "clean and readable at first glance", "minimal words". And the way in should just say "Maya Okafor studied at UCLA" with UCLA in bold.
+
+**Done (on `main`).**
+- **Target** is three boxes (Sell to, Company size, Start in) and then lists of names with how sure the agent is. Press a line to read why. Nothing was removed, only folded.
+- **Way in** reads "Maya Okafor studied at **UCLA**" on the best-lead card and the profile card.
+- 74 checks pass; every button pressed again.
+
+**Need.**
+- `[open]` Yoon Woo: pull, `npm run clean`, `npm run dev`.
+- `[open]` Skylar: at 0:52 the Target screen looks different (boxes and short lists). The line to say is the same; press one line to show the reasoning, then Accept under "Also worth a look".
+
 ## Nov 24, 05:25. Yoon Woo's Claude: a pass for mistakes, and a spotlight from the legend
 
 **Why.** Yoon Woo, 04:44: "check for ANY possible mistakes before I test again and fix ALL of it." 04:53: clicking a name in the legend should brighten that kind and push the rest into the background.

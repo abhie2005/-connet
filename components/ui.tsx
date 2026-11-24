@@ -3,7 +3,7 @@
 // where a fact came from.
 import type { ReactNode } from "react";
 import { host } from "@/lib/client";
-import type { AgentName, Evidence, Source } from "@/lib/types";
+import type { AgentName, Evidence, Source, WarmPath } from "@/lib/types";
 
 export function Logo({ size = 40 }: { size?: number }) {
   return (
@@ -186,5 +186,24 @@ export function SectionTitle({ children, count, right }: { children: ReactNode; 
       <span className="flex-1 h-px bg-line ml-1" />
       {right}
     </div>
+  );
+}
+
+/** A way in, in as few words as say it, with what is shared in bold: "Maya Okafor studied at UCLA".
+    The full sentence the agent wrote is the tooltip. */
+export function WayIn({ warm, who }: { warm: WarmPath; who?: string | null }) {
+  const person = who || "Someone there";
+  return (
+    <span title={warm.note}>
+      {warm.kind === "referral" ? (
+        <>
+          <b className="wayin">{warm.via}</b> can introduce you to {person}
+        </>
+      ) : (
+        <>
+          {person} {warm.kind === "shared_school" ? "studied at" : "worked at"} <b className="wayin">{warm.via}</b>
+        </>
+      )}
+    </span>
   );
 }

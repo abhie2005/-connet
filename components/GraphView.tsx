@@ -646,8 +646,13 @@ export function GraphView({
       ctx.textBaseline = "middle";
       // A name is only written where it does not run over one already written: first where it
       // belongs, then on the other side of its node. If neither is free it waits for a hover.
-      const taken: { x0: number; y0: number; x1: number; y1: number }[] = [];
-      const free = (b: { x0: number; y0: number; x1: number; y1: number }) => !taken.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+      const taken: { x0: number; y0: number; x1: number; y1: number; of?: string }[] = [];
+      const free = (b: { x0: number; y0: number; x1: number; y1: number }, self: string) => !taken.some((o) => o.of !== self && b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+      // A name is not written across somebody else's disc either.
+      for (const o of d.nodes) {
+        if (o.x == null || o.y == null || o.node.label === "Signal" || o.node.label === "Person") continue;
+        taken.push({ x0: o.x - o.r, x1: o.x + o.r, y0: o.y - o.r, y1: o.y + o.r, of: o.id });
+      }
       // The edges of what can be seen, in the graph's own units: a name is kept inside them.
       const edgeL = v.x - v.w / 2 / v.k + 3 / v.k, edgeR = v.x + v.w / 2 / v.k - 3 / v.k;
       // The "Best first" flag is drawn later, above its node: keep names out of its way.
@@ -674,9 +679,9 @@ export function GraphView({
         const cx = edgeR - edgeL > half * 2 ? Math.min(edgeR - half, Math.max(edgeL + half, n.x!)) : n.x!;
         const boxAt = (y: number) => ({ x0: cx - half, x1: cx + half, y0: y - px * 0.78 - 1, y1: y + px * 0.78 + 1 });
         let y = above ? up : down;
-        if (!free(boxAt(y))) {
+        if (!free(boxAt(y), n.id)) {
           const other = above ? down : up;
-          if (free(boxAt(other))) y = other;
+          if (free(boxAt(other), n.id)) y = other;
           else if (rank >= 2) continue; // whoever the net is about, and what is pointed at, are always named
         }
         taken.push(boxAt(y));

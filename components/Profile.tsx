@@ -11,7 +11,7 @@ import { COSTS, type Competitor, type Contact, type Lead, type Workspace } from 
 import type { Act } from "./BriefTab";
 import { EmailChip } from "./LeadsTab";
 import { COST_NOTE, type LeadView } from "./leads";
-import { Icon, Monogram, Quote, Score, initials } from "./ui";
+import { Icon, Monogram, Quote, Score, initials, WayIn } from "./ui";
 
 // Drawn on a patch of the field, in the colors the big graph uses.
 const TIER_STROKE = { A: "#1B1640", B: "rgba(27,22,64,.6)", C: "rgba(27,22,64,.36)" } as const;
@@ -326,7 +326,9 @@ function Entry({
                 <span className="text-signal">
                   <Icon name="path" size={18} />
                 </span>
-                <div className="flex-1 font-semibold leading-snug">{warm.note}</div>
+                <div className="flex-1 leading-snug">
+                  <WayIn warm={warm} who={lead.contacts.find((c) => c.id === warm.contactId)?.name} />
+                </div>
                 <button className="btn !text-[13.5px] !py-1 !px-3" onClick={() => onShowPath(lead)}>
                   Show on graph
                 </button>

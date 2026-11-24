@@ -9,7 +9,7 @@ import { COSTS, type Contact, type Lead, type Workspace } from "@/lib/types";
 import { useLogo } from "./logos";
 import type { Act } from "./BriefTab";
 import { COST_NOTE, bestNext, ranked, viewOf, type LeadView } from "./leads";
-import { Empty, Icon, Monogram, Score, SourceLink } from "./ui";
+import { Empty, Icon, Monogram, Score, SourceLink, WayIn } from "./ui";
 
 export function EmailChip({ c }: { c: Contact }) {
   if (!c.email) return <span className="chip chip-line">no address yet</span>;
@@ -137,7 +137,9 @@ function Best({ view, h }: { view: LeadView; h: Handlers }) {
               <Icon name="path" size={15} />
               Way in
             </span>
-            <span className="reason-v">{warm.note}</span>
+            <span className="reason-v">
+              <WayIn warm={warm} who={lead.contacts.find((c) => c.id === warm.contactId)?.name} />
+            </span>
           </div>
         )}
       </div>

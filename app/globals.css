@@ -1605,3 +1605,115 @@ a.dex-site[href]:hover {
   background: #fff;
   box-shadow: 0 2px 10px rgb(44 30 128 / 0.18);
 }
+
+/* What is shared with someone, in a way in: the one word to catch the eye. */
+.wayin {
+  font-weight: 800;
+  color: var(--color-signal-ink);
+}
+
+/* ---- Target: the picture at a glance ------------------------------------------------- */
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.tile {
+  min-width: 0;
+  padding: 13px 15px 14px;
+  border-radius: 14px;
+  background: var(--color-raise);
+}
+
+.tile-k {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--color-faint);
+  margin-bottom: 3px;
+}
+
+.tile-v {
+  font-size: 17px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.tile-s {
+  font-size: 13px;
+  color: var(--color-soft);
+  margin-top: 3px;
+}
+
+/* One line: a name, how sure, and the reasoning one press away. */
+.tline {
+  border-top: 1px solid var(--color-line);
+}
+
+.tline:first-of-type {
+  border-top: 0;
+}
+
+.tline-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 42px;
+}
+
+.tline-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  padding: 9px 0;
+  text-align: left;
+  color: var(--color-ink);
+  font-size: 14.5px;
+}
+
+.tline-main:disabled {
+  cursor: default;
+}
+
+.tline-arrow {
+  flex: none;
+  align-self: center;
+  display: inline-grid;
+  color: var(--color-faint);
+  transition: transform 0.2s;
+}
+
+.tline-main:hover:not(:disabled) .tline-arrow {
+  color: var(--color-ink);
+}
+
+.tline-more {
+  margin: -2px 0 12px 22px;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-soft);
+}
+
+.tline-why {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 0;
+  background: transparent;
+  padding: 8px 0 0;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--color-faint);
+}
+
+.tline-why:hover {
+  color: var(--color-ink);
+}

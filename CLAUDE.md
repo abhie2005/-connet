@@ -170,7 +170,19 @@ He asked: "check for ANY possible mistakes before I test again and fix ALL of it
 
 **"If you click each of the labels in the legend, it brightens them and makes the rest the background" (04:53).** The names in the legend are switches (`Spot` in `GraphView.tsx`, `Legend` in `App.tsx`): Company, Person, Reason to write, Competitor, Draft waiting for you. Pressed, that kind gets a soft light behind it and is named (people and reasons to write too), everything else fades to the background, and the other legend names dim. Press again, or switch nets, to let go. Whoever the net is about is never dimmed.
 
-## Status (Nov 24, 05:25)
+## Fewer words on the right (his request, Nov 24, 05:20)
+
+"Is it possible for the right side to be more clean and readable at first glance... we're trying to get minimal words, so that they could increase productivity." He was looking at Target on live data: a three-line summary, a sentence of reasoning beside every line, paragraphs in the boxes.
+- **Target is rebuilt** (`components/BriefTab.tsx`): three boxes carry the answer (Sell to, Company size, Start in), then every section is a list of **names with how sure the agent is**, and nothing else. The reasoning behind a line opens when the line is pressed (`Line`); the summary paragraph is behind "Why these". Sections: Who buys, Who to reach, Write when, Leave out when, Also worth a look (Accept, Dismiss; Adjust is inside the opened line), What they could buy instead. Nothing was removed, only folded.
+- **"For the way in just say Maya Okafor studied at UCLA and bold UCLA."** `WayIn` in `components/ui.tsx`: "{person} studied at **UCLA**", "{person} worked at **Acme**", "**{person}** can introduce you to {person}". Used on the best-lead card and the profile card; the agent's full sentence is the tooltip. The stored sentence (`WarmPath.note`) is unchanged, because the writer is given it as a fact.
+- **The rule from now on: the fewest words that say it.** A name and a number beat a sentence; a sentence of reasoning goes behind a press, not beside the name. He has now asked for this four times (Nov 24, 00:59, 02:31, 02:48, 05:20).
+- Also: a name on the graph is no longer written across another company's disc.
+
+## Status (Nov 24, 05:40)
+
+74 checks pass; lint and build are clean; every button pressed again (66 checks) and every screen measured at 1190 x 773 after the Target rebuild. Still never run against the live services: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google.
+
+### Earlier status (Nov 24, 05:25)
 
 74 checks pass; lint and build are clean. Every button pressed (66 checks) and every screen measured on live-like sample data at 1190 x 773. **Still never run against the live services:** the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google. Those are the places a mistake could still be hiding.
 
