@@ -6,7 +6,7 @@ import { ago } from "@/lib/client";
 import { STAGE_NAMES, type Lead, type Stage, type Workspace } from "@/lib/types";
 import type { Act } from "./BriefTab";
 import { Calendar } from "./Calendar";
-import { AGENTS, Empty, Icon, SectionTitle, Tier } from "./ui";
+import { AGENTS, Empty, Icon, Letter, SectionTitle, Tier } from "./ui";
 
 const COLUMNS: { key: Stage; title: string; holds: Stage[] }[] = [
   { key: "matched", title: "Matched", holds: ["matched"] },
@@ -19,11 +19,14 @@ const COLUMNS: { key: Stage; title: string; holds: Stage[] }[] = [
 const ORDER: Stage[] = ["matched", "contacted", "replied", "meeting", "won"];
 const EXAMPLE = "Thanks for reaching out. This is timely for us. Could you do a call on Tuesday at 2pm?";
 
-function Card({ lead, onReply, act }: { lead: Lead; onReply: () => void; act: Act }) {
+function Card({ lead, onReply, onOpen, wrote, act }: { lead: Lead; onReply: () => void; onOpen: () => void; wrote: number; act: Act }) {
   const contact = lead.contacts[0];
   return (
     <div
       className="boardcard arrive"
+      // The whole card can be pressed with a mouse; the company's name is the real button, for the keyboard.
+      onClick={onOpen}
+      title={wrote ? "Press to read what was written to them" : "Press to open their profile"}
       draggable
       onDragStart={(e) => {
         e.dataTransfer.setData("text/lead", lead.id);
@@ -33,7 +36,15 @@ function Card({ lead, onReply, act }: { lead: Lead; onReply: () => void; act: Ac
       <div className="flex items-start gap-2">
         <Tier tier={lead.score.tier} />
         <div className="min-w-0 flex-1">
-          <div className="font-bold text-[14px] leading-snug boardname">{lead.company}</div>
+          <button
+            className="font-bold text-[14px] leading-snug boardname"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen();
+            }}
+          >
+            {lead.company}
+          </button>
           {contact && <div className="text-faint text-[12.5px] leading-snug truncate">{contact.name}</div>}
         </div>
       </div>
@@ -48,19 +59,43 @@ function Card({ lead, onReply, act }: { lead: Lead; onReply: () => void; act: Ac
             <Icon name="path" size={15} />
           </span>
         )}
+        {wrote > 0 && (
+          <span className="text-soft inline-flex items-center gap-1 text-[12.5px] font-semibold" title="Press the card to read it">
+            <Icon name="mail" size={14} />
+            {wrote > 1 ? wrote : ""}
+          </span>
+        )}
       </div>
       {(lead.stage === "contacted" || lead.stage === "replied") && (
-        <button className="btn btn-quiet w-full mt-2 !py-1 !text-[13px]" onClick={onReply}>
+        <button
+          className="btn btn-quiet w-full mt-2 !py-1 !text-[13px]"
+          onClick={(e) => {
+            e.stopPropagation();
+            onReply();
+          }}
+        >
           <Icon name="reply" size={14} />
           Log a reply
         </button>
       )}
       {lead.stage === "meeting" && (
         <div className="flex gap-1.5 mt-2">
-          <button className="btn btn-quiet flex-1 !py-1 !text-[13px]" onClick={() => act({ type: "stage", leadId: lead.id, stage: "won" })}>
+          <button
+            className="btn btn-quiet flex-1 !py-1 !text-[13px]"
+            onClick={(e) => {
+              e.stopPropagation();
+              act({ type: "stage", leadId: lead.id, stage: "won" });
+            }}
+          >
             Won
           </button>
-          <button className="btn btn-plain flex-1 !py-1 !text-[13px]" onClick={() => act({ type: "stage", leadId: lead.id, stage: "lost" })}>
+          <button
+            className="btn btn-plain flex-1 !py-1 !text-[13px]"
+            onClick={(e) => {
+              e.stopPropagation();
+              act({ type: "stage", leadId: lead.id, stage: "lost" });
+            }}
+          >
             Lost
           </button>
         </div>
@@ -73,9 +108,17 @@ function pct(a: number, b: number): string {
   return b === 0 ? "n/a" : `${Math.round((a / b) * 100)}%`;
 }
 
-export function PipelineTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set<string> }) {
+export function PipelineTab({ ws, act, busy, onOpen }: { ws: Workspace; act: Act; busy: Set<string>; onOpen: (leadId: string) => void }) {
   const [over, setOver] = useState<Stage | null>(null);
   const [replyFor, setReplyFor] = useState<Lead | null>(null);
+  /** The lead whose messages are being read. */
+  const [reading, setReading] = useState<string | null>(null);
+  // What was written to each lead: sent first, then what is waiting, newest first within each.
+  const written = (leadId: string) => {
+    const order = { sent: 0, draft: 1, rejected: 2 };
+    return ws.messages.filter((m) => m.leadId === leadId).sort((a, b) => order[a.status] - order[b.status] || (b.decidedAt || b.createdAt).localeCompare(a.decidedAt || a.createdAt));
+  };
+  const readLead = ws.leads.find((l) => l.id === reading) || null;
   const [text, setText] = useState("");
   const leads = ws.leads.filter((l) => l.status !== "suppressed" || l.stage !== "matched");
 
@@ -142,14 +185,14 @@ export function PipelineTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: 
               </div>
               <div className="grid gap-2 grid-cols-[minmax(0,1fr)]">
                 {cards.map((l) => (
-                  <Card key={l.id} lead={l} act={act} onReply={() => setReplyFor(l)} />
+                  <Card key={l.id} lead={l} act={act} wrote={written(l.id).filter((m) => m.status !== "rejected").length} onReply={() => setReplyFor(l)} onOpen={() => (written(l.id).length ? setReading(l.id) : onOpen(l.id))} />
                 ))}
               </div>
             </div>
           );
         })}
       </div>
-      <div className="text-faint text-[13px] mt-2">Drag a card to move it. Every move is recorded with who made it.</div>
+      <div className="text-faint text-[13px] mt-2">Press a card to read what was written to them. Drag it to move it.</div>
 
       <SectionTitle>How it is going</SectionTitle>
       <div className="grid grid-cols-5 gap-2.5">
@@ -255,6 +298,36 @@ export function PipelineTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: 
             );
           })}
       </div>
+
+      <Dialog.Root open={!!readLead} onOpenChange={(open) => !open && setReading(null)}>
+        <Dialog.Portal>
+          <Dialog.Overlay className="dialog-overlay" />
+          <Dialog.Content className="modal modal-wide sheet" aria-describedby={undefined}>
+            <div className="flex items-start gap-3">
+              <Dialog.Title className="text-[19px] font-extrabold m-0 flex-1 leading-snug">Written to {readLead?.company}</Dialog.Title>
+              <Dialog.Close className="btn btn-plain !p-2" aria-label="Close">
+                <Icon name="x" />
+              </Dialog.Close>
+            </div>
+            <div className="scroll grid gap-3 mt-3" style={{ maxHeight: "62vh" }}>
+              {readLead && written(readLead.id).map((m) => <Letter key={m.id} m={m} when={m.decidedAt ? ago(m.decidedAt) : undefined} />)}
+            </div>
+            <div className="flex items-center gap-2 mt-4">
+              <button
+                className="btn"
+                onClick={() => {
+                  const id = readLead!.id;
+                  setReading(null);
+                  onOpen(id);
+                }}
+              >
+                Open their profile
+              </button>
+              <span className="text-faint text-[13px]">Nothing was really sent: this build records the approval only.</span>
+            </div>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog.Root>
 
       <Dialog.Root
         open={!!replyFor}

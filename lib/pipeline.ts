@@ -11,7 +11,7 @@ import { whyNobody, widerQueries, type Search2 } from "./agents/widen";
 import { config } from "./config";
 import { QUERY_MEANING, type QueryName } from "./graph/cypher";
 import type { Rows } from "./graph";
-import { companyId, schoolId } from "./ids";
+import { companyId, nextId, schoolId } from "./ids";
 import { enrichDomain, guessEmail } from "./providers/enrich";
 import { topUpWallet } from "./providers/billing";
 import { bestContact, scoreLead, strongestSignal } from "./score";
@@ -557,7 +557,7 @@ export async function logReply(leadId: string, text: string) {
     const contact = lead.contacts.find((c) => c.id === sent?.contactId) || lead.contacts[0] || null;
     const when = whenFrom(text, new Date());
     const meeting: Meeting = {
-      id: `mt${(s.state.meetings || []).length + 1}`,
+      id: nextId("mt", s.state.meetings || []),
       leadId: lead.id,
       contactId: contact?.id || null,
       title: `${s.state.product?.name || "Intro"} intro: ${contact ? `${contact.name}, ` : ""}${lead.company}`,

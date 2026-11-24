@@ -7,7 +7,7 @@ import { ago } from "@/lib/client";
 import { markUp, says, type Marked } from "@/lib/marks";
 import { COSTS, type Evidence, type Message, type Workspace } from "@/lib/types";
 import type { Act } from "./BriefTab";
-import { Empty, Icon, SectionTitle, SourceLink } from "./ui";
+import { Empty, Icon, Letter, SectionTitle, SourceLink } from "./ui";
 
 /** A message with what must go struck out in red and what an agent added in green. */
 function Marks({ of }: { of: Marked[] }) {
@@ -305,6 +305,7 @@ function Draft({ m, ws, act, busy }: { m: Message; ws: Workspace; act: Act; busy
 
 export function ApprovalsTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set<string> }) {
   const drafts = ws.messages.filter((m) => m.status === "draft");
+  const [open, setOpen] = useState<string | null>(null);
   const done = ws.messages.filter((m) => m.status !== "draft").sort((a, b) => (b.decidedAt || "").localeCompare(a.decidedAt || ""));
   if (ws.messages.length === 0) return <Empty title="Nothing to approve yet">Drafts land here after the reviewer and the security agent have been through them. Nothing is sent without your approval.</Empty>;
   return (
@@ -320,19 +321,26 @@ export function ApprovalsTab({ ws, act, busy }: { ws: Workspace; act: Act; busy:
         <>
           <SectionTitle count={done.length}>Decided</SectionTitle>
           {done.map((m, i) => (
-            <div key={m.id} className={`flex items-center gap-3 py-2.5 ${i ? "rowline" : ""}`}>
-              <span className={m.status === "sent" ? "text-good" : "text-faint"}>
-                <Icon name={m.status === "sent" ? "send" : "x"} />
-              </span>
-              <div className="flex-1 min-w-0">
-                <div className="font-semibold leading-snug truncate">{m.subject}</div>
-                <div className="text-faint text-[13px]">To {m.to}</div>
-              </div>
-              <span className="chip chip-line">
-                {m.status === "sent" ? "Approved by you" : "Rejected by you"}
-                {m.editedByRep ? ", edited" : ""}
-              </span>
-              <span className="text-faint text-[13px] w-20 text-right">{ago(m.decidedAt)}</span>
+            <div key={m.id} className={i ? "rowline" : ""}>
+              <button className="decided" onClick={() => setOpen(open === m.id ? null : m.id)} aria-expanded={open === m.id} title="Press to read the message">
+                <span className={m.status === "sent" ? "text-good" : "text-faint"}>
+                  <Icon name={m.status === "sent" ? "send" : "x"} />
+                </span>
+                <span className="flex-1 min-w-0 text-left">
+                  <span className="block font-semibold leading-snug truncate">{m.subject}</span>
+                  <span className="block text-faint text-[13px]">To {m.to}</span>
+                </span>
+                <span className="chip chip-line flex-none">
+                  {m.status === "sent" ? "Approved by you" : "Rejected by you"}
+                  {m.editedByRep ? ", edited" : ""}
+                </span>
+                <span className="text-faint text-[13px] w-20 text-right flex-none">{ago(m.decidedAt)}</span>
+              </button>
+              {open === m.id && (
+                <div className="pb-3 arrive">
+                  <Letter m={m} />
+                </div>
+              )}
             </div>
           ))}
         </>

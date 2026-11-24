@@ -3,7 +3,7 @@
 // where a fact came from.
 import type { ReactNode } from "react";
 import { host } from "@/lib/client";
-import type { AgentName, Evidence, Source, WarmPath } from "@/lib/types";
+import type { AgentName, Evidence, Message, Source, WarmPath } from "@/lib/types";
 
 export function Logo({ size = 40 }: { size?: number }) {
   return (
@@ -90,15 +90,16 @@ export function Tier({ tier }: { tier: "A" | "B" | "C" }) {
   );
 }
 
-export function Confidence({ value }: { value: number }) {
+/** How sure the agent is of something. With `word`, the number says what it is: "95% sure". */
+export function Confidence({ value, word }: { value: number; word?: string }) {
   const pct = Math.round(value * 100);
   return (
-    <span className="inline-flex items-center gap-2" title={`How sure the agent is: ${pct}%`}>
+    <span className="inline-flex items-center gap-2 flex-none" title={`How sure the agent is that this is right: ${pct} out of 100`}>
       <span className="bar" style={{ width: 54 }}>
         <i style={{ width: `${pct}%` }} />
       </span>
-      <span className="text-[12.5px] text-faint" style={{ minWidth: 30 }}>
-        {pct}%
+      <span className="text-[12.5px] text-faint whitespace-nowrap" style={{ minWidth: word ? 62 : 30 }}>
+        {pct}%{word ? ` ${word}` : ""}
       </span>
     </span>
   );
@@ -205,5 +206,28 @@ export function WayIn({ warm, who }: { warm: WarmPath; who?: string | null }) {
         </>
       )}
     </span>
+  );
+}
+
+const STATUS_WORD: Record<Message["status"], string> = { sent: "Approved by you", rejected: "Rejected by you", draft: "Waiting for your approval" };
+
+/** A message, read as it stands: who to, what it says, and what became of it. */
+export function Letter({ m, when }: { m: Message; when?: string }) {
+  return (
+    <div className="letter">
+      <div className="flex items-baseline gap-2 flex-wrap">
+        <span className="text-faint text-[13px]">To</span>
+        <span className="font-bold leading-snug">{m.to.split(",")[0]}</span>
+        {m.toEmail && <span className="text-soft text-[13.5px] leading-snug">{m.toEmail}</span>}
+        <span className="flex-1" />
+        <span className={`chip ${m.status === "sent" ? "chip-signal" : m.status === "draft" ? "chip-flag" : "chip-line"}`}>
+          {STATUS_WORD[m.status]}
+          {m.editedByRep && m.status !== "draft" ? ", edited" : ""}
+          {when ? `, ${when}` : ""}
+        </span>
+      </div>
+      <div className="font-bold text-[15.5px] leading-snug mt-2.5">{m.subject}</div>
+      <div className="whitespace-pre-wrap text-[14.5px] leading-relaxed mt-1.5">{m.body}</div>
+    </div>
   );
 }

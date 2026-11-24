@@ -4,6 +4,7 @@
 import { llm } from "../providers/llm";
 import { bestContact, strongestSignal } from "../score";
 import type { Store } from "../store";
+import { nextId } from "../ids";
 import { greet, located, says, topicOnly, without } from "../marks";
 import type { Claim, Contact, Fact, Freedom, Lead, Message, Product } from "../types";
 import type { ReplyIn, ReplyOut, ReviewIn, ReviewOut, WriteIn, WriteOut } from "./shapes";
@@ -249,7 +250,7 @@ export async function draftMessage(s: Store, lead: Lead): Promise<Message> {
   s.log("security", sec.ok ? "say" : "flag", `${lead.company}: ${sec.notes.join(" ")}`, { to: "rep" });
 
   const message: Message = {
-    id: `m${s.state.messages.length + 1}`,
+    id: nextId("m", s.state.messages),
     leadId: lead.id,
     contactId: contact?.id || null,
     to: contact ? `${contact.name}, ${contact.title}` : lead.company,

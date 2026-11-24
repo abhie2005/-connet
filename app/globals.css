@@ -1563,6 +1563,19 @@ a.dex-site[href]:hover {
 
 .boardname {
   overflow-wrap: anywhere;
+  display: block;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+  color: var(--color-ink);
+  cursor: pointer;
+}
+
+.boardname:hover {
+  text-decoration: underline;
+  text-decoration-color: var(--color-line-strong);
+  text-underline-offset: 3px;
 }
 
 /* A chip that is a switch (the agents' names in the open Agents bar). */
@@ -1589,7 +1602,7 @@ a.dex-site[href]:hover {
   padding: 3px 9px 3px 5px;
   margin: -3px -5px -3px -5px;
   border-radius: 8px;
-  cursor: pointer;
+  cursor: default;
   transition: background 0.15s, opacity 0.2s;
 }
 
@@ -1732,4 +1745,37 @@ a.dex-site[href]:hover {
   max-width: 100%;
   padding: 6px 10px;
   font-size: 14px;
+}
+
+/* A message read as it stands. */
+.letter {
+  padding: 14px 16px 16px;
+  border-radius: 12px;
+  background: var(--color-raise);
+}
+
+.modal-wide {
+  width: min(640px, calc(100vw - 28px));
+}
+
+.boardcard:focus-visible {
+  outline-offset: 0;
+}
+
+/* A decided message: a row that opens to show what it said. */
+.decided {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 10px 6px;
+  border-radius: 8px;
+  color: var(--color-ink);
+  transition: background 0.15s;
+}
+
+.decided:hover {
+  background: var(--color-raise);
 }

@@ -91,10 +91,10 @@ const DOT_GAP = 115; // milliseconds between dots
 
 // Your net: how far from the founder each ring lies, and what standing on it means.
 // The outside ring holds only small unnamed dots, so it sits close and the two that matter get the room.
-const RINGS: { at: number; ring: 0 | 1 | 2; means: string }[] = [
-  { at: 125, ring: 1, means: "same school or employer" },
-  { at: 218, ring: 2, means: "one introduction away" },
-  { at: 288, ring: 0, means: "no way in yet" },
+const RINGS: { at: number; ring: 0 | 1 | 2; means: string; title: string; says: string }[] = [
+  { at: 125, ring: 1, means: "same school or employer", title: "Same school or employer", says: "went to your school or worked where you worked. The easiest to write to." },
+  { at: 218, ring: 2, means: "one introduction away", title: "One introduction away", says: "known to someone in your first ring, who could introduce you." },
+  { at: 288, ring: 0, means: "no way in yet", title: "No way in yet", says: "with no tie to you that was found. A cold message." },
 ];
 const ringAt = (k: number) => (k <= 0 ? 0 : RINGS[Math.min(k, 3) - 1].at);
 
@@ -185,7 +185,7 @@ export function GraphView({
   const sim = useRef<Simulation<N, L> | null>(null);
   const data = useRef<{ nodes: N[]; links: L[]; byId: Map<string, N> }>({ nodes: [], links: [], byId: new Map() });
   const view = useRef({ k: 1, x: 0, y: 0, w: 0, h: 0 });
-  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best, net, reach, turned: 0, shownNet: net, spot: spotNow as Spot | null });
+  const live = useRef({ highlight, leads: new Map<string, Lead>(), hover: null as string | null, flows, waiting, best, net, reach, turned: 0, shownNet: net, spot: spotNow as Spot | null, ring: null as 0 | 1 | 2 | null });
   const [tip, setTip] = useState<{ x: number; y: number; title: string; sub: string } | null>(null);
 
   // The page gets a fresh copy of the graph on every poll. Only a real change (a new node or
@@ -408,7 +408,10 @@ export function GraphView({
               : spot === "competitor"
                 ? n.node.label === "Competitor"
                 : live.current.waiting.has(n.id));
-      const dim = (id: string) => (!!hl && !hl.nodes.has(id)) || (!!spot && !inSpot(d.byId.get(id)));
+      // A ring being pointed at: it lights up, the people standing on it stay bright, the rest steps back.
+      const hotRing = you ? live.current.ring : null;
+      const offRing = (n: N | undefined) => hotRing != null && !!n && !n.node.props.isFounder && !(n.node.label === "Person" && n.ring === hotRing);
+      const dim = (id: string) => (!!hl && !hl.nodes.has(id)) || (!!spot && !inSpot(d.byId.get(id))) || offRing(d.byId.get(id));
       const now = performance.now();
       const moving = new Set<string>();
       for (const f of live.current.flows) for (const id of f.path) moving.add(id);
@@ -431,10 +434,25 @@ export function GraphView({
         ctx.setLineDash([2, 7]);
         for (const ring of RINGS) {
           if (!ringsInUse.has(ring.at)) continue;
+          const hot = hotRing === ring.ring;
+          if (hot) {
+            // A soft band of light along the ring, then the ring itself, whole and bright.
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.arc(0, 0, ring.at, 0, Math.PI * 2);
+            ctx.strokeStyle = white(0.22);
+            ctx.lineWidth = 26;
+            ctx.stroke();
+            ctx.shadowColor = white(0.95);
+            ctx.shadowBlur = 16;
+          }
           ctx.beginPath();
           ctx.arc(0, 0, ring.at, 0, Math.PI * 2);
-          ctx.strokeStyle = ring.ring === 1 ? white(0.8) : ring.ring === 2 ? ink(0.3) : ink(0.17);
+          ctx.lineWidth = (hot ? 2.4 : 1) / Math.sqrt(v.k);
+          ctx.strokeStyle = hot ? "#FFFFFF" : ring.ring === 1 ? white(0.8) : ring.ring === 2 ? ink(0.3) : ink(0.17);
           ctx.stroke();
+          ctx.shadowBlur = 0;
+          ctx.setLineDash([2, 7]);
         }
         ctx.setLineDash([]);
       }
@@ -629,7 +647,7 @@ export function GraphView({
         // With a spotlight on, what is picked out is named (people and reasons to write too) and
         // the rest is not, so the picture goes quiet around it.
         const picked = !!spot && inSpot(n);
-        const named = spot ? picked : label !== "Signal" && (label !== "Person" || founder || (hl && hl.nodes.has(n.id)) || hover === n.id || moving.has(n.id) || (you && n.ring !== 0));
+        const named = spot ? picked : hotRing != null && label === "Person" && n.ring === hotRing ? true : label !== "Signal" && (label !== "Person" || founder || (hl && hl.nodes.has(n.id)) || hover === n.id || moving.has(n.id) || (you && n.ring !== 0));
         if (named && age > 0.5) {
           // Which names win when two would overlap: whoever the net is about, then whatever is
           // being pointed at, then the best lead, then leads by score, then the rest; competitors last.
@@ -712,7 +730,7 @@ export function GraphView({
             if (clear > 46) break;
           }
           written.push({ x: Math.cos(at) * ring.at, y: Math.sin(at) * ring.at });
-          ctx.globalAlpha = hl ? 0.4 : 1;
+          ctx.globalAlpha = hl || (hotRing != null && hotRing !== ring.ring) ? 0.4 : 1;
           ctx.font = `600 ${px}px ${font}`;
           const halfCap = (ctx.measureText(ring.means).width + 12) / 2 + 2;
           const capX = edgeR - edgeL > halfCap * 2 ? Math.min(edgeR - halfCap, Math.max(edgeL + halfCap, Math.cos(at) * ring.at)) : Math.cos(at) * ring.at;
@@ -865,9 +883,27 @@ export function GraphView({
     return best;
   };
 
+  /** The ring under the pointer, in your net, when it is not over a node. */
+  const ringAtPointer = (e: React.MouseEvent) => {
+    if (live.current.shownNet !== "you") return null;
+    const box = canvas.current!.getBoundingClientRect();
+    const v = view.current;
+    const far = Math.hypot((e.clientX - box.left - v.w / 2) / v.k + v.x, (e.clientY - box.top - v.h / 2) / v.k + v.y);
+    const onRing = new Set(data.current.nodes.filter((n) => n.node.label === "Person" && !n.node.props.isFounder).map((n) => n.orbit));
+    return RINGS.find((r) => onRing.has(r.at) && Math.abs(far - r.at) < 13 / v.k) || null;
+  };
+
   const move = (e: React.MouseEvent) => {
     const n = at(e);
     live.current.hover = n?.id || null;
+    const ring = n ? null : ringAtPointer(e);
+    live.current.ring = ring ? ring.ring : null;
+    if (ring) {
+      const box = wrap.current!.getBoundingClientRect();
+      const count = data.current.nodes.filter((x) => x.node.label === "Person" && !x.node.props.isFounder && x.ring === ring.ring).length;
+      canvas.current!.style.cursor = "default";
+      return setTip({ x: Math.min(e.clientX - box.left + 14, box.width - 250), y: e.clientY - box.top + 14, title: ring.title, sub: `${count} ${count === 1 ? "person" : "people"} ${ring.says}` });
+    }
     const opens = n && n.node.label !== "Product" && n.node.label !== "School" && !n.node.props.isFounder && !(n.node.label === "Company" && !live.current.leads.has(n.id));
     canvas.current!.style.cursor = opens ? "pointer" : "default";
     if (!n) return setTip(null);
@@ -910,6 +946,7 @@ export function GraphView({
         ref={canvas}
         onMouseMove={move}
         onMouseLeave={() => {
+          live.current.ring = null;
           live.current.hover = null;
           setTip(null);
         }}

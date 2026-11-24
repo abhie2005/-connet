@@ -4,6 +4,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { config, modes } from "./config";
 import { garbledName } from "./garbled";
+import { nextId } from "./ids";
 import { Graph } from "./graph";
 import { bandPost } from "./providers/band";
 import { lastError as billingError, readWallet, trackUsage } from "./providers/billing";
@@ -69,6 +70,7 @@ export class Store {
         this.graph.resync();
         this.seq = this.state.activity.reduce((m, a) => Math.max(m, a.seq), 0);
         this.dropGarbled();
+        this.repairIds();
       }
     } catch (e) {
       console.warn("[tact] could not read the saved workspace:", e);
@@ -79,6 +81,22 @@ export class Store {
       this.state.run.stats.replayed = (this.state.run.stats.replayed || 0) + 1;
     };
     void this.refreshWallet();
+  }
+
+  /** Two messages must never share an id: an action on one would land on the other ("Already
+      decided" on a draft that was never decided). Ids used to be handed out by count, so removing
+      a message could cause exactly that. Any message that repeats an earlier id gets a fresh one. */
+  private repairIds() {
+    const seen = new Set<string>();
+    let fixed = 0;
+    for (const m of this.state.messages) {
+      if (seen.has(m.id)) {
+        m.id = nextId("m", this.state.messages);
+        fixed += 1;
+      }
+      seen.add(m.id);
+    }
+    if (fixed) this.touch();
   }
 
   /** A saved workspace can hold a "company" read off a page that was not readable (lib/garbled.ts),

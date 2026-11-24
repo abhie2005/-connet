@@ -7,6 +7,22 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 06:15. Yoon Woo's Claude: "Already decided" fixed, hover for the legend and the rings, read what was sent
+
+**Why.** Yoon Woo, 05:39, from his live run.
+
+**Done (on `main`).**
+- **"Already decided" on a draft**: two messages had ended up with the same id (ids were handed out by count, and a message had been removed). Fixed at the source, and saved data is repaired when the app starts.
+- **The legend works on hover**, not click.
+- **Rings in "Your net" light up under the pointer** and say what they mean and how many people are on them.
+- **Target** says what it is in one line, and its numbers read "95% sure".
+- **Press a Pipeline card to read what was written to that lead.** Rows under Decided in Approve open too.
+- 77 checks pass; every button pressed again (71 checks).
+
+**Need.**
+- `[open]` Yoon Woo: pull, `npm run clean`, `npm run dev`. The stuck draft should approve now (it needs an address first: see the 05:55 entry).
+- `[open]` Skylar: two new things worth ten seconds in the video: hover a ring in "Your net", and press a card in Pipeline after approving.
+
 ## Nov 24, 05:55. Yoon Woo's Claude: no address, no send
 
 **Why.** Yoon Woo, 05:28, on a draft marked "no address yet" with an Approve button: "Then how will it send the email".

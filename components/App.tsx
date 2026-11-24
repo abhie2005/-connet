@@ -241,11 +241,12 @@ function Legend({ net, waiting, competitors, spot, onSpot }: { net: Net; waiting
         ];
   if (waiting) items.push({ key: "waiting", spot: "waiting", hint: "who has a draft waiting for you", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="3 2.600" /> });
   return (
-    <div className={`legend ${spot ? "has-spot" : ""}`} aria-label="What the shapes on the graph mean. Press one to pick it out.">
+    <div className={`legend ${spot ? "has-spot" : ""}`} aria-label="What the shapes on the graph mean. Point at one to pick it out." onMouseLeave={() => onSpot(null)}>
       {items.map((it) =>
         it.spot ? (
-          // Press a name to pick that kind out on the graph; press it again to let go.
-          <button key={it.key} className="legend-item legend-btn" aria-pressed={spot === it.spot} title={spot === it.spot ? "Show everything again" : `Pick out ${it.hint}`} onClick={() => onSpot(spot === it.spot ? null : it.spot!)}>
+          // Point at a name and that kind is picked out on the graph for as long as the pointer
+          // stays (his choice, Nov 24: hovering, not clicking). Keyboard focus does the same.
+          <button key={it.key} className="legend-item legend-btn" aria-pressed={spot === it.spot} title={`Shows ${it.hint}`} onMouseEnter={() => onSpot(it.spot!)} onFocus={() => onSpot(it.spot!)} onBlur={() => onSpot(null)}>
             <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true">
               {it.mark}
             </svg>
@@ -674,7 +675,7 @@ export function App() {
             {tab === "target" && <BriefTab ws={ws} act={act} busy={busy} />}
             {tab === "leads" && <LeadsTab ws={ws} act={act} busy={busy} onOpen={open} onDraft={draft} onReview={() => go("approve")} />}
             {tab === "approve" && <ApprovalsTab ws={ws} act={act} busy={busy} />}
-            {tab === "pipeline" && <PipelineTab ws={ws} act={act} busy={busy} />}
+            {tab === "pipeline" && <PipelineTab ws={ws} act={act} busy={busy} onOpen={(id) => open(id)} />}
           </div>
         </section>
       </main>

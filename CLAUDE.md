@@ -185,7 +185,19 @@ A fair question about a draft to Cold Locker Storage: nobody had been found ther
 - **Nothing is really sent by this build, with or without an address.** "Approve and send" records the message as sent; nothing leaves his machine (`decideMessage`, the comment "Sending is simulated"). The button's tooltip says so now. Real sending would need a mail provider and his say; do not wire one up while the product being sold is invented and the people are real.
 - The "To" line no longer repeats the company's name when nobody was found there ("nobody found there yet").
 
-## Status (Nov 24, 05:55)
+## Five things from his live run (Nov 24, 05:39)
+
+- **"Why does it say already decided when I click Approve?"** A real bug, mine. Message ids were handed out by count (`m${messages.length + 1}`). When the garbled company's draft was removed on start, the count dropped, and the next draft got the id of a message already sent; Approve then landed on that one. Ids now follow the highest in use (`nextId` in `lib/ids.ts`, for messages and meetings), and a saved workspace with a repeated id is put right when it loads (`repairIds` in `lib/store.ts`; tested on exactly his case). **Never hand out an id by counting.**
+- **"Hovering the legend, not clicking."** Pointing at a name in the legend picks that kind out for as long as the pointer stays on it; moving off the legend lets go. (Keyboard focus does the same.) Nothing is pinned by a click any more.
+- **"When you hover over the rings, light them up, so they know what the rings mean."** In "Your net", a ring under the pointer becomes a whole bright line with a band of light, the people standing on it stay bright and named, the rest steps back, and a note says what the ring is and how many are on it ("Same school or employer: 1 person went to your school or worked where you worked. The easiest to write to."). `ringAtPointer` and `live.current.ring` in `GraphView.tsx`.
+- **"The right side isn't intuitive. What do those percentages mean?"** Target opens with one line saying what it is ("Who should buy X, worked out from your description. Each line shows how sure the agent is. Press a line to see why.") and each number reads "95% sure".
+- **"Once you send a message, clicking it on the pipeline should show the message."** Pressing a Pipeline card (or the company's name on it) opens "Written to X": every message to that lead as it stands, with who approved it and when (`Letter` in `ui.tsx`). A card with nothing written opens the profile. A small envelope on the card says there is something to read. In Approve, a row under Decided opens the same way.
+
+## Status (Nov 24, 06:15)
+
+77 checks pass; lint and build are clean; every button pressed again (71 checks) at 1190 x 773. Still never run against the live services: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google.
+
+### Earlier status (Nov 24, 05:55)
 
 75 checks pass; lint and build are clean; every button pressed again (68 checks) at 1190 x 773. Still never run against the live services: the settings "Nothing" and "More", the wider search, Find their address from an approval card, the Google Calendar link opening in Google.
 

@@ -23,7 +23,7 @@ function Line({ name, note, sure, right, children }: { name: string; note?: stri
           <span className="font-bold leading-snug min-w-0">{name}</span>
           {note && <span className="text-faint text-[13px] leading-snug truncate">{note}</span>}
         </button>
-        {sure != null && <Confidence value={sure} />}
+        {sure != null && <Confidence value={sure} word="sure" />}
         {right}
       </div>
       {open && children && <div className="tline-more arrive">{children}</div>}
@@ -76,6 +76,9 @@ export function BriefTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set
   const suggested = icp.expansions.filter((x) => x.status === "suggested").length;
   return (
     <div>
+      <p className="m-0 mb-3 text-[14.5px] leading-snug text-soft">
+        Who should buy <span className="font-bold text-ink">{ws.product?.name || "this"}</span>, worked out from your description. Each line shows how sure the agent is. Press a line to see why.
+      </p>
       {/* The whole answer in three boxes. */}
       <div className="tiles">
         <div className="tile">
@@ -123,7 +126,7 @@ export function BriefTab({ ws, act, busy }: { ws: Workspace; act: Act; busy: Set
         </Line>
       ))}
 
-      <div className="grid grid-cols-2 gap-x-7">
+      <div className="grid grid-cols-2 gap-x-7 mt-7">
         <div className="min-w-0">
           <SectionTitle>Write when</SectionTitle>
           {icp.triggers.map((t) => (
