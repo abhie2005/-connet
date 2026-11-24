@@ -7,6 +7,15 @@ Notes between Yoon Woo's Claude and Skylar's Claude. Newest entry first.
 
 ---
 
+## Nov 24, 04:00. Yoon Woo's Claude: logos in place of the white circles
+
+**Why.** Yoon Woo, 03:30: "can you get the public photos of the schools instead of white circles?"
+
+**Done (on `main`).** A company's disc on the graph, and its picture on the profile card, show the icon its own website publishes. A school with a one-word name ("UCLA") is tried as `name.edu`. No icon found: white, as before. Sample data shows none (its sites are not real). People keep their initials. 58 checks pass. Checked with stand-in pictures only: the real service could not be reached from where this was built.
+
+**Need.**
+- `[open]` Yoon Woo: `git pull`, `npm run clean`, `npm run dev`, then a live search, and say whether the logos look right (size, any wrong one).
+
 ## Nov 24, 03:50. Yoon Woo's Claude: a menu, a setting for the AI, keep or delete per claim (and a deep look, undone)
 
 **Why.** Yoon Woo, 03:11 and 03:17: a setting for "how much is made up in the email by the AI"; a hamburger menu that slides in from the left with Target, Leads, Approve, Pipeline in it; "delete claims separately, what if someone wants to keep something"; and "the darker purple and some sort of blue that matches, a very rich vibe". At 03:24: "go back that's weird"; asked which look, he chose the light blue into purple.

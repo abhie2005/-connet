@@ -106,7 +106,20 @@ What he has said about interfaces, from a week of Glyph feedback. Follow these w
   - At every setting a number that is in no fact is flagged and sends the draft back, and nothing is sent without approval. The setting applies to drafts written from then on and outlives a new search. On sample data "More" adds one fixed sentence so the setting can be seen without keys; "Nothing" and "A little" give the same sample drafts (the sample rewrite is always clean).
 - **"Make it so that you can delete claims separately, what if someone wants to keep something."** Each unbacked claim on the Approve card is a small box with its own **Keep** and **Delete** (`decideClaim` in `lib/pipeline.ts`, action `claim`). Delete takes that one sentence out. Keep leaves it in and unmarks it: it is listed under "Kept by you" (with Undo), never as backed (`Claim.kept`), and the audit trail records it. "Delete all" appears when two or more are marked.
 
-## Status (Nov 24, 03:50)
+## Logos on the graph (his request, Nov 24, 03:30)
+
+**"Can you get the public photos of the schools instead of white circles?"** Read as logos: a company's disc on the graph (and its small picture on the profile card) shows the icon its own website publishes; a school's square does too. `lib/logo.ts` decides whose (tested), `components/logos.ts` loads each once, `stamp` in `GraphView.tsx` draws it clipped inside the shape.
+- The browser fetches it from Google's public favicon service (`www.google.com/s2/favicons?domain=…&sz=128`). Nothing is stored, nothing is scraped, no key. It does tell Google which domains are on screen.
+- A company's domain is the one the search found. **A school is known by name only**, so a one-word name is tried as `name.edu` ("UCLA" gives `ucla.edu`) and anything longer is not guessed at.
+- No domain, a reserved one (sample data is all `.example`), no icon, or the 16 px globe the service sends for an unknown site: the plain white disc or initials, as before. So **sample data shows no logos**; they appear on live data.
+- People still have initials: there is no public way to get LinkedIn photos (see the Nov 24, 02:48 notes).
+- **Checked only with stand-in pictures** (the sandbox cannot reach Google): a square logo, a wide one, and the "no icon" answer falling back to white. Not yet seen with real logos on his Mac.
+
+## Status (Nov 24, 04:00)
+
+58 checks pass (3 new in `tests/logo.test.ts`); lint and build are clean. Everything since 03:11 (the menu, the setting, Keep and Delete per claim, logos) is checked on sample data only; he has confirmed the light look and the first screen on his Mac (screenshot, 03:30). "Nothing" and "More" have never been run against the live model.
+
+### Earlier status (Nov 24, 03:50)
 
 **Checked on sample data only** (1512 wide), in the light blue-into-purple look: every section through the menu, the setting at each step, Keep then Delete on a draft doctored to have three unbacked claims, both nets, a Draft click with its dots, the open Agents bar, the profile card. No console errors. 55 checks pass (4 new: one claim at a time, "More", "Nothing", taking one claim out of a text); lint and build are clean. He has seen none of it yet. **"Nothing" and "More" have never been run against the live model.** After pulling he must run `npm run clean` before `npm run dev`, or the old stylesheet stays.
 

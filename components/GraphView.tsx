@@ -6,6 +6,8 @@
 // off the product. Your net puts the founder in the middle and sets people on rings by how
 // close they are: sharing a school or employer, one introduction away, or no way in yet.
 // Switching keeps the nodes both nets share where they are and lets them drift to their new places.
+import { logoDomainOf } from "@/lib/logo";
+import { logoFor } from "./logos";
 import { forceCollide, forceLink, forceManyBody, forceRadial, forceSimulation, forceX, forceY, type Simulation, type SimulationLinkDatum, type SimulationNodeDatum } from "d3-force";
 import { useEffect, useRef, useState } from "react";
 import { FOUNDER, howYouKnow, netOf, ringOf, type Net, type Reach } from "@/lib/graph/nets";
@@ -55,6 +57,22 @@ const GLIDE = 0.085;
 // The graph is drawn straight on the blue-and-purple field. Dark ink is the structure (rings, people,
 // names), white is what is bright or in motion (the product, the way in, a draft on its way, a
 // draft waiting), and the violet accent is what is live (a reason to write, you).
+/** A logo drawn inside a shape that is already on the canvas: fitted in, clipped to the shape. */
+function stamp(ctx: CanvasRenderingContext2D, img: HTMLImageElement, x: number, y: number, r: number, square: boolean) {
+  ctx.save();
+  ctx.beginPath();
+  if (square) ctx.roundRect(x - r, y - r, r * 2, r * 2, 3);
+  else ctx.arc(x, y, r, 0, Math.PI * 2);
+  ctx.clip();
+  // A logo is rarely round: keep it whole, inside the circle, on the white already there.
+  const side = square ? r * 2 : r * 1.5;
+  const scale = side / Math.max(img.naturalWidth, img.naturalHeight);
+  const w = img.naturalWidth * scale, h = img.naturalHeight * scale;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(img, x - w / 2, y - h / 2, w, h);
+  ctx.restore();
+}
+
 const INK = "#1B1640";
 const ink = (a: number) => `rgba(27,22,64,${a})`;
 const WHITE = "#FFFFFF";
@@ -496,6 +514,8 @@ export function GraphView({
           ctx.lineWidth = you && reach.get(n.id)?.dist === 1 ? 2.2 : 1.6;
           ctx.strokeStyle = you && reach.get(n.id)?.dist === 1 ? INK : ink(0.55);
           ctx.stroke();
+          const mark = logoFor(logoDomainOf(n.node));
+          if (mark) stamp(ctx, mark, n.x, n.y, s - 1.5, true);
         } else {
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
           if (label === "Product" || (founder && you)) {
@@ -523,6 +543,9 @@ export function GraphView({
             if (off) ctx.setLineDash([3, 3]);
             ctx.stroke();
             ctx.setLineDash([]);
+            // Its own logo, when its website publishes one. Otherwise the plain white disc.
+            const mark = logoFor(logoDomainOf(n.node));
+            if (mark) stamp(ctx, mark, n.x, n.y, r - ctx.lineWidth / 2 - 0.5, false);
           } else if (label === "Competitor") {
             ctx.fillStyle = "#CBC8F6";
             ctx.fill();

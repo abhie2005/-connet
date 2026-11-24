@@ -3,6 +3,8 @@
 // that decide whether to write: who to write to, why now, and the way in. The rest (the other
 // people there, how the score was reached, the proof) is one click away, folded. Arrow keys
 // flip entries.
+import { cleanDomain } from "@/lib/logo";
+import { useLogo } from "./logos";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useEffect, useRef, useState } from "react";
 import { COSTS, type Competitor, type Contact, type Lead, type Workspace } from "@/lib/types";
@@ -26,6 +28,8 @@ function Sprite({ lead, to }: { lead: Lead; to: Contact | null }) {
   const S = signals.map((s, i) => ({ s, ...at(fan(signals.length, i, 180, signals.length > 2 ? 100 : 56), 44) }));
   const warm = lead.warmPaths[0];
   const warmAt = warm ? P.find((p) => p.c.id === warm.contactId) : null;
+  // The company's own logo when its website publishes one, else its initials.
+  const logo = useLogo(cleanDomain(lead.domain));
   return (
     <svg viewBox="0 0 200 112" className="sprite" role="img" aria-label={`${lead.company}: ${people.length} people and ${signals.length} reasons to write found`}>
       {[...S, ...P].map(({ x, y }, i) => (
@@ -53,9 +57,13 @@ function Sprite({ lead, to }: { lead: Lead; to: Contact | null }) {
         </g>
       ))}
       <circle cx={cx} cy={cy} r="22" fill="#FFFFFF" stroke={TIER_STROKE[lead.score.tier]} strokeWidth={lead.score.tier === "A" ? 2.800 : 2} strokeDasharray={lead.status === "suppressed" ? "3 3" : undefined} />
-      <text x={cx} y={cy + 0.500} textAnchor="middle" dominantBaseline="middle" className="sprite-i">
-        {initials(lead.company)}
-      </text>
+      {logo ? (
+        <image href={logo} x={cx - 16} y={cy - 16} width="32" height="32" preserveAspectRatio="xMidYMid meet" />
+      ) : (
+        <text x={cx} y={cy + 0.500} textAnchor="middle" dominantBaseline="middle" className="sprite-i">
+          {initials(lead.company)}
+        </text>
+      )}
     </svg>
   );
 }
