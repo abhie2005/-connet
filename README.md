@@ -122,9 +122,11 @@ Finding the lead and writing the email is half the work. The other half is the f
 - **Inviting the client.** A rep press only, never the agent's, never before a reply with interest, and it records who pressed it, like every other approval here.
 - **Where it shows.** A **Deal room** fold on the profile card, and a **Deal room** chip on the Pipeline card. Opening a room, and a reply arriving in one, are also said in the agents' feed, which carries them to the Band room when Band keys are set.
 
-### Working a deal room from Teamily
+### Working a deal room from another AI client (MCP)
 
-Teamily is an AI-native messenger, and its agents can call MCP tools. Rather than this app pushing copies of every message into it, the room is offered to it: point a Teamily agent at `/api/mcp` and the deal room can be read and worked from inside a Teamily chat.
+The room is offered as MCP tools rather than copied anywhere: point any MCP client at `/api/mcp` and the deal room can be read and worked from inside it - Claude Desktop, Claude Code, Cursor, or an agent of your own.
+
+This started as a Teamily connection. Teamily's app takes agents that can *be* reached; we found no way to point one of its agents *out* at an MCP server, and no published endpoint shapes to push into it either, so nothing here claims to talk to Teamily. The endpoint stands on its own and works with any MCP client.
 
 | Tool | What it does |
 |---|---|
@@ -141,14 +143,14 @@ Turn it on with `CONNET_MCP_TOKEN` in `.env.local`. **It is not a key from anybo
 echo "CONNET_MCP_TOKEN=$(openssl rand -hex 32)" >> .env.local
 ```
 
-Then put it on a public URL, because Teamily cannot reach `localhost`:
+Then put it on a public URL, if the client is not on this machine (a local client, like Claude Code, can use `http://localhost:3000/api/mcp` directly):
 
 ```bash
 npm run tunnel            # the app on port 3000
 npm run tunnel -- 3001    # or whichever port it is on
 ```
 
-That opens a Cloudflare quick tunnel (no account, no key: `brew install cloudflared`), checks the endpoint really answers through it, prints the URL and header to paste into Teamily, and writes both to `teamily-mcp.local.json`, which is git-ignored because it carries the token. The URL is new every time, so re-paste it after a restart. **Ctrl-C closes the tunnel**, and the endpoint goes back to being reachable only from your machine - do that when you are done.
+That opens a Cloudflare quick tunnel (no account, no key: `brew install cloudflared`), checks the endpoint really answers through it, prints the URL and header to paste into the client, and writes both to `teamily-mcp.local.json`, which is git-ignored because it carries the token. The URL is new every time, so re-paste it after a restart. **Ctrl-C closes the tunnel**, and the endpoint goes back to being reachable only from your machine - do that when you are done.
 
 ## The screen
 
