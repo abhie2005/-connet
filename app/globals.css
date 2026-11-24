@@ -1,13 +1,14 @@
 @import "tailwindcss";
 
-/* The look: blue into purple. One soft field runs behind the whole window (sky blue on the left,
-   violet on the right; it turns to purple all over in your own net), the graph is drawn straight
-   on it, and the work sits on white sheets that float on it. Deep indigo ink carries the
-   hierarchy (the main action and what is selected are ink), violet is kept for what is
-   live (the running lamp, reasons to write, the way in, your own net), and amber for what an
+/* The look: rich. One deep field runs behind the whole window, royal blue on the left into
+   violet on the right (it turns to purple all over in your own net). The graph is drawn straight
+   on it in light strokes, the controls on it are dark glass with white text, and the work sits
+   on white sheets that float on it. On a sheet, deep indigo ink carries the hierarchy (the main
+   action and what is selected are ink), violet is kept for what is
+   live (the running lamp, reasons to write, the way in), and amber for what an
    agent stopped or what is waiting for you. A match score is green, amber or red. */
 @theme {
-  --color-void: #9a9ff7;
+  --color-void: #4031bd;
   --color-panel: #fdfcff;
   --color-raise: #f3f1fd;
   --color-raise-2: #e8e4fb;
@@ -25,6 +26,8 @@
   --color-flag: rgb(226 160 30 / 0.18);
   --color-flag-ink: #7a4d00;
   --color-bad: #d03838;
+  --color-on-field: #ffffff;
+  --color-sky: #8fcbff;
   --radius-lg: 6px;
   --radius-xl: 8px;
   --radius-2xl: 10px;
@@ -34,7 +37,7 @@
 
 :root {
   color-scheme: light;
-  --frost: rgba(251, 250, 255, 0.58);
+  --frost: rgba(255, 255, 255, 0.13);
 }
 
 * {
@@ -69,7 +72,7 @@ button:disabled {
 }
 
 :focus-visible {
-  outline: 2px solid var(--color-signal);
+  outline: 2px solid #9c8cf8;
   outline-offset: 2px;
   border-radius: 6px;
 }
@@ -93,7 +96,7 @@ h3 {
   background: var(--color-void);
 }
 
-/* The field itself: blue into purple, with a soft light behind the graph. */
+/* The field itself: royal blue into violet, a soft light behind the graph, depth in one corner. */
 .field::before {
   content: "";
   position: fixed;
@@ -101,13 +104,14 @@ h3 {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(48% 56% at 21% 44%, rgba(255, 255, 255, 0.36), transparent 72%),
-    linear-gradient(118deg, #84b4fa 0%, #989ff7 48%, #b08df3 100%);
+    radial-gradient(46% 54% at 21% 46%, rgba(134, 150, 255, 0.42), transparent 72%),
+    radial-gradient(70% 80% at 100% 100%, rgba(20, 8, 78, 0.5), transparent 70%),
+    linear-gradient(118deg, #2440b8 0%, #4433c6 46%, #6a27bd 100%);
 }
 
 /* The graph's drawing surface: a faint dot grid that fades out towards the edges. */
 .dots {
-  background-image: radial-gradient(rgba(27, 22, 64, 0.13) 1px, transparent 1.3px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.17) 1px, transparent 1.3px);
   background-size: 22px 22px;
   -webkit-mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, #000 35%, transparent 100%);
   mask-image: radial-gradient(ellipse 75% 75% at 50% 50%, #000 35%, transparent 100%);
@@ -119,14 +123,38 @@ h3 {
   border-radius: 14px;
   box-shadow:
     0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 14px 38px rgba(44, 30, 128, 0.2);
+    0 20px 54px rgba(10, 4, 52, 0.42);
 }
 
 .frost {
   background: var(--frost);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  /* Dark glass: what is inside reads in white, so the tokens are turned over for it. */
+  color: #fff;
+  --color-ink: #ffffff;
+  --color-on-ink: #1b1640;
+  --color-soft: rgb(255 255 255 / 0.78);
+  --color-faint: rgb(255 255 255 / 0.6);
+  --color-raise: rgb(255 255 255 / 0.1);
+  --color-raise-2: rgb(255 255 255 / 0.18);
+  --color-line: rgb(255 255 255 / 0.16);
+  --color-line-strong: rgb(255 255 255 / 0.3);
+  --color-signal: #c3b2ff;
+  --color-signal-ink: #e2d9ff;
+  --color-signal-pale: rgb(255 255 255 / 0.12);
+  --color-good: #7dedb0;
+  --color-warn: #ffc65c;
+  --color-flag: rgb(255 198 92 / 0.2);
+  --color-flag-ink: #ffd88a;
+  --color-bad: #ff9a9a;
+}
+
+/* A note over the graph has to be read on top of anything: nearly solid. */
+.frost.tip {
+  background: rgba(20, 11, 70, 0.9);
 }
 
 /* ---- small parts -------------------------------------------------------------------- */
@@ -497,7 +525,7 @@ textarea.input {
   font-size: 13px;
   font-weight: 600;
   line-height: 1.2;
-  color: var(--color-ink);
+  color: var(--color-on-field);
   white-space: nowrap;
 }
 
@@ -715,8 +743,8 @@ textarea.input {
   width: 176px;
   height: 100px;
   border-radius: 10px;
-  background: var(--color-void);
-  border: 1px solid var(--color-line-strong);
+  background: linear-gradient(118deg, #2c3fbb 0%, #4a32c6 55%, #6a27bd 100%);
+  border: 0;
   overflow: hidden;
   flex: none;
 }
@@ -758,7 +786,7 @@ textarea.input {
 .sprite-t {
   font-size: 9.5px;
   font-weight: 700;
-  fill: var(--color-ink);
+  fill: #fff;
 }
 
 .sprite-i {
@@ -928,7 +956,7 @@ a.dex-site[href]:hover {
 
 .netswitch[data-net="you"] .thumb {
   transform: translateX(100%);
-  background: var(--color-signal);
+  background: var(--color-sky);
 }
 
 /* In your net the field turns from blue-and-purple to purple. It is a second still layer that
@@ -940,8 +968,9 @@ a.dex-site[href]:hover {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(48% 56% at 21% 44%, rgba(255, 255, 255, 0.34), transparent 72%),
-    linear-gradient(118deg, #a79bf7 0%, #b38cf2 50%, #c583ea 100%);
+    radial-gradient(46% 54% at 21% 46%, rgba(178, 138, 255, 0.4), transparent 72%),
+    radial-gradient(70% 80% at 100% 100%, rgba(40, 6, 76, 0.5), transparent 70%),
+    linear-gradient(118deg, #4d2bbd 0%, #6a24b6 50%, #8a229f 100%);
   opacity: 0;
   transition: opacity 0.7s ease;
 }
@@ -951,7 +980,7 @@ a.dex-site[href]:hover {
 }
 
 .netswitch button[aria-pressed="true"] .count {
-  background: rgb(255 255 255 / 0.22);
+  background: rgb(27 22 64 / 0.12);
   color: var(--color-on-ink);
 }
 
@@ -1067,12 +1096,12 @@ a.dex-site[href]:hover {
   display: grid;
   place-items: center;
   border-radius: 10px;
-  color: var(--color-ink);
+  color: #fff;
   transition: background 0.15s;
 }
 
 .menu-btn:hover {
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .menu-dot {
@@ -1090,10 +1119,22 @@ a.dex-site[href]:hover {
   background: transparent;
   padding: 6px 10px 6px 14px;
   margin-left: 2px;
-  border-left: 1.5px solid rgb(27 22 64 / 0.22);
+  border-left: 1.5px solid rgb(255 255 255 / 0.3);
   font-size: 17px;
   font-weight: 750;
-  color: var(--color-ink);
+  color: var(--color-on-field);
+}
+
+.crumb .count {
+  background: rgb(255 255 255 / 0.2);
+  color: #fff;
+}
+
+/* A note that sits straight on the field (which way in is lit on the graph). */
+.field-tag {
+  background: rgba(20, 11, 70, 0.72);
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 0.3);
+  color: #fff;
 }
 
 .menu {
