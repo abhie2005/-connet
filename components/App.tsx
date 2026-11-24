@@ -644,7 +644,7 @@ export function App() {
           <div className="flex items-center gap-3 flex-none">
             <NetSwitch net={net} onChange={turn} product={ws.product.name} canYou={canYou} within={ws.graph.nodes.filter((n) => n.label === "Person" && !n.props.isFounder && ringOf(reach.get(n.id)) !== 0).length} />
             <span className="flex-1" />
-            <button className="btn btn-plain !text-[13px] !text-ink" onClick={() => setGraphOpen(false)}>
+            <button className="btn btn-frost !text-[13px] !py-1.5" onClick={() => setGraphOpen(false)}>
               Hide graph
             </button>
           </div>

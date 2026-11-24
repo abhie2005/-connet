@@ -184,6 +184,21 @@ h3 {
   color: var(--color-ink);
 }
 
+/* A control that floats on the gradient rather than on a white sheet: it carries its own
+   frosted ground, so it is read against the graph and not lost in it. */
+.btn-frost {
+  background: var(--frost);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  color: var(--color-soft);
+}
+
+.btn-frost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--color-ink);
+}
+
 .btn-main {
   background: var(--color-ink);
   box-shadow: none;
@@ -481,24 +496,77 @@ textarea.input {
   box-shadow: none;
 }
 
-/* A plain line of marks under the switch: no box, so it reads as a caption to the graph. */
+/* The marks under the switch. They sit on the same frosted sheet as the switch above them:
+   straight on the gradient, dark text and a white mark had almost nothing to read against. */
 .legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 18px;
-  padding: 0 4px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  align-items: center;
+  gap: 1px;
+  padding: 5px 6px;
+  border-radius: 11px;
+  background: var(--frost);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 6px 20px rgba(44, 30, 128, 0.1);
   flex: none;
 }
 
 .legend-item {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 600;
+  gap: 7px;
+  padding: 4px 9px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 650;
   line-height: 1.2;
-  color: var(--color-ink);
+  color: var(--color-soft);
   white-space: nowrap;
+  /* Each mark arrives in turn, so a kind that turns up later (the first job post) is noticed
+     without anything moving on the graph. */
+  animation: legendin 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* Four marks in three columns would leave one on a row of its own: give that count two
+   columns, so the key is always a tidy block however many kinds are on the graph. */
+.legend:has(.legend-item:nth-child(4):last-child) {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.legend-item:nth-child(2) {
+  animation-delay: 0.03s;
+}
+.legend-item:nth-child(3) {
+  animation-delay: 0.06s;
+}
+.legend-item:nth-child(4) {
+  animation-delay: 0.09s;
+}
+.legend-item:nth-child(5) {
+  animation-delay: 0.12s;
+}
+.legend-item:nth-child(6) {
+  animation-delay: 0.15s;
+}
+
+.legend-item svg {
+  flex: none;
+  transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes legendin {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .legend-n {
@@ -1595,28 +1663,40 @@ a.dex-site[href]:hover {
   box-shadow: none;
 }
 
-/* A name in the legend is a switch: press it and that kind of thing is picked out on the graph. */
+/* A name in the legend is a switch: point at it and that kind of thing is picked out on the graph. */
 .legend-btn {
   border: 0;
-  background: transparent;
-  padding: 3px 9px 3px 5px;
-  margin: -3px -5px -3px -5px;
-  border-radius: 8px;
   cursor: default;
-  transition: background 0.15s, opacity 0.2s;
+  transition:
+    background 0.18s,
+    color 0.18s,
+    opacity 0.22s,
+    box-shadow 0.18s;
 }
 
 .legend-btn:hover {
-  background: rgb(255 255 255 / 0.4);
+  background: rgb(255 255 255 / 0.75);
+  color: var(--color-ink);
+}
+
+.legend-btn:hover svg {
+  transform: scale(1.12);
 }
 
 .legend.has-spot .legend-btn:not([aria-pressed="true"]) {
-  opacity: 0.55;
+  opacity: 0.42;
 }
 
 .legend-btn[aria-pressed="true"] {
   background: #fff;
-  box-shadow: 0 2px 10px rgb(44 30 128 / 0.18);
+  color: var(--color-ink);
+  box-shadow:
+    0 1px 2px rgb(44 30 128 / 0.1),
+    0 4px 14px rgb(44 30 128 / 0.14);
+}
+
+.legend-btn[aria-pressed="true"] svg {
+  transform: scale(1.12);
 }
 
 /* What is shared with someone, in a way in: the one word to catch the eye. */
