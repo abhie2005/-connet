@@ -201,7 +201,7 @@ function Connections({ ws }: { ws: Workspace }) {
   );
 }
 /** The switch between the two nets. The thumb takes the color of whoever the net is about:
-    white for the product, sky blue for you. Both halves are the same width, so nothing
+    ink for the product, the violet accent for you. Both halves are the same width, so nothing
     resizes when it moves. */
 function NetSwitch({ net, onChange, product, canYou, within }: { net: Net; onChange: (n: Net) => void; product: string; canYou: boolean; within: number }) {
   return (
@@ -232,12 +232,12 @@ function Legend({ net, waiting, competitors }: { net: Net; waiting: boolean; com
   // Your net needs no key of its own: each ring says what it means on the graph.
   const items: Item[] =
     net === "you"
-      ? [{ key: "rings", label: "The closer to you, the closer the tie", mark: <><circle cx="9" cy="9" r="7" fill="none" stroke="#FFFFFF" strokeOpacity="0.7" strokeWidth="1.200" strokeDasharray="2 2.600" /><circle cx="9" cy="9" r="3" fill="#8FCBFF" /></> }]
+      ? [{ key: "rings", label: "The closer to you, the closer the tie", mark: <><circle cx="9" cy="9" r="7" fill="none" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.200" strokeDasharray="2 2.600" /><circle cx="9" cy="9" r="3" fill="#5A34D6" /></> }]
       : [
-          { key: "company", label: "Company", mark: <circle cx="9" cy="9" r="6.500" fill="#FFFFFF" /> },
-          { key: "person", label: "Person", mark: <circle cx="9" cy="9" r="4.400" fill="#8FCBFF" /> },
-          { key: "signal", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#D9BEFF" stroke="#FFFFFF" strokeWidth="1.200" /> },
-          ...(competitors ? [{ key: "competitor", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#FFFFFF" fillOpacity="0.2" stroke="#FFFFFF" strokeOpacity="0.65" strokeWidth="1.600" /> }] : []),
+          { key: "company", label: "Company", mark: <circle cx="9" cy="9" r="6" fill="#FFFFFF" stroke="#1B1640" strokeWidth="2.200" /> },
+          { key: "person", label: "Person", mark: <circle cx="9" cy="9" r="4.400" fill="#2E2863" stroke="#FFFFFF" strokeWidth="1.400" /> },
+          { key: "signal", label: "Reason to write", mark: <path d="M9 2.500 15.500 9 9 15.500 2.500 9Z" fill="#5A34D6" stroke="#FFFFFF" strokeWidth="1.200" /> },
+          ...(competitors ? [{ key: "competitor", label: "Competitor", mark: <circle cx="9" cy="9" r="5.800" fill="#CBC8F6" stroke="#1B1640" strokeOpacity="0.5" strokeWidth="1.600" /> }] : []),
         ];
   if (waiting) items.push({ key: "waiting", label: "Draft waiting for you", mark: <circle cx="9" cy="9" r="6" fill="none" stroke="#FFFFFF" strokeWidth="2" strokeDasharray="3 2.600" /> });
   return (
@@ -570,8 +570,8 @@ export function App() {
           {drafts > 0 && tab !== "approve" && <span className="waitdot menu-dot" />}
         </button>
         <div className="flex items-center gap-2.5">
-          <Logo size={38} light />
-          <div className="text-[24px] font-extrabold tracking-tight leading-none text-on-field">{APP_NAME}</div>
+          <Logo size={38} />
+          <div className="text-[24px] font-extrabold tracking-tight leading-none">{APP_NAME}</div>
         </div>
         <button className="crumb" onClick={() => setMenu(true)} title="Open the menu to go somewhere else">
           <Icon name={here.icon} size={17} />
@@ -608,7 +608,7 @@ export function App() {
           <div className="flex items-center gap-3 flex-none">
             <NetSwitch net={net} onChange={turn} product={ws.product.name} canYou={canYou} within={ws.graph.nodes.filter((n) => n.label === "Person" && !n.props.isFounder && ringOf(reach.get(n.id)) !== 0).length} />
             <span className="flex-1" />
-            <button className="btn btn-plain !text-[13px] !text-on-field" onClick={() => setGraphOpen(false)}>
+            <button className="btn btn-plain !text-[13px] !text-ink" onClick={() => setGraphOpen(false)}>
               Hide graph
             </button>
           </div>
@@ -619,7 +619,7 @@ export function App() {
               <GraphView nodes={ws.graph.nodes} edges={ws.graph.edges} leads={ws.leads} net={net} reach={reach} highlight={highlight} flows={flows} waiting={waiting} best={best?.lead.id || null} onPick={pick} />
             </div>
             {pathLead && (
-              <div className="absolute left-0 top-0 tag field-tag !py-1.5 arrive">
+              <div className="absolute left-0 top-0 tag !py-1.5 arrive">
                 <Icon name="path" size={14} />
                 The way in to {pathLead.company}
                 <button className="border-0 bg-transparent p-0 ml-1 grid place-items-center" onClick={() => setPathFor(null)} aria-label="Stop highlighting">

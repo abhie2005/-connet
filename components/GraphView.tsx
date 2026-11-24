@@ -52,20 +52,15 @@ export interface Flow {
 // has put it. The layout answers a change of net at once; this turns the jump into a glide.
 const GLIDE = 0.085;
 
-// The graph is drawn straight on the deep blue-and-purple field, so it is drawn in light.
-// Pale lilac lines are the structure (ties, rings). White is what is bright or in motion (the
-// product, companies, the way in, a draft on its way, a draft waiting). Sky blue is people, and
-// you. Orchid is a reason to write. Mint is a message you approved. Names sit on white pills in ink.
+// The graph is drawn straight on the blue-and-purple field. Dark ink is the structure (rings, people,
+// names), white is what is bright or in motion (the product, the way in, a draft on its way, a
+// draft waiting), and the violet accent is what is live (a reason to write, you).
 const INK = "#1B1640";
-const ink = (a: number) => `rgba(226,222,255,${a})`; // structure, on the field
-const deep = (a: number) => `rgba(14,8,56,${a})`; // the edge that lifts a light shape off a line
+const ink = (a: number) => `rgba(27,22,64,${a})`;
 const WHITE = "#FFFFFF";
 const white = (a: number) => `rgba(255,255,255,${a})`;
-const ACCENT = "#8FCBFF"; // sky
-const accent = (a: number) => `rgba(143,203,255,${a})`;
-const ORCHID = "#D9BEFF";
-const MINT = "#8AF0B8";
-const mint = (a: number) => `rgba(138,240,184,${a})`;
+const ACCENT = "#5A34D6";
+const accent = (a: number) => `rgba(90,52,214,${a})`;
 
 const DOT_SPEED = 185; // graph units a second
 const DOT_GAP = 115; // milliseconds between dots
@@ -392,7 +387,7 @@ export function GraphView({
           if (!ringsInUse.has(ring.at)) continue;
           ctx.beginPath();
           ctx.arc(0, 0, ring.at, 0, Math.PI * 2);
-          ctx.strokeStyle = ring.ring === 1 ? white(0.8) : ring.ring === 2 ? ink(0.4) : ink(0.24);
+          ctx.strokeStyle = ring.ring === 1 ? white(0.8) : ring.ring === 2 ? ink(0.3) : ink(0.17);
           ctx.stroke();
         }
         ctx.setLineDash([]);
@@ -445,20 +440,20 @@ export function GraphView({
           ctx.strokeStyle = ACCENT;
           ctx.lineWidth = 2.2;
         } else if (type === "CONTACTED_VIA") {
-          ctx.strokeStyle = accent(0.9);
+          ctx.strokeStyle = accent(0.8);
           ctx.lineWidth = 1.5;
           ctx.setLineDash([4, 5]);
           ctx.lineDashOffset = 0;
         } else if (type === "STUDIED_AT" || type === "PREVIOUSLY_EMPLOYED_AT") {
-          ctx.strokeStyle = ink(0.55);
+          ctx.strokeStyle = ink(0.42);
           ctx.lineWidth = 1.2;
           ctx.setLineDash([2, 5]);
           ctx.lineDashOffset = 0;
         } else if (type === "USES" || type === "COMPETES_WITH") {
-          ctx.strokeStyle = ink(0.3);
+          ctx.strokeStyle = ink(0.22);
           ctx.lineWidth = 1.2;
         } else {
-          ctx.strokeStyle = type === "MATCHED_TO" ? ink(0.46) : ink(0.36);
+          ctx.strokeStyle = type === "MATCHED_TO" ? ink(0.32) : ink(0.26);
           ctx.lineWidth = type === "MATCHED_TO" ? 1.4 : 1.1;
         }
         ctx.globalAlpha = hl && !lit ? 0.3 : far(a) || far(b) ? 0.5 : 1;
@@ -488,7 +483,7 @@ export function GraphView({
           ctx.lineTo(n.x, n.y + r * 1.25);
           ctx.lineTo(n.x - r * 1.25, n.y);
           ctx.closePath();
-          ctx.fillStyle = ORCHID;
+          ctx.fillStyle = ACCENT;
           ctx.fill();
           ctx.lineWidth = 1.5;
           ctx.strokeStyle = WHITE;
@@ -499,15 +494,15 @@ export function GraphView({
           ctx.fillStyle = WHITE;
           ctx.fill();
           ctx.lineWidth = you && reach.get(n.id)?.dist === 1 ? 2.2 : 1.6;
-          ctx.strokeStyle = you && reach.get(n.id)?.dist === 1 ? ACCENT : deep(0.55);
+          ctx.strokeStyle = you && reach.get(n.id)?.dist === 1 ? INK : ink(0.55);
           ctx.stroke();
         } else {
           ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
           if (label === "Product" || (founder && you)) {
             // Whoever the net is about is the one bright thing: a disc with light around it.
-            // The product's is white. The founder's is sky blue.
+            // The product's is white. The founder's is the accent.
             const halo = ctx.createRadialGradient(n.x, n.y, r * 0.7, n.x, n.y, r * 2.6);
-            halo.addColorStop(0, founder ? accent(0.5) : white(0.6));
+            halo.addColorStop(0, founder ? accent(0.34) : white(0.7));
             halo.addColorStop(1, founder ? accent(0) : white(0));
             ctx.beginPath();
             ctx.arc(n.x, n.y, r * 2.6, 0, Math.PI * 2);
@@ -518,40 +513,33 @@ export function GraphView({
             ctx.fillStyle = founder ? ACCENT : "#FFFFFF";
             ctx.fill();
           } else if (label === "Company") {
-            // A company is a light disc. The brighter the disc, the better the match.
+            // A company is a white disc with a ring round it.
             const tier = lead?.score.tier;
-            ctx.fillStyle = off ? white(0.3) : !lead ? "#D5CFF8" : tier === "A" ? WHITE : tier === "B" ? "#DAD4FA" : "#B9B0EE";
+            ctx.fillStyle = WHITE;
             ctx.fill();
-            ctx.lineWidth = off ? 1.5 : 2;
-            ctx.strokeStyle = off ? white(0.75) : !lead && you && reach.get(n.id)?.dist === 1 ? ACCENT : deep(0.5);
+            ctx.lineWidth = !lead ? 1.4 : tier === "A" ? 2.8 : tier === "B" ? 2 : 1.6;
+            // The darker the ring, the better the match.
+            ctx.strokeStyle = !lead ? (you && reach.get(n.id)?.dist === 1 ? INK : ink(0.42)) : tier === "A" ? INK : tier === "B" ? ink(0.6) : ink(0.36);
             if (off) ctx.setLineDash([3, 3]);
             ctx.stroke();
             ctx.setLineDash([]);
-            if (tier === "A" && !off) {
-              // The best matches wear a thin ring of light as well.
-              ctx.beginPath();
-              ctx.arc(n.x, n.y, r + 3.5, 0, Math.PI * 2);
-              ctx.lineWidth = 1.3;
-              ctx.strokeStyle = white(0.7);
-              ctx.stroke();
-            }
           } else if (label === "Competitor") {
-            ctx.fillStyle = white(0.2);
+            ctx.fillStyle = "#CBC8F6";
             ctx.fill();
             ctx.lineWidth = 1.6;
-            ctx.strokeStyle = white(0.62);
+            ctx.strokeStyle = ink(0.5);
             ctx.stroke();
           } else {
             if (founder) {
-              ctx.shadowColor = accent(0.8);
+              ctx.shadowColor = accent(0.7);
               ctx.shadowBlur = 12;
             }
-            // Your net: the nearer the ring, the brighter the person.
-            ctx.fillStyle = founder ? ACCENT : you && n.ring === 1 ? WHITE : you && n.ring === 0 ? "#8D83DA" : ACCENT;
+            // Your net: the nearer the ring, the darker the person.
+            ctx.fillStyle = founder ? ACCENT : you && n.ring === 1 ? INK : you && n.ring === 0 ? "#7D79B3" : "#2E2863";
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.lineWidth = 2;
-            ctx.strokeStyle = deep(0.6);
+            ctx.strokeStyle = WHITE;
             ctx.stroke();
           }
         }
@@ -572,7 +560,7 @@ export function GraphView({
           ctx.globalAlpha = 1;
           ctx.beginPath();
           ctx.arc(n.x, n.y, r + 5, 0, Math.PI * 2);
-          ctx.strokeStyle = white(0.95);
+          ctx.strokeStyle = ink(0.85);
           ctx.lineWidth = 2;
           ctx.stroke();
         }
@@ -581,7 +569,7 @@ export function GraphView({
         if (named && age > 0.5) labels.push({ n, text: founder && you ? "You" : n.node.name, bold: label === "Product" || !!lead || (founder && you) || (you && n.ring === 1) });
       }
 
-      // Labels, on a white pill so the lines behind do not run through the letters.
+      // Labels, on a dark pill so the lines behind do not run through the letters.
       const job = new Map<string, N>();
       if (you) for (const l of d.links) if (l.edge.type === "WORKS_AT") job.set((l.source as N).id, l.target as N);
       ctx.textAlign = "center";
@@ -628,7 +616,7 @@ export function GraphView({
         ctx.globalAlpha = 1;
       }
 
-      // The lead to contact first wears a small sky-blue flag, so it can be found without reading.
+      // The lead to contact first wears a small dark flag, so it can be found without reading.
       const top = live.current.best ? d.byId.get(live.current.best) : null;
       if (top && top.x != null && top.y != null && performance.now() - top.born > 420) {
         const px = Math.max(9.5, Math.min(15, 10.5 / v.k));
@@ -637,7 +625,7 @@ export function GraphView({
         const w = ctx.measureText(text).width + 14;
         const y = top.y - top.r - px * 1.25;
         ctx.globalAlpha = dim(top.id) ? 0.3 : 1;
-        ctx.fillStyle = ACCENT;
+        ctx.fillStyle = INK;
         ctx.beginPath();
         ctx.roundRect(top.x - w / 2, y - px * 0.82, w, px * 1.64, 5);
         ctx.fill();
@@ -647,7 +635,7 @@ export function GraphView({
         ctx.lineTo(top.x, y + px * 0.8 + 4.5);
         ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = INK;
+        ctx.fillStyle = "#FFFFFF";
         ctx.fillText(text, top.x, y + 0.5);
         ctx.globalAlpha = 1;
       }
@@ -669,9 +657,9 @@ export function GraphView({
         }
         if (total < 1) continue;
         const send = f.tone === "send";
-        // A draft on its way is white. One the rep has approved goes in mint: it is on its way out.
-        const core = send ? MINT : "#FFFFFF";
-        const glow = send ? mint(0.9) : white(0.95);
+        // A draft on its way is white. One the rep has approved goes in ink: it is written down.
+        const core = send ? INK : "#FFFFFF";
+        const glow = send ? ink(0.45) : white(0.95);
         const travel = (total / DOT_SPEED) * 1000;
         const until = Math.min(now, f.end ?? now);
         const last = Math.floor((until - f.start) / DOT_GAP);
@@ -683,7 +671,7 @@ export function GraphView({
           ctx.beginPath();
           ctx.moveTo(pts[0].x!, pts[0].y!);
           for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x!, pts[i].y!);
-          ctx.strokeStyle = send ? mint(0.26) : white(0.34);
+          ctx.strokeStyle = send ? ink(0.14) : white(0.34);
           ctx.lineWidth = 7 / Math.sqrt(v.k);
           ctx.lineCap = "round";
           ctx.lineJoin = "round";
@@ -728,7 +716,7 @@ export function GraphView({
           const beat = (landed % 900) / 900;
           ctx.beginPath();
           ctx.arc(target.x!, target.y!, target.r + 4 + beat * 15, 0, Math.PI * 2);
-          ctx.strokeStyle = send ? mint(0.95 * (1 - beat)) : white(0.95 * (1 - beat));
+          ctx.strokeStyle = send ? ink(0.7 * (1 - beat)) : white(0.95 * (1 - beat));
           ctx.lineWidth = 1.8;
           ctx.stroke();
         }
@@ -828,7 +816,7 @@ export function GraphView({
         role="img"
       />
       {tip && (
-        <div className="frost tip absolute pointer-events-none rounded-xl px-3 py-2 text-sm shadow-lg" style={{ left: tip.x, top: tip.y, maxWidth: 260, zIndex: 5 }}>
+        <div className="frost absolute pointer-events-none rounded-xl px-3 py-2 text-sm shadow-lg" style={{ left: tip.x, top: tip.y, maxWidth: 260, zIndex: 5 }}>
           <div className="font-bold leading-snug">{tip.title}</div>
           <div className="text-soft text-[13px] leading-snug">{tip.sub}</div>
         </div>

@@ -12,7 +12,7 @@ import { COST_NOTE, type LeadView } from "./leads";
 import { Icon, Monogram, Quote, Score, initials } from "./ui";
 
 // Drawn on a patch of the field, in the colors the big graph uses.
-const TIER_FILL = { A: "#FFFFFF", B: "#DAD4FA", C: "#B9B0EE" } as const;
+const TIER_STROKE = { A: "#1B1640", B: "rgba(27,22,64,.6)", C: "rgba(27,22,64,.36)" } as const;
 
 /** The entry's own small graph: the company, the people found there, its reasons to write, and
     the shared school or employer that makes a warm way in. Drawn the way the big graph draws them. */
@@ -29,30 +29,30 @@ function Sprite({ lead, to }: { lead: Lead; to: Contact | null }) {
   return (
     <svg viewBox="0 0 200 112" className="sprite" role="img" aria-label={`${lead.company}: ${people.length} people and ${signals.length} reasons to write found`}>
       {[...S, ...P].map(({ x, y }, i) => (
-        <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(226,222,255,.5)" strokeWidth="1.1" />
+        <line key={i} x1={cx} y1={cy} x2={x} y2={y} stroke="rgba(27,22,64,.3)" strokeWidth="1.1" />
       ))}
       {warm && warmAt && (
         <>
           <path className="sprite-way" d={`M${warmAt.x} ${warmAt.y} L160 24 L184 56`} fill="none" stroke="#FFFFFF" strokeWidth="1.8" strokeDasharray="5 4" />
-          <rect x="154" y="18" width="12" height="12" rx="3" fill="#FFFFFF" stroke="rgba(14,8,56,.55)" strokeWidth="1.5" />
-          <circle cx="184" cy="56" r="5.500" fill="#8FCBFF" stroke="rgba(14,8,56,.6)" strokeWidth="1.5" />
+          <rect x="154" y="18" width="12" height="12" rx="3" fill="#FFFFFF" stroke="#1B1640" strokeWidth="1.5" />
+          <circle cx="184" cy="56" r="5.500" fill="#5A34D6" stroke="#FFFFFF" strokeWidth="2" />
           <text x="184" y="74" textAnchor="middle" className="sprite-t">you</text>
         </>
       )}
       {S.map(({ s, x, y }) => (
-        <path key={s.id} d={`M${x} ${y - 6}L${x + 6} ${y}L${x} ${y + 6}L${x - 6} ${y}Z`} fill="#D9BEFF" stroke="#FFFFFF" strokeWidth="1.2">
+        <path key={s.id} d={`M${x} ${y - 6}L${x + 6} ${y}L${x} ${y + 6}L${x - 6} ${y}Z`} fill="#5A34D6" stroke="#FFFFFF" strokeWidth="1.5">
           <title>{s.summary}</title>
         </path>
       ))}
       {P.map(({ c, x, y }) => (
         <g key={c.id}>
-          {to?.id === c.id && <circle cx={x} cy={y} r="9" fill="none" stroke="#FFFFFF" strokeWidth="1.400" />}
-          <circle cx={x} cy={y} r="5" fill={to?.id === c.id ? "#FFFFFF" : "#8FCBFF"} stroke="rgba(14,8,56,.6)" strokeWidth="1.5">
+          {to?.id === c.id && <circle cx={x} cy={y} r="9" fill="none" stroke="#1B1640" strokeWidth="1.400" />}
+          <circle cx={x} cy={y} r="5" fill={to?.id === c.id ? "#1B1640" : "#4A4585"} stroke="#FFFFFF" strokeWidth="2">
             <title>{`${c.name}, ${c.title}`}</title>
           </circle>
         </g>
       ))}
-      <circle cx={cx} cy={cy} r="22" fill={TIER_FILL[lead.score.tier]} stroke="rgba(14,8,56,.5)" strokeWidth="2" strokeDasharray={lead.status === "suppressed" ? "3 3" : undefined} />
+      <circle cx={cx} cy={cy} r="22" fill="#FFFFFF" stroke={TIER_STROKE[lead.score.tier]} strokeWidth={lead.score.tier === "A" ? 2.800 : 2} strokeDasharray={lead.status === "suppressed" ? "3 3" : undefined} />
       <text x={cx} y={cy + 0.500} textAnchor="middle" dominantBaseline="middle" className="sprite-i">
         {initials(lead.company)}
       </text>
